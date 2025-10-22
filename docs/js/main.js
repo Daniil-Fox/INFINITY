@@ -86592,767 +86592,6 @@ function toCreasedNormals( geometry, creaseAngle = Math.PI / 3 /* 60 degrees */ 
 
 /***/ }),
 
-/***/ "./node_modules/three/src/math/MathUtils.js":
-/*!**************************************************!*\
-  !*** ./node_modules/three/src/math/MathUtils.js ***!
-  \**************************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   DEG2RAD: () => (/* binding */ DEG2RAD),
-/* harmony export */   MathUtils: () => (/* binding */ MathUtils),
-/* harmony export */   RAD2DEG: () => (/* binding */ RAD2DEG),
-/* harmony export */   ceilPowerOfTwo: () => (/* binding */ ceilPowerOfTwo),
-/* harmony export */   clamp: () => (/* binding */ clamp),
-/* harmony export */   damp: () => (/* binding */ damp),
-/* harmony export */   degToRad: () => (/* binding */ degToRad),
-/* harmony export */   denormalize: () => (/* binding */ denormalize),
-/* harmony export */   euclideanModulo: () => (/* binding */ euclideanModulo),
-/* harmony export */   floorPowerOfTwo: () => (/* binding */ floorPowerOfTwo),
-/* harmony export */   generateUUID: () => (/* binding */ generateUUID),
-/* harmony export */   inverseLerp: () => (/* binding */ inverseLerp),
-/* harmony export */   isPowerOfTwo: () => (/* binding */ isPowerOfTwo),
-/* harmony export */   lerp: () => (/* binding */ lerp),
-/* harmony export */   mapLinear: () => (/* binding */ mapLinear),
-/* harmony export */   normalize: () => (/* binding */ normalize),
-/* harmony export */   pingpong: () => (/* binding */ pingpong),
-/* harmony export */   radToDeg: () => (/* binding */ radToDeg),
-/* harmony export */   randFloat: () => (/* binding */ randFloat),
-/* harmony export */   randFloatSpread: () => (/* binding */ randFloatSpread),
-/* harmony export */   randInt: () => (/* binding */ randInt),
-/* harmony export */   seededRandom: () => (/* binding */ seededRandom),
-/* harmony export */   setQuaternionFromProperEuler: () => (/* binding */ setQuaternionFromProperEuler),
-/* harmony export */   smootherstep: () => (/* binding */ smootherstep),
-/* harmony export */   smoothstep: () => (/* binding */ smoothstep)
-/* harmony export */ });
-const _lut = [ '00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '0a', '0b', '0c', '0d', '0e', '0f', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '1a', '1b', '1c', '1d', '1e', '1f', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '2a', '2b', '2c', '2d', '2e', '2f', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '3a', '3b', '3c', '3d', '3e', '3f', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '4a', '4b', '4c', '4d', '4e', '4f', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '5a', '5b', '5c', '5d', '5e', '5f', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '6a', '6b', '6c', '6d', '6e', '6f', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '7a', '7b', '7c', '7d', '7e', '7f', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '8a', '8b', '8c', '8d', '8e', '8f', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '9a', '9b', '9c', '9d', '9e', '9f', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'ba', 'bb', 'bc', 'bd', 'be', 'bf', 'c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'ca', 'cb', 'cc', 'cd', 'ce', 'cf', 'd0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'da', 'db', 'dc', 'dd', 'de', 'df', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9', 'ea', 'eb', 'ec', 'ed', 'ee', 'ef', 'f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'fa', 'fb', 'fc', 'fd', 'fe', 'ff' ];
-
-let _seed = 1234567;
-
-
-const DEG2RAD = Math.PI / 180;
-const RAD2DEG = 180 / Math.PI;
-
-/**
- * Generate a [UUID]{@link https://en.wikipedia.org/wiki/Universally_unique_identifier}
- * (universally unique identifier).
- *
- * @return {string} The UUID.
- */
-function generateUUID() {
-
-	// http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
-
-	const d0 = Math.random() * 0xffffffff | 0;
-	const d1 = Math.random() * 0xffffffff | 0;
-	const d2 = Math.random() * 0xffffffff | 0;
-	const d3 = Math.random() * 0xffffffff | 0;
-	const uuid = _lut[ d0 & 0xff ] + _lut[ d0 >> 8 & 0xff ] + _lut[ d0 >> 16 & 0xff ] + _lut[ d0 >> 24 & 0xff ] + '-' +
-			_lut[ d1 & 0xff ] + _lut[ d1 >> 8 & 0xff ] + '-' + _lut[ d1 >> 16 & 0x0f | 0x40 ] + _lut[ d1 >> 24 & 0xff ] + '-' +
-			_lut[ d2 & 0x3f | 0x80 ] + _lut[ d2 >> 8 & 0xff ] + '-' + _lut[ d2 >> 16 & 0xff ] + _lut[ d2 >> 24 & 0xff ] +
-			_lut[ d3 & 0xff ] + _lut[ d3 >> 8 & 0xff ] + _lut[ d3 >> 16 & 0xff ] + _lut[ d3 >> 24 & 0xff ];
-
-	// .toLowerCase() here flattens concatenated strings to save heap memory space.
-	return uuid.toLowerCase();
-
-}
-
-/**
- * Clamps the given value between min and max.
- *
- * @param {number} value - The value to clamp.
- * @param {number} min - The min value.
- * @param {number} max - The max value.
- * @return {number} The clamped value.
- */
-function clamp( value, min, max ) {
-
-	return Math.max( min, Math.min( max, value ) );
-
-}
-
-/**
- * Computes the Euclidean modulo of the given parameters that
- * is `( ( n % m ) + m ) % m`.
- *
- * @param {number} n - The first parameter.
- * @param {number} m - The second parameter.
- * @return {number} The Euclidean modulo.
- */
-function euclideanModulo( n, m ) {
-
-	// https://en.wikipedia.org/wiki/Modulo_operation
-
-	return ( ( n % m ) + m ) % m;
-
-}
-
-/**
- * Performs a linear mapping from range `<a1, a2>` to range `<b1, b2>`
- * for the given value.
- *
- * @param {number} x - The value to be mapped.
- * @param {number} a1 - Minimum value for range A.
- * @param {number} a2 - Maximum value for range A.
- * @param {number} b1 - Minimum value for range B.
- * @param {number} b2 - Maximum value for range B.
- * @return {number} The mapped value.
- */
-function mapLinear( x, a1, a2, b1, b2 ) {
-
-	return b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 );
-
-}
-
-/**
- * Returns the percentage in the closed interval `[0, 1]` of the given value
- * between the start and end point.
- *
- * @param {number} x - The start point
- * @param {number} y - The end point.
- * @param {number} value - A value between start and end.
- * @return {number} The interpolation factor.
- */
-function inverseLerp( x, y, value ) {
-
-	// https://www.gamedev.net/tutorials/programming/general-and-gameplay-programming/inverse-lerp-a-super-useful-yet-often-overlooked-function-r5230/
-
-	if ( x !== y ) {
-
-		return ( value - x ) / ( y - x );
-
-	} else {
-
-		return 0;
-
-	}
-
-}
-
-/**
- * Returns a value linearly interpolated from two known points based on the given interval -
- * `t = 0` will return `x` and `t = 1` will return `y`.
- *
- * @param {number} x - The start point
- * @param {number} y - The end point.
- * @param {number} t - The interpolation factor in the closed interval `[0, 1]`.
- * @return {number} The interpolated value.
- */
-function lerp( x, y, t ) {
-
-	return ( 1 - t ) * x + t * y;
-
-}
-
-/**
- * Smoothly interpolate a number from `x` to `y` in  a spring-like manner using a delta
- * time to maintain frame rate independent movement. For details, see
- * [Frame rate independent damping using lerp]{@link http://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/}.
- *
- * @param {number} x - The current point.
- * @param {number} y - The target point.
- * @param {number} lambda - A higher lambda value will make the movement more sudden,
- * and a lower value will make the movement more gradual.
- * @param {number} dt - Delta time in seconds.
- * @return {number} The interpolated value.
- */
-function damp( x, y, lambda, dt ) {
-
-	return lerp( x, y, 1 - Math.exp( - lambda * dt ) );
-
-}
-
-/**
- * Returns a value that alternates between `0` and the given `length` parameter.
- *
- * @param {number} x - The value to pingpong.
- * @param {number} [length=1] - The positive value the function will pingpong to.
- * @return {number} The alternated value.
- */
-function pingpong( x, length = 1 ) {
-
-	// https://www.desmos.com/calculator/vcsjnyz7x4
-
-	return length - Math.abs( euclideanModulo( x, length * 2 ) - length );
-
-}
-
-/**
- * Returns a value in the range `[0,1]` that represents the percentage that `x` has
- * moved between `min` and `max`, but smoothed or slowed down the closer `x` is to
- * the `min` and `max`.
- *
- * See [Smoothstep]{@link http://en.wikipedia.org/wiki/Smoothstep} for more details.
- *
- * @param {number} x - The value to evaluate based on its position between min and max.
- * @param {number} min - The min value. Any x value below min will be `0`.
- * @param {number} max - The max value. Any x value above max will be `1`.
- * @return {number} The alternated value.
- */
-function smoothstep( x, min, max ) {
-
-	if ( x <= min ) return 0;
-	if ( x >= max ) return 1;
-
-	x = ( x - min ) / ( max - min );
-
-	return x * x * ( 3 - 2 * x );
-
-}
-
-/**
- * A [variation on smoothstep]{@link https://en.wikipedia.org/wiki/Smoothstep#Variations}
- * that has zero 1st and 2nd order derivatives at x=0 and x=1.
- *
- * @param {number} x - The value to evaluate based on its position between min and max.
- * @param {number} min - The min value. Any x value below min will be `0`.
- * @param {number} max - The max value. Any x value above max will be `1`.
- * @return {number} The alternated value.
- */
-function smootherstep( x, min, max ) {
-
-	if ( x <= min ) return 0;
-	if ( x >= max ) return 1;
-
-	x = ( x - min ) / ( max - min );
-
-	return x * x * x * ( x * ( x * 6 - 15 ) + 10 );
-
-}
-
-/**
- * Returns a random integer from `<low, high>` interval.
- *
- * @param {number} low - The lower value boundary.
- * @param {number} high - The upper value boundary
- * @return {number} A random integer.
- */
-function randInt( low, high ) {
-
-	return low + Math.floor( Math.random() * ( high - low + 1 ) );
-
-}
-
-/**
- * Returns a random float from `<low, high>` interval.
- *
- * @param {number} low - The lower value boundary.
- * @param {number} high - The upper value boundary
- * @return {number} A random float.
- */
-function randFloat( low, high ) {
-
-	return low + Math.random() * ( high - low );
-
-}
-
-/**
- * Returns a random integer from `<-range/2, range/2>` interval.
- *
- * @param {number} range - Defines the value range.
- * @return {number} A random float.
- */
-function randFloatSpread( range ) {
-
-	return range * ( 0.5 - Math.random() );
-
-}
-
-/**
- * Returns a deterministic pseudo-random float in the interval `[0, 1]`.
- *
- * @param {number} [s] - The integer seed.
- * @return {number} A random float.
- */
-function seededRandom( s ) {
-
-	if ( s !== undefined ) _seed = s;
-
-	// Mulberry32 generator
-
-	let t = _seed += 0x6D2B79F5;
-
-	t = Math.imul( t ^ t >>> 15, t | 1 );
-
-	t ^= t + Math.imul( t ^ t >>> 7, t | 61 );
-
-	return ( ( t ^ t >>> 14 ) >>> 0 ) / 4294967296;
-
-}
-
-/**
- * Converts degrees to radians.
- *
- * @param {number} degrees - A value in degrees.
- * @return {number} The converted value in radians.
- */
-function degToRad( degrees ) {
-
-	return degrees * DEG2RAD;
-
-}
-
-/**
- * Converts radians to degrees.
- *
- * @param {number} radians - A value in radians.
- * @return {number} The converted value in degrees.
- */
-function radToDeg( radians ) {
-
-	return radians * RAD2DEG;
-
-}
-
-/**
- * Returns `true` if the given number is a power of two.
- *
- * @param {number} value - The value to check.
- * @return {boolean} Whether the given number is a power of two or not.
- */
-function isPowerOfTwo( value ) {
-
-	return ( value & ( value - 1 ) ) === 0 && value !== 0;
-
-}
-
-/**
- * Returns the smallest power of two that is greater than or equal to the given number.
- *
- * @param {number} value - The value to find a POT for.
- * @return {number} The smallest power of two that is greater than or equal to the given number.
- */
-function ceilPowerOfTwo( value ) {
-
-	return Math.pow( 2, Math.ceil( Math.log( value ) / Math.LN2 ) );
-
-}
-
-/**
- * Returns the largest power of two that is less than or equal to the given number.
- *
- * @param {number} value - The value to find a POT for.
- * @return {number} The largest power of two that is less than or equal to the given number.
- */
-function floorPowerOfTwo( value ) {
-
-	return Math.pow( 2, Math.floor( Math.log( value ) / Math.LN2 ) );
-
-}
-
-/**
- * Sets the given quaternion from the [Intrinsic Proper Euler Angles]{@link https://en.wikipedia.org/wiki/Euler_angles}
- * defined by the given angles and order.
- *
- * Rotations are applied to the axes in the order specified by order:
- * rotation by angle `a` is applied first, then by angle `b`, then by angle `c`.
- *
- * @param {Quaternion} q - The quaternion to set.
- * @param {number} a - The rotation applied to the first axis, in radians.
- * @param {number} b - The rotation applied to the second axis, in radians.
- * @param {number} c - The rotation applied to the third axis, in radians.
- * @param {('XYX'|'XZX'|'YXY'|'YZY'|'ZXZ'|'ZYZ')} order - A string specifying the axes order.
- */
-function setQuaternionFromProperEuler( q, a, b, c, order ) {
-
-	const cos = Math.cos;
-	const sin = Math.sin;
-
-	const c2 = cos( b / 2 );
-	const s2 = sin( b / 2 );
-
-	const c13 = cos( ( a + c ) / 2 );
-	const s13 = sin( ( a + c ) / 2 );
-
-	const c1_3 = cos( ( a - c ) / 2 );
-	const s1_3 = sin( ( a - c ) / 2 );
-
-	const c3_1 = cos( ( c - a ) / 2 );
-	const s3_1 = sin( ( c - a ) / 2 );
-
-	switch ( order ) {
-
-		case 'XYX':
-			q.set( c2 * s13, s2 * c1_3, s2 * s1_3, c2 * c13 );
-			break;
-
-		case 'YZY':
-			q.set( s2 * s1_3, c2 * s13, s2 * c1_3, c2 * c13 );
-			break;
-
-		case 'ZXZ':
-			q.set( s2 * c1_3, s2 * s1_3, c2 * s13, c2 * c13 );
-			break;
-
-		case 'XZX':
-			q.set( c2 * s13, s2 * s3_1, s2 * c3_1, c2 * c13 );
-			break;
-
-		case 'YXY':
-			q.set( s2 * c3_1, c2 * s13, s2 * s3_1, c2 * c13 );
-			break;
-
-		case 'ZYZ':
-			q.set( s2 * s3_1, s2 * c3_1, c2 * s13, c2 * c13 );
-			break;
-
-		default:
-			console.warn( 'THREE.MathUtils: .setQuaternionFromProperEuler() encountered an unknown order: ' + order );
-
-	}
-
-}
-
-/**
- * Denormalizes the given value according to the given typed array.
- *
- * @param {number} value - The value to denormalize.
- * @param {TypedArray} array - The typed array that defines the data type of the value.
- * @return {number} The denormalize (float) value in the range `[0,1]`.
- */
-function denormalize( value, array ) {
-
-	switch ( array.constructor ) {
-
-		case Float32Array:
-
-			return value;
-
-		case Uint32Array:
-
-			return value / 4294967295.0;
-
-		case Uint16Array:
-
-			return value / 65535.0;
-
-		case Uint8Array:
-
-			return value / 255.0;
-
-		case Int32Array:
-
-			return Math.max( value / 2147483647.0, - 1.0 );
-
-		case Int16Array:
-
-			return Math.max( value / 32767.0, - 1.0 );
-
-		case Int8Array:
-
-			return Math.max( value / 127.0, - 1.0 );
-
-		default:
-
-			throw new Error( 'Invalid component type.' );
-
-	}
-
-}
-
-/**
- * Normalizes the given value according to the given typed array.
- *
- * @param {number} value - The float value in the range `[0,1]` to normalize.
- * @param {TypedArray} array - The typed array that defines the data type of the value.
- * @return {number} The normalize value.
- */
-function normalize( value, array ) {
-
-	switch ( array.constructor ) {
-
-		case Float32Array:
-
-			return value;
-
-		case Uint32Array:
-
-			return Math.round( value * 4294967295.0 );
-
-		case Uint16Array:
-
-			return Math.round( value * 65535.0 );
-
-		case Uint8Array:
-
-			return Math.round( value * 255.0 );
-
-		case Int32Array:
-
-			return Math.round( value * 2147483647.0 );
-
-		case Int16Array:
-
-			return Math.round( value * 32767.0 );
-
-		case Int8Array:
-
-			return Math.round( value * 127.0 );
-
-		default:
-
-			throw new Error( 'Invalid component type.' );
-
-	}
-
-}
-
-/**
- * @class
- * @classdesc A collection of math utility functions.
- * @hideconstructor
- */
-const MathUtils = {
-	DEG2RAD: DEG2RAD,
-	RAD2DEG: RAD2DEG,
-	/**
-	 * Generate a [UUID]{@link https://en.wikipedia.org/wiki/Universally_unique_identifier}
-	 * (universally unique identifier).
-	 *
-	 * @static
-	 * @method
-	 * @return {string} The UUID.
-	 */
-	generateUUID: generateUUID,
-	/**
-	 * Clamps the given value between min and max.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} value - The value to clamp.
-	 * @param {number} min - The min value.
-	 * @param {number} max - The max value.
-	 * @return {number} The clamped value.
-	 */
-	clamp: clamp,
-	/**
-	 * Computes the Euclidean modulo of the given parameters that
-	 * is `( ( n % m ) + m ) % m`.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} n - The first parameter.
-	 * @param {number} m - The second parameter.
-	 * @return {number} The Euclidean modulo.
-	 */
-	euclideanModulo: euclideanModulo,
-	/**
-	 * Performs a linear mapping from range `<a1, a2>` to range `<b1, b2>`
-	 * for the given value.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} x - The value to be mapped.
-	 * @param {number} a1 - Minimum value for range A.
-	 * @param {number} a2 - Maximum value for range A.
-	 * @param {number} b1 - Minimum value for range B.
-	 * @param {number} b2 - Maximum value for range B.
-	 * @return {number} The mapped value.
-	 */
-	mapLinear: mapLinear,
-	/**
-	 * Returns the percentage in the closed interval `[0, 1]` of the given value
-	 * between the start and end point.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} x - The start point
-	 * @param {number} y - The end point.
-	 * @param {number} value - A value between start and end.
-	 * @return {number} The interpolation factor.
-	 */
-	inverseLerp: inverseLerp,
-	/**
-	 * Returns a value linearly interpolated from two known points based on the given interval -
-	 * `t = 0` will return `x` and `t = 1` will return `y`.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} x - The start point
-	 * @param {number} y - The end point.
-	 * @param {number} t - The interpolation factor in the closed interval `[0, 1]`.
-	 * @return {number} The interpolated value.
-	 */
-	lerp: lerp,
-	/**
-	 * Smoothly interpolate a number from `x` to `y` in  a spring-like manner using a delta
-	 * time to maintain frame rate independent movement. For details, see
-	 * [Frame rate independent damping using lerp]{@link http://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/}.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} x - The current point.
-	 * @param {number} y - The target point.
-	 * @param {number} lambda - A higher lambda value will make the movement more sudden,
-	 * and a lower value will make the movement more gradual.
-	 * @param {number} dt - Delta time in seconds.
-	 * @return {number} The interpolated value.
-	 */
-	damp: damp,
-	/**
-	 * Returns a value that alternates between `0` and the given `length` parameter.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} x - The value to pingpong.
-	 * @param {number} [length=1] - The positive value the function will pingpong to.
-	 * @return {number} The alternated value.
-	 */
-	pingpong: pingpong,
-	/**
-	 * Returns a value in the range `[0,1]` that represents the percentage that `x` has
-	 * moved between `min` and `max`, but smoothed or slowed down the closer `x` is to
-	 * the `min` and `max`.
-	 *
-	 * See [Smoothstep]{@link http://en.wikipedia.org/wiki/Smoothstep} for more details.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} x - The value to evaluate based on its position between min and max.
-	 * @param {number} min - The min value. Any x value below min will be `0`.
-	 * @param {number} max - The max value. Any x value above max will be `1`.
-	 * @return {number} The alternated value.
-	 */
-	smoothstep: smoothstep,
-	/**
-	 * A [variation on smoothstep]{@link https://en.wikipedia.org/wiki/Smoothstep#Variations}
-	 * that has zero 1st and 2nd order derivatives at x=0 and x=1.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} x - The value to evaluate based on its position between min and max.
-	 * @param {number} min - The min value. Any x value below min will be `0`.
-	 * @param {number} max - The max value. Any x value above max will be `1`.
-	 * @return {number} The alternated value.
-	 */
-	smootherstep: smootherstep,
-	/**
-	 * Returns a random integer from `<low, high>` interval.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} low - The lower value boundary.
-	 * @param {number} high - The upper value boundary
-	 * @return {number} A random integer.
-	 */
-	randInt: randInt,
-	/**
-	 * Returns a random float from `<low, high>` interval.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} low - The lower value boundary.
-	 * @param {number} high - The upper value boundary
-	 * @return {number} A random float.
-	 */
-	randFloat: randFloat,
-	/**
-	 * Returns a random integer from `<-range/2, range/2>` interval.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} range - Defines the value range.
-	 * @return {number} A random float.
-	 */
-	randFloatSpread: randFloatSpread,
-	/**
-	 * Returns a deterministic pseudo-random float in the interval `[0, 1]`.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} [s] - The integer seed.
-	 * @return {number} A random float.
-	 */
-	seededRandom: seededRandom,
-	/**
-	 * Converts degrees to radians.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} degrees - A value in degrees.
-	 * @return {number} The converted value in radians.
-	 */
-	degToRad: degToRad,
-	/**
-	 * Converts radians to degrees.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} radians - A value in radians.
-	 * @return {number} The converted value in degrees.
-	 */
-	radToDeg: radToDeg,
-	/**
-	 * Returns `true` if the given number is a power of two.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} value - The value to check.
-	 * @return {boolean} Whether the given number is a power of two or not.
-	 */
-	isPowerOfTwo: isPowerOfTwo,
-	/**
-	 * Returns the smallest power of two that is greater than or equal to the given number.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} value - The value to find a POT for.
-	 * @return {number} The smallest power of two that is greater than or equal to the given number.
-	 */
-	ceilPowerOfTwo: ceilPowerOfTwo,
-	/**
-	 * Returns the largest power of two that is less than or equal to the given number.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} value - The value to find a POT for.
-	 * @return {number} The largest power of two that is less than or equal to the given number.
-	 */
-	floorPowerOfTwo: floorPowerOfTwo,
-	/**
-	 * Sets the given quaternion from the [Intrinsic Proper Euler Angles]{@link https://en.wikipedia.org/wiki/Euler_angles}
-	 * defined by the given angles and order.
-	 *
-	 * Rotations are applied to the axes in the order specified by order:
-	 * rotation by angle `a` is applied first, then by angle `b`, then by angle `c`.
-	 *
-	 * @static
-	 * @method
-	 * @param {Quaternion} q - The quaternion to set.
-	 * @param {number} a - The rotation applied to the first axis, in radians.
-	 * @param {number} b - The rotation applied to the second axis, in radians.
-	 * @param {number} c - The rotation applied to the third axis, in radians.
-	 * @param {('XYX'|'XZX'|'YXY'|'YZY'|'ZXZ'|'ZYZ')} order - A string specifying the axes order.
-	 */
-	setQuaternionFromProperEuler: setQuaternionFromProperEuler,
-	/**
-	 * Normalizes the given value according to the given typed array.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} value - The float value in the range `[0,1]` to normalize.
-	 * @param {TypedArray} array - The typed array that defines the data type of the value.
-	 * @return {number} The normalize value.
-	 */
-	normalize: normalize,
-	/**
-	 * Denormalizes the given value according to the given typed array.
-	 *
-	 * @static
-	 * @method
-	 * @param {number} value - The value to denormalize.
-	 * @param {TypedArray} array - The typed array that defines the data type of the value.
-	 * @return {number} The denormalize (float) value in the range `[0,1]`.
-	 */
-	denormalize: denormalize
-};
-
-
-
-
-/***/ }),
-
 /***/ "./src/js/_components.js":
 /*!*******************************!*\
   !*** ./src/js/_components.js ***!
@@ -87376,15 +86615,49 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
 /* harmony import */ var three_addons_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/addons/loaders/GLTFLoader.js */ "./node_modules/three/examples/jsm/loaders/GLTFLoader.js");
 /* harmony import */ var lil_gui__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lil-gui */ "./node_modules/lil-gui/dist/lil-gui.esm.js");
-/* harmony import */ var three_src_math_MathUtils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/src/math/MathUtils.js */ "./node_modules/three/src/math/MathUtils.js");
-
-
 
 
 
 const canvas = document.getElementById('scene');
+
+// GUI setup - показываем только если в URL есть #debug
+const isDebugMode = window.location.hash === '#debug';
 const gui = new lil_gui__WEBPACK_IMPORTED_MODULE_3__.GUI();
+if (!isDebugMode) {
+  gui.hide();
+}
 let coinModel = null;
+
+// Параметры для GUI
+const coinParams = {
+  positionX: 2.1,
+  positionY: 0.5,
+  positionZ: -0.8,
+  rotationX: -0.353,
+  rotationY: -0.62,
+  rotationZ: -0.29,
+  scale: 2.1
+};
+
+// Параметры для освещения
+const lightParams = {
+  ambientIntensity: 1,
+  ambientColor: '#ffffff',
+  directional1Intensity: 2.7,
+  directional1Color: '#ffffff',
+  directional1X: 1.4,
+  directional1Y: -1,
+  directional1Z: 3.7,
+  directional2Intensity: 4,
+  directional2Color: '#ffffff',
+  directional2X: -1,
+  directional2Y: -1.5,
+  directional2Z: -0.2
+};
+const mouse = {
+  x: 0,
+  y: 0
+};
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight
@@ -87394,40 +86667,37 @@ const scene = new three__WEBPACK_IMPORTED_MODULE_0__.Scene();
 // Camera
 const camera = new three__WEBPACK_IMPORTED_MODULE_0__.PerspectiveCamera(30, sizes.width / sizes.height, 0.1, 100);
 camera.position.set(0, 0, 12);
+const cameraGroup = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+scene.add(cameraGroup);
+cameraGroup.add(camera);
 const renderer = new three__WEBPACK_IMPORTED_MODULE_1__.WebGLRenderer({
-  canvas: canvas
+  canvas: canvas,
+  alpha: true
 });
 
 // Controls
 // const controls = new OrbitControls( camera, renderer.domElement );
 
-const ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight("#fff", 1);
+// Lights
+
+const ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(lightParams.ambientColor, lightParams.ambientIntensity);
 scene.add(ambientLight);
-
-// const pointLightBottomLeft = new THREE.PointLight( 0xffffff, 100 );
-// pointLightBottomLeft.position.set(-3, -2, 1)
-// scene.add(pointLightBottomLeft)
-
-// const pointLightTopRight = new THREE.PointLight( 0xffffff, 100 );
-// pointLightTopRight.position.set(3, 2, 1)
-// scene.add(pointLightTopRight)
-
-const directionLightBottomLeft = new three__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight('#fff', 5);
-directionLightBottomLeft.position.set(-3, -4, 2);
+const directionLightBottomLeft = new three__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight(lightParams.directional1Color, lightParams.directional1Intensity);
+directionLightBottomLeft.position.set(lightParams.directional1X, lightParams.directional1Y, lightParams.directional1Z);
 scene.add(directionLightBottomLeft);
-const directionLightTopRight = new three__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight('#fff', 5);
-directionLightTopRight.position.set(3, 4, 2);
+const directionLightTopRight = new three__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight(lightParams.directional2Color, lightParams.directional2Intensity);
+directionLightTopRight.position.set(lightParams.directional2X, lightParams.directional2Y, lightParams.directional2Z);
 scene.add(directionLightTopRight);
+
 // LOADER
 const loader = new three_addons_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_2__.GLTFLoader();
-loader.load('./models/gltf/bitcoin/bitcoin.gltf', function (gltf) {
+loader.load('./models/gltf/bitcoin3/bitcoin.gltf', function (gltf) {
   coinModel = gltf.scene;
-  coinModel.scale.set(2, 2, 2);
-  coinModel.position.x = 2;
-  coinModel.position.z = -2;
-  coinModel.rotation.y = -(0,three_src_math_MathUtils_js__WEBPACK_IMPORTED_MODULE_4__.degToRad)(45);
-  coinModel.rotation.x = -(0,three_src_math_MathUtils_js__WEBPACK_IMPORTED_MODULE_4__.degToRad)(20);
-  coinModel.rotation.z = -(0,three_src_math_MathUtils_js__WEBPACK_IMPORTED_MODULE_4__.degToRad)(20);
+
+  // Применяем параметры из GUI
+  coinModel.scale.set(coinParams.scale, coinParams.scale, coinParams.scale);
+  coinModel.position.set(coinParams.positionX, coinParams.positionY, coinParams.positionZ);
+  coinModel.rotation.set(coinParams.rotationX, coinParams.rotationY, coinParams.rotationZ);
   scene.add(coinModel);
 },
 // called while loading is progressing
@@ -87438,6 +86708,88 @@ function (xhr) {
 function (error) {
   console.log('Bitcoin loading error: ' + error);
 });
+
+// Создаем GUI контролы для монетки
+const coinFolder = gui.addFolder('Монетка');
+
+// Позиция
+const positionFolder = coinFolder.addFolder('Позиция');
+positionFolder.add(coinParams, 'positionX', -10, 10, 0.1).onChange(value => {
+  coinModel.position.x = value;
+});
+positionFolder.add(coinParams, 'positionY', -10, 10, 0.1).onChange(value => {
+  coinModel.position.y = value;
+});
+positionFolder.add(coinParams, 'positionZ', -10, 10, 0.1).onChange(value => {
+  coinModel.position.z = value;
+});
+
+// Поворот
+const rotationFolder = coinFolder.addFolder('Поворот');
+rotationFolder.add(coinParams, 'rotationX', -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+  coinModel.rotation.x = value;
+});
+rotationFolder.add(coinParams, 'rotationY', -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+  coinModel.rotation.y = value;
+});
+rotationFolder.add(coinParams, 'rotationZ', -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+  coinModel.rotation.z = value;
+});
+
+// Масштаб
+coinFolder.add(coinParams, 'scale', 0.1, 5, 0.1).onChange(value => {
+  coinModel.scale.set(value, value, value);
+});
+coinFolder.open();
+
+// Создаем GUI контролы для освещения
+const lightFolder = gui.addFolder('Освещение');
+
+// Ambient Light
+const ambientFolder = lightFolder.addFolder('Рассеянный свет');
+ambientFolder.add(lightParams, 'ambientIntensity', 0, 5, 0.1).onChange(value => {
+  ambientLight.intensity = value;
+});
+ambientFolder.addColor(lightParams, 'ambientColor').onChange(value => {
+  ambientLight.color.setHex(value.replace('#', '0x'));
+});
+
+// Directional Light 1
+const directional1Folder = lightFolder.addFolder('Направленный свет 1');
+directional1Folder.add(lightParams, 'directional1Intensity', 0, 10, 0.1).onChange(value => {
+  directionLightBottomLeft.intensity = value;
+});
+directional1Folder.addColor(lightParams, 'directional1Color').onChange(value => {
+  directionLightBottomLeft.color.setHex(value.replace('#', '0x'));
+});
+directional1Folder.add(lightParams, 'directional1X', -10, 10, 0.1).onChange(value => {
+  directionLightBottomLeft.position.x = value;
+});
+directional1Folder.add(lightParams, 'directional1Y', -10, 10, 0.1).onChange(value => {
+  directionLightBottomLeft.position.y = value;
+});
+directional1Folder.add(lightParams, 'directional1Z', -10, 10, 0.1).onChange(value => {
+  directionLightBottomLeft.position.z = value;
+});
+
+// Directional Light 2
+const directional2Folder = lightFolder.addFolder('Направленный свет 2');
+directional2Folder.add(lightParams, 'directional2Intensity', 0, 10, 0.1).onChange(value => {
+  directionLightTopRight.intensity = value;
+});
+directional2Folder.addColor(lightParams, 'directional2Color').onChange(value => {
+  directionLightTopRight.color.setHex(value.replace('#', '0x'));
+});
+directional2Folder.add(lightParams, 'directional2X', -10, 10, 0.1).onChange(value => {
+  directionLightTopRight.position.x = value;
+});
+directional2Folder.add(lightParams, 'directional2Y', -10, 10, 0.1).onChange(value => {
+  directionLightTopRight.position.y = value;
+});
+directional2Folder.add(lightParams, 'directional2Z', -10, 10, 0.1).onChange(value => {
+  directionLightTopRight.position.z = value;
+});
+lightFolder.open();
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -87450,17 +86802,32 @@ window.addEventListener('resize', () => {
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
+window.addEventListener('mousemove', e => {
+  const mouseX = e.clientX / sizes.width * 2 - 1;
+  const mouseY = -(e.clientY / sizes.height) * 2 + 1;
+  mouse.x = mouseX;
+  mouse.y = mouseY;
+});
 
 // Animation
 
 const clock = new three__WEBPACK_IMPORTED_MODULE_0__.Clock();
+let previousTime = 0;
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
-  renderer.render(scene, camera);
+  const delta = elapsedTime - previousTime;
+  previousTime = elapsedTime;
   // controls.update();
   if (coinModel) {
-    coinModel.rotation.y = elapsedTime * 0.5;
+    const targetX = mouse.x * 0.5;
+    const targetY = mouse.y * 0.5;
+    cameraGroup.position.x += (targetX - cameraGroup.position.x) * 0.5 * delta;
+    cameraGroup.position.y += (targetY - cameraGroup.position.y) * 0.5 * delta;
+    console.log(targetX);
+    coinModel.rotation.x += Math.sin(elapsedTime) * 0.001;
+    coinModel.rotation.y += Math.cos(elapsedTime) * 0.001;
   }
+  renderer.render(scene, camera);
   requestAnimationFrame(tick);
 };
 tick();
