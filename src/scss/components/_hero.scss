@@ -2,6 +2,7 @@
   position: relative;
   height: 100vh;
   overflow: hidden;
+  padding: 13rem 7.5rem;
   &::after {
     content: "";
     position: absolute;
@@ -11,9 +12,45 @@
     width: 100%;
     height: 240rem;
 
-    background-image: url('./../img/blur-sphere.svg');
-    background-size: contain;
+    background-image: url('./../img/blur-sphere.svg'), url('./../img/grid.svg');
+    background-size: contain, auto 100%;
     background-repeat: no-repeat;
     background-position: right;
+  }
+  &__logo {
+    margin-bottom: 9.5rem;
+  }
+  &__content {
+    position: relative;
+    z-index: 5;
+    max-width: 75rem;
+  }
+
+  &__title {
+    margin: 0;
+    margin-bottom: 6rem;
+    font-weight: 700;
+    font-size: 7rem;
+    line-height: 110%;
+
+  }
+
+  &__desc {
+    margin: 0;
+    margin-bottom: 6rem;
+
+    font-weight: 600;
+    font-size: 2.8rem;
+    line-height: 140%;
+
+    span {
+      display: block;
+      color: var(--it-pink);
+    }
+  }
+
+  &__btn {
+    width: 100%;
+    max-width: 51.6rem;
   }
 }

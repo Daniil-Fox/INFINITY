@@ -1,0 +1,83 @@
+.logo {
+  width: 18.2rem;
+  height: auto;
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+
+  img, svg {
+    display: block;
+    width: 100%;
+    height: 3.1rem;
+    object-fit: contain;
+  }
+
+  svg {
+    fill: var(--it-white);
+  }
+
+  // Эффект блика
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      45deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0.5) 51%,
+      rgba(255, 255, 255, 0.3) 52%,
+      transparent 60%,
+      transparent 100%
+    );
+    transform: skewX(-15deg);
+    transition: left 0.6s ease-in-out;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @include hover {
+    &::before {
+      left: 100%;
+    }
+  }
+}
+
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2rem;
+  font-weight: 700;
+  font-size: 2.4rem;
+  line-height: 140%;
+  padding: 2rem;
+  background-color: var(--it-pink);
+  color: var(--it-white);
+  transition-property: color, background-color;
+  transition-duration: .3s;
+  transition-timing-function: ease;
+
+
+  @include hover {
+    background-color: var(--it-pink-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    background-color: var(--it-pink-hover);
+  }
+
+  &:active {
+    background-color:  var(--it-pink);
+  }
+
+  &_dark {
+    background-color: var(--it-black);
+  }
+}

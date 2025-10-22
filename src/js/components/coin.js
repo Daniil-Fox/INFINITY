@@ -15,7 +15,7 @@ let coinModel = null;
 
 // Параметры для GUI
 const coinParams = {
-  positionX: 2.1,
+  positionX: 3.5,
   positionY: 0.5,
   positionZ: -0.8,
 
