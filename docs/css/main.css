@@ -1,7 +1,7 @@
 :root {
   --font-family: "Open Sans", sans-serif;
-  --content-width: 1170px;
-  --container-offset: 15px;
+  --content-width: 180rem;
+  --container-offset: 3rem;
   --container-width: calc(var(--content-width) + (var(--container-offset) * 2));
   --it-white: #fff;
   --30-black: #f7f7f7;
@@ -43,6 +43,11 @@
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
   font-size: 0.5208333333vw;
+}
+@media screen and (min-width: 2560px) {
+  .page {
+    font-size: 0.390625vw;
+  }
 }
 
 .page__body {

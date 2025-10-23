@@ -86630,7 +86630,7 @@ let coinModel = null;
 
 // Параметры для GUI
 const coinParams = {
-  positionX: 3.5,
+  positionX: 2,
   positionY: 0.5,
   positionZ: -0.8,
   rotationX: -0.353,
@@ -86643,7 +86643,7 @@ const coinParams = {
 const lightParams = {
   ambientIntensity: 1,
   ambientColor: '#ffffff',
-  directional1Intensity: 2.7,
+  directional1Intensity: 8,
   directional1Color: '#ffffff',
   directional1X: 1.4,
   directional1Y: -1,
