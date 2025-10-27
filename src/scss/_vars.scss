@@ -1,8 +1,8 @@
 // если вы хотите использовать sass-переменные - удалите root
 // colors
 :root {
-  // base
-  --font-family: "Open Sans", sans-serif;
+  --font-family: "Manrope", sans-serif;
+  --second-family: "Inter", sans-serif;
   --content-width: 180rem;
   --container-offset: 3rem;
   --container-width: calc(var(--content-width) + (var(--container-offset) * 2));

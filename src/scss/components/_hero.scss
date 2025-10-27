@@ -1,8 +1,8 @@
 .hero {
   position: relative;
   height: 100vh;
-  overflow: hidden;
   padding: 13rem 7.5rem;
+  margin-bottom: 10rem;
   &::after {
     content: "";
     position: absolute;
@@ -52,5 +52,141 @@
   &__btn {
     width: 100%;
     max-width: 51.6rem;
+  }
+
+  &__decor {
+    position: absolute;
+    right: 7rem;
+    top: 0;
+    height: 100%;
+    width: 88.7rem;
+  }
+  &__element {
+    position: absolute;
+
+    aspect-ratio: 1 / 1;
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    &_square {
+      z-index: 3;
+      right: -3.5rem;
+      bottom: -4.7rem;
+      transform: rotate(-30deg);
+      width: 50rem;
+
+      animation-name: woble;
+      animation-timing-function: ease-in-out;
+      animation-duration: 4s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+    &_square-second {
+      z-index: 2;
+      width: 24rem;
+      transform: rotate(30deg);
+
+      animation-name: sway-slow;
+      animation-timing-function: ease-in-out;
+      animation-duration: 4s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+    &_square-third {
+      top: 4rem;
+      right: 4rem;;
+      z-index: 2;
+      width: 16rem;
+      filter: blur(3px);
+      transform: rotate(30deg);
+
+      animation-name: sway-fast;
+      animation-timing-function: ease-in-out;
+      animation-duration: 2.5s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+
+    &_diamond {
+      z-index: 2;
+      width: 20rem;
+      left: -3rem;
+      bottom: 5rem;
+
+      animation-name: sway-medium;
+      animation-timing-function: ease-in-out;
+      animation-duration: 3.5s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+    &_tubus {
+      transform: rotate(-45deg);
+      width: 15rem;
+      top: -6rem;
+      left: 28rem;
+
+      animation-name: sway-tubus;
+      animation-timing-function: ease-in-out;
+      animation-duration: 3s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+  }
+}
+
+@keyframes woble {
+  0% {
+    transform: rotate(-30deg) translateX(0px) translateY(0px) rotateZ(0deg);
+  }
+  25% {
+    transform: rotate(-30deg) translateX(10px) translateY(-8px) rotateZ(2deg);
+  }
+  50% {
+    transform: rotate(-30deg) translateX(15px) translateY(5px) rotateZ(-1deg);
+  }
+  75% {
+    transform: rotate(-30deg) translateX(-8px) translateY(12px) rotateZ(1deg);
+  }
+  100% {
+    transform: rotate(-30deg) translateX(-12px) translateY(-5px) rotateZ(-2deg);
+  }
+}
+
+@keyframes sway-slow {
+  0% {
+    transform: rotate(30deg) translateX(-5px) translateY(-3px);
+  }
+  100% {
+    transform: rotate(30deg) translateX(5px) translateY(3px);
+  }
+}
+
+@keyframes sway-fast {
+  0% {
+    transform: rotate(30deg) translateX(-8px) translateY(-5px);
+  }
+  100% {
+    transform: rotate(30deg) translateX(8px) translateY(5px);
+  }
+}
+
+@keyframes sway-medium {
+  0% {
+    transform: translateX(-6px) translateY(-4px) rotate(-2deg);
+  }
+  100% {
+    transform: translateX(6px) translateY(4px) rotate(2deg);
+  }
+}
+
+@keyframes sway-tubus {
+  0% {
+    transform: rotate(-45deg) translateX(-4px) translateY(-6px);
+  }
+  100% {
+    transform: rotate(-45deg) translateX(4px) translateY(6px);
   }
 }

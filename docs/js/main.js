@@ -86631,7 +86631,7 @@ let coinModel = null;
 // Параметры для GUI
 const coinParams = {
   positionX: 2,
-  positionY: 0.5,
+  positionY: 0,
   positionZ: -0.8,
   rotationX: -0.353,
   rotationY: -0.62,
@@ -86641,18 +86641,18 @@ const coinParams = {
 
 // Параметры для освещения
 const lightParams = {
-  ambientIntensity: 1,
+  ambientIntensity: 0.6,
   ambientColor: '#ffffff',
-  directional1Intensity: 8,
+  directional1Intensity: 1,
   directional1Color: '#ffffff',
-  directional1X: 1.4,
-  directional1Y: -1,
+  directional1X: -10,
+  directional1Y: 1.1,
   directional1Z: 3.7,
-  directional2Intensity: 4,
+  directional2Intensity: 6,
   directional2Color: '#ffffff',
   directional2X: -1,
   directional2Y: -1.5,
-  directional2Z: -0.2
+  directional2Z: 0.6
 };
 const mouse = {
   x: 0,
@@ -86691,7 +86691,7 @@ scene.add(directionLightTopRight);
 
 // LOADER
 const loader = new three_addons_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_2__.GLTFLoader();
-loader.load('./models/gltf/bitcoin3/bitcoin.gltf', function (gltf) {
+loader.load('./models/gltf/bitcoin6/bitcoin.gltf', function (gltf) {
   coinModel = gltf.scene;
 
   // Применяем параметры из GUI
@@ -86815,9 +86815,9 @@ const clock = new three__WEBPACK_IMPORTED_MODULE_0__.Clock();
 let previousTime = 0;
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
-  const delta = elapsedTime - previousTime;
+  let delta = elapsedTime - previousTime;
   previousTime = elapsedTime;
-  // controls.update();
+  delta = Math.min(delta, 0.1);
   if (coinModel) {
     const targetX = mouse.x * 0.5;
     const targetY = mouse.y * 0.5;

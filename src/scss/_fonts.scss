@@ -1,1 +1,9 @@
-// @include font-face("Muller", "MullerRegular", 400, normal);
+// Manrope шрифты
+@include font-face("Manrope", "Manrope-Light", 300, normal);
+@include font-face("Manrope", "Manrope-Regular", 400, normal);
+@include font-face("Manrope", "Manrope-Medium", 500, normal);
+@include font-face("Manrope", "Manrope-Semibold", 600, normal);
+@include font-face("Manrope", "Manrope-Bold", 700, normal);
+
+// Inter шрифты
+@include font-face("Inter", "Inter-SemiBold", 600, normal);
