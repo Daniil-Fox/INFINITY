@@ -86627,6 +86627,10 @@ if (!isDebugMode) {
   gui.hide();
 }
 let coinModel = null;
+let currentIntersect = null;
+let spinYRemaining = 0; // радианы, оставшиеся для докручивания по Y
+let clickCounter = 0; // счетчик кликов подряд
+const MAX_CLICKS = 5; // максимум кликов подряд
 
 // Параметры для GUI
 const coinParams = {
@@ -86654,10 +86658,7 @@ const lightParams = {
   directional2Y: -1.5,
   directional2Z: 0.6
 };
-const mouse = {
-  x: 0,
-  y: 0
-};
+const mouse = new three__WEBPACK_IMPORTED_MODULE_0__.Vector2();
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight
@@ -86808,12 +86809,24 @@ window.addEventListener('mousemove', e => {
   mouse.x = mouseX;
   mouse.y = mouseY;
 });
+window.addEventListener('click', e => {
+  if (currentIntersect && clickCounter < MAX_CLICKS) {
+    spinYRemaining += Math.PI * 2;
+    clickCounter++;
+  }
+});
+
+// Сброс счетчика когда анимация завершилась
+// Это будет внутри tick функции
+// Raycaster
+const raycaster = new three__WEBPACK_IMPORTED_MODULE_0__.Raycaster();
 
 // Animation
 
 const clock = new three__WEBPACK_IMPORTED_MODULE_0__.Clock();
 let previousTime = 0;
 const tick = () => {
+  raycaster.setFromCamera(mouse, camera);
   const elapsedTime = clock.getElapsedTime();
   let delta = elapsedTime - previousTime;
   previousTime = elapsedTime;
@@ -86823,9 +86836,34 @@ const tick = () => {
     const targetY = mouse.y * 0.5;
     cameraGroup.position.x += (targetX - cameraGroup.position.x) * 0.5 * delta;
     cameraGroup.position.y += (targetY - cameraGroup.position.y) * 0.5 * delta;
-    console.log(targetX);
     coinModel.rotation.x += Math.sin(elapsedTime) * 0.001;
     coinModel.rotation.y += Math.cos(elapsedTime) * 0.001;
+
+    // Плавное докручивание по клику (экспоненциальное сглаживание)
+    if (spinYRemaining > 0) {
+      const responsiveness = 2; // чем больше, тем быстрее догоняет цель
+      const factor = Math.min(1, responsiveness * delta);
+      const step = spinYRemaining * factor;
+      coinModel.rotation.y += step;
+      spinYRemaining -= step;
+      // защита от бесконечного малого остатка
+      if (spinYRemaining < 1e-5) spinYRemaining = 0;
+    } else if (clickCounter > 0) {
+      // Сброс счетчика когда анимация завершилась
+      clickCounter = 0;
+    }
+    const intersects = raycaster.intersectObject(coinModel, true);
+    if (intersects.length) {
+      if (!currentIntersect) {
+        document.body.style.cursor = 'pointer';
+      }
+      currentIntersect = intersects[0];
+    } else {
+      if (currentIntersect) {
+        document.body.style.cursor = null;
+      }
+      currentIntersect = null;
+    }
   }
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
