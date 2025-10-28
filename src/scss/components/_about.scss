@@ -1,0 +1,34 @@
+.about {
+  padding: 10rem 0;
+  position: relative;
+
+  &::after {
+    content: "";
+    background-image: url('./../img/blur-sphere-all.svg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 70%;
+    transform: translateY(-50%);
+    width: 240rem;
+    aspect-ratio: 1 / 1;
+
+    animation: shake 4s linear infinite;
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translate(0%, -50%);
+  }
+  50% {
+    transform: scale(1.1) translate(0%, -50%);
+  }
+  100% {
+    transform: translate(0%, -50%);
+  }
+}

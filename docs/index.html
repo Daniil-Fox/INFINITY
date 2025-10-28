@@ -28,9 +28,9 @@
 
     <main class="main">
       <section class="hero">
-  <canvas id="scene"></canvas>
+  <canvas id="scene" class="rellax" data-rellax-speed="3"></canvas>
 
-  <div class="hero__decor">
+  <div class="hero__decor rellax" data-rellax-speed="5">
     <div class="hero__element hero__element_square">
       <img src="./img/decor/square.webp" alt="">
     </div>
@@ -73,6 +73,12 @@
 </section>
 
       <section class="benefits">
+  <div class="benefits__star star rellax" data-rellax-speed="2" data-rellax-percentage="0.5">
+    <picture>
+      <source srcset="./img/decor/star.webp" type="image/webp">
+      <img loading="lazy" src="./img/decor/star.png" class="image" width="628" height="628" alt="">
+    </picture>
+  </div>
   <div class="container">
     <h2 class="benefits__title">
       Преимущества
@@ -146,6 +152,22 @@
           </p>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+      <section class="about">
+  <div class="container">
+    <h2 class="about__title">О компании</h2>
+
+    <div class="about__video" data-video>
+      <video src="./cover.mp4" poster="./img/cover-video.webp"></video>
+
+      <button class="btn-reset about__play" data-video-play>
+        <svg class="" width="75" height="75">
+          <use xlink:href="img/sprite.svg#play"></use>
+        </svg>
+      </button>
     </div>
   </div>
 </section>

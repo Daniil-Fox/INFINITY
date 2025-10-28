@@ -214,7 +214,7 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 })
 
-window.addEventListener('mousemove', e => {
+canvas.addEventListener('mousemove', e => {
   const mouseX = e.clientX / sizes.width * 2 - 1
   const mouseY = -(e.clientY / sizes.height) * 2 + 1
 
@@ -223,7 +223,7 @@ window.addEventListener('mousemove', e => {
 
 })
 
-window.addEventListener('click', e => {
+canvas.addEventListener('click', e => {
   if (currentIntersect && clickCounter < MAX_CLICKS) {
     spinYRemaining += Math.PI * 2;
     clickCounter++;
