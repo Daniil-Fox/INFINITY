@@ -60,6 +60,7 @@
     "aos": "^2.3.4",
     "graph-modal": "^1.0.7",
     "graph-tabs": "^1.0.2",
+    "gsap": "^3.13.0",
     "inputmask": "^5.0.8",
     "just-validate": "^4.3.0",
     "lil-gui": "^0.21.0",
