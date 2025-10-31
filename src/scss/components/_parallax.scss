@@ -6,9 +6,55 @@
   width: 62.8rem;
   aspect-ratio: 1 / 1;
 
+  pointer-events: none;
 
   img {
 
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.big-cube {
+  position: absolute;
+  right: -30rem;
+  bottom: -40rem;
+  width: 105rem;
+  aspect-ratio: 1 / 1;
+
+  pointer-events: none;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+
+.long {
+  position: absolute;
+  left: -30rem;
+  top: -4rem;
+  width: 57rem;
+  aspect-ratio: 1 / 1;
+
+  pointer-events: none;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.cube {
+  position: absolute;
+  width: 41.4rem;
+  aspect-ratio: 1 / 1;
+  right: -15rem;
+  top: 40rem;
+  pointer-events: none;
+  img {
     width: 100%;
     height: 100%;
     object-fit: contain;

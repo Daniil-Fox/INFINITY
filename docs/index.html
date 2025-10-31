@@ -22,6 +22,66 @@
 
 <body class="page__body">
   <div class="site-container">
+    <style>
+  :root {
+    --pre-white-opacity: 1;
+  }
+
+  .preloader {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+  }
+
+  .preloader::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: var(--pre-white-opacity, 1);
+  }
+
+  .preloader__svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    inset: 0;
+    display: block;
+  }
+
+  .preloader__group {}
+
+  .preloader__svg {
+    fill: var(--it-black);
+  }
+
+  .preloader__logo {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0.3);
+  }
+</style>
+<div class="preloader" aria-hidden="true">
+  <svg class="preloader__svg" viewBox="0 0 117 68" xmlns="http://www.w3.org/2000/svg"
+    preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <mask id="preloader-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
+        <rect x="0" y="0" width="117" height="68" fill="white" />
+        <g class="preloader__logo">
+          <path
+            d="M32.8828 0C35.8028 3.51543e-05 38.5866 1.23747 40.5439 3.4043L63.6074 28.9385L85.1341 52.7716C85.4603 53.1327 85.9242 53.3389 86.4109 53.3389H101.515C102.465 53.3389 103.235 52.5685 103.235 51.6183V15.4862C103.235 14.536 102.465 13.7656 101.515 13.7656H86.1512C85.6948 13.7656 85.2572 13.9469 84.9345 14.2696L76.6276 22.5765C75.9558 23.2483 74.8664 23.2484 74.1945 22.5766L70.5439 18.9268L66.8944 15.2772C66.2224 14.6053 66.2224 13.5158 66.8944 12.8439L76.7139 3.02441C78.6498 1.08856 81.2759 3.4345e-05 84.0137 0H106.677C112.378 0.000166213 117 4.623 117 10.3242V56.7793C117 62.4807 112.378 67.1033 106.677 67.1035H84.1172C81.1971 67.1035 78.4134 65.8663 76.4561 63.6992L53.3926 38.165L31.8669 14.3329C31.5407 13.9717 31.0767 13.7656 30.59 13.7656H15.4862C14.536 13.7656 13.7656 14.536 13.7656 15.4862V51.6183C13.7656 52.5685 14.536 53.3389 15.4862 53.3389H30.8488C31.3052 53.3389 31.7428 53.1576 32.0655 52.8349L40.3732 44.5272C41.0451 43.8553 42.1345 43.8553 42.8065 44.5272L50.1056 51.8263C50.7776 52.4983 50.7776 53.5877 50.1056 54.2596L40.2861 64.0791C38.3501 66.0151 35.7243 67.1035 32.9863 67.1035H10.3242C4.62271 67.1035 0 62.4808 0 56.7793V10.3242C0.000209284 4.6229 4.62283 0 10.3242 0H32.8828Z"
+            fill="black" />
+        </g>
+      </mask>
+    </defs>
+    <g class="preloader__group">
+      <rect x="0" y="0" width="100%" height="100%" mask="url(#preloader-mask)" />
+    </g>
+  </svg>
+</div>
     <header class="header">
   <div class="container"></div>
 </header>
@@ -173,12 +233,16 @@
 </section>
 
       <section class="clients horScroll">
+
   <div class="container">
     <h2 class="clients__title">
       Для кого это
     </h2>
   </div>
   <div class="clients__wrapper">
+    <div class="big-cube rellax cleints__cube">
+      <img src="./img/decor/big-cube.webp" aria-hidden="true"  alt="" data-rellax-speed="-2">
+    </div>
     <div class="clients__container horScroll-container">
       <div class="clients__item">
         <div class="clients__item-top">
@@ -303,95 +367,238 @@
       Как это работает
     </h2>
   </div>
-  <div class="work__container horScroll-container">
-    <div class="work__item">
-      <div class="work__item-top">
-        <h5 class="work__item-title">
-          Размещение оборудования
-        </h5>
-        <p class="desc work__item-desc">
-          Современные устройства работают
-          в партнерских дата-центрах
-          с дешёвой электроэнергией, охлаждением и круглосуточным обслуживанием
-        </p>
+  <div class="work__wrapper">
+    <div class="long rellax work__long" data-rellax-speed="3">
+      <img src="./img/decor/long.webp" width="570" height="570" alt="">
+    </div>
+    <div class="work__container horScroll-container">
+      <div class="work__item">
+        <div class="work__item-top">
+          <h5 class="work__item-title">
+            Размещение оборудования
+          </h5>
+          <p class="desc work__item-desc">
+            Современные устройства работают
+            в партнерских дата-центрах
+            с дешёвой электроэнергией, охлаждением и круглосуточным обслуживанием
+          </p>
+        </div>
+        <div class="work__item-img">
+          <picture>
+            <source srcset="./img/work/01.webp" type="image/webp">
+            <img loading="lazy" src="./img/work/01.jpg" class="image" width="470" height="470" alt="">
+          </picture>
+        </div>
       </div>
-      <div class="work__item-img">
-        <picture>
-          <source srcset="./img/work/01.webp" type="image/webp">
-          <img loading="lazy" src="./img/work/01.jpg" class="image" width="470" height="470" alt="">
-        </picture>
+
+      <div class="work__item">
+        <div class="work__item-top">
+          <h5 class="work__item-title">
+            Коллективный майнинг
+          </h5>
+          <p class="desc work__item-desc">
+            Вы не покупаете оборудование целиком, а берёте долю мощности. Так вход в майнинг становится доступным даже с небольшой суммы
+          </p>
+        </div>
+        <div class="work__item-img">
+          <picture>
+            <source srcset="./img/work/02.webp" type="image/webp">
+            <img loading="lazy" src="./img/work/02.jpg" class="image" width="470" height="470" alt="">
+          </picture>
+        </div>
+      </div>
+
+      <div class="work__item">
+        <div class="work__item-top">
+          <h5 class="work__item-title">
+            Токенизация участия
+          </h5>
+          <p class="desc work__item-desc">
+            Ваша доля закрепляется токеном. Это гарантия прозрачности
+            и возможность при желании продать или обменять свою часть
+          </p>
+        </div>
+        <div class="work__item-img">
+          <picture>
+            <source srcset="./img/work/03.webp" type="image/webp">
+            <img loading="lazy" src="./img/work/03.jpg" class="image" width="470" height="470" alt="">
+          </picture>
+        </div>
+      </div>
+
+      <div class="work__item">
+        <div class="work__item-top">
+          <h5 class="work__item-title">
+            Автоматическая добыча
+          </h5>
+          <p class="desc work__item-desc">
+            Оборудование работает 24/7. Начисления происходят пропорционально вашей доле
+  без задержек
+          </p>
+        </div>
+        <div class="work__item-img">
+          <picture>
+            <source srcset="./img/work/04.webp" type="image/webp">
+            <img loading="lazy" src="./img/work/04.jpg" class="image" width="470" height="470" alt="">
+          </picture>
+        </div>
+      </div>
+
+      <div class="work__item">
+        <div class="work__item-top">
+          <h5 class="work__item-title">
+            Вывод дохода
+          </h5>
+          <p class="desc work__item-desc">
+            Прибыль выводится автоматически
+            в биткоине, в стейблкойнах
+            или рублях — быстро
+            и без скрытых комиссий
+          </p>
+        </div>
+        <div class="work__item-img">
+          <picture>
+            <source srcset="./img/work/05.webp" type="image/webp">
+            <img loading="lazy" src="./img/work/05.jpg" class="image" width="470" height="470" alt="">
+          </picture>
+        </div>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="work__item">
-      <div class="work__item-top">
-        <h5 class="work__item-title">
-          Коллективный майнинг
-        </h5>
-        <p class="desc work__item-desc">
-          Вы не покупаете оборудование целиком, а берёте долю мощности. Так вход в майнинг становится доступным даже с небольшой суммы
+      <section class="why">
+  <div class="container">
+    <h2 class="why__title">Почему выбирают наш сервис</h2>
+
+    <div class="why__container">
+      <div class="why__item">
+        <p class="why__item-capture">До 50% годовых без забот</p>
+        <p class="why__item-desc desc">
+          Всё обслуживание и электроэнергия на нас
         </p>
       </div>
-      <div class="work__item-img">
-        <picture>
-          <source srcset="./img/work/02.webp" type="image/webp">
-          <img loading="lazy" src="./img/work/02.jpg" class="image" width="470" height="470" alt="">
-        </picture>
+      <div class="why__item">
+        <p class="why__item-capture">Минимальные затраты</p>
+        <p class="why__item-desc desc">
+          Выгодные тарифы и оптовые условия
+        </p>
+      </div>
+      <div class="why__item">
+        <p class="why__item-capture">Рост актива с ростом биткоина </p>
+        <p class="why__item-desc desc">
+          Ваш доход увеличивается вместе с курсом
+        </p>
+      </div>
+      <div class="why__item">
+        <p class="why__item-capture">Защищённость и юридическая чистота</p>
+        <p class="why__item-desc desc">
+          Лицензии, договоры, юридическая поддержка
+        </p>
+      </div>
+      <div class="why__item">
+        <p class="why__item-capture">Низкий порог входа</p>
+        <p class="why__item-desc desc">
+          Можно протестировать с минимальной суммы
+        </p>
+      </div>
+      <div class="why__item">
+        <p class="why__item-capture">Поддержка менеджеров </p>
+        <p class="why__item-desc desc">
+          Быстрые ответы 24/7, возможность лично встретиться в Москве
+        </p>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="work__item">
-      <div class="work__item-top">
-        <h5 class="work__item-title">
-          Токенизация участия
-        </h5>
-        <p class="desc work__item-desc">
-          Ваша доля закрепляется токеном. Это гарантия прозрачности
-          и возможность при желании продать или обменять свою часть
+      <section class="different">
+  <div class="different__video">
+    <video muted playsinline>
+      <source src="./different.webm" type="video/webm">
+      <source src="./different.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="container">
+    <h2 class="different__title">В чем отличие от обычного майнинга</h2>
+    <p class="different__subtitle">Почему выгоднее вложиться, а не просто купить биткоин на бирже</p>
+
+    <div class="different__status status">
+      <div class="status__row">
+        <div class="status__col">
+          <p class="status__capture">Стоимость биткоина здесь </p>
+          <div class="status__price status__price_our"><span>111 890</span> $ </div>
+          <p class="status__diff">на 20%  дешевле</p>
+        </div>
+        <div class="status__col status__col_everywhere">
+          <p class="status__capture">Стоимость биткоина здесь </p>
+          <div class="status__price status__price_everywhere"><span>134 268</span> $ </div>
+        </div>
+      </div>
+      <button class="btn-reset btn btn_dark status__btn">Оформить заявку</button>
+    </div>
+  </div>
+</section>
+
+      <section class="steps">
+  <div class="steps__cube cube rellax" data-rellax-speed="-2">
+    <img src="./img/decor/cube.webp" aria-hidden="true" width="414" height="414" alt="">
+  </div>
+  <div class="container">
+    <h2 class="steps__title">
+      3 простых шага<br>
+      к&nbsp;пассивному доходу
+    </h2>
+
+    <div class="steps__container">
+      <div class="steps__item">
+        <p class="steps__item-title">Выберите тариф</p>
+        <p class="steps__item-desc desc">Определите сумму и мощность, подходящую вашему бюджету</p>
+      </div>
+      <div class="steps__item">
+        <p class="steps__item-title">Подключитесь к&nbsp;коллективному майнингу</p>
+        <p class="steps__item-desc desc">
+          Ваша доля фиксируется в личном кабинете — всё прозрачно
+          и под контролем
         </p>
       </div>
-      <div class="work__item-img">
-        <picture>
-          <source srcset="./img/work/03.webp" type="image/webp">
-          <img loading="lazy" src="./img/work/03.jpg" class="image" width="470" height="470" alt="">
-        </picture>
+      <div class="steps__item">
+        <p class="steps__item-title">Получайте доход</p>
+        <p class="steps__item-desc desc">
+          Начисления происходят автоматически
+          — в BTC, USDT или рублях.  Выводите прибыль или реинвестируйте
+          для роста
+        </p>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="work__item">
-      <div class="work__item-top">
-        <h5 class="work__item-title">
-          Автоматическая добыча
-        </h5>
-        <p class="desc work__item-desc">
-          Оборудование работает 24/7. Начисления происходят пропорционально вашей доле
-без задержек
-        </p>
-      </div>
-      <div class="work__item-img">
-        <picture>
-          <source srcset="./img/work/04.webp" type="image/webp">
-          <img loading="lazy" src="./img/work/04.jpg" class="image" width="470" height="470" alt="">
-        </picture>
-      </div>
-    </div>
+      <section class="care">
+  <div class="container">
+    <h2 class="care__title">
+      Мы заботимся о&nbsp;стабильности<br>
+      Вашего дохода
+    </h2>
 
-    <div class="work__item">
-      <div class="work__item-top">
-        <h5 class="work__item-title">
-          Вывод дохода
-        </h5>
-        <p class="desc work__item-desc">
-          Прибыль выводится автоматически
-          в биткоине, в стейблкойнах
-          или рублях — быстро
-          и без скрытых комиссий
-        </p>
+    <div class="care__container">
+      <div class="care__content desc">
+        <ul>
+          <li>
+            Наш пул всегда работает с запасом:
+            к реальным мощностям мы добавляем ещё +10% резервных ресурсов
+          </li>
+          <li>
+            Даже если часть оборудования временно выходит из строя,
+            вы продолжаете получать прибыль
+            без перебоев
+          </li>
+        </ul>
       </div>
-      <div class="work__item-img">
+      <div class="care__img">
         <picture>
-          <source srcset="./img/work/05.webp" type="image/webp">
-          <img loading="lazy" src="./img/work/05.jpg" class="image" width="470" height="470" alt="">
+          <source srcset="./img/care.webp" type="image/webp">
+          <img loading="lazy" src="./img/care.jpg" class="image" width="1235" height="500" alt="">
         </picture>
       </div>
     </div>

@@ -96780,6 +96780,10 @@ function toCreasedNormals( geometry, creaseAngle = Math.PI / 3 /* 60 degrees */ 
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_coin_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/coin.js */ "./src/js/components/coin.js");
 /* harmony import */ var _components_gsap_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/gsap.js */ "./src/js/components/gsap.js");
+/* harmony import */ var _components_different_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/different.js */ "./src/js/components/different.js");
+/* harmony import */ var _components_preloader_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/preloader.js */ "./src/js/components/preloader.js");
+
+
 
 
 
@@ -97054,6 +97058,81 @@ tick();
 
 /***/ }),
 
+/***/ "./src/js/components/different.js":
+/*!****************************************!*\
+  !*** ./src/js/components/different.js ***!
+  \****************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// Плавное проявление видео после полной загрузки и появления секции во вьюпорте
+(function initDifferentVideo() {
+  const section = document.querySelector('.different');
+  if (!section) return;
+  const videoWrap = section.querySelector('.different__video');
+  const video = videoWrap ? videoWrap.querySelector('video') : null;
+  if (!video || !videoWrap) return;
+  let isLoaded = false;
+  let isVisible = false;
+  const tryReveal = () => {
+    if (isLoaded && isVisible) {
+      videoWrap.classList.add('is-visible');
+      // автозапуск, если разрешено браузером (видео уже muted)
+      if (video.paused) {
+        video.play().catch(() => {});
+      }
+    }
+  };
+
+  // Считаем видео готовым, когда доступно к проигрыванию целиком
+  const onReady = () => {
+    if (isLoaded) return;
+    isLoaded = true;
+    // включаем зацикливание после загрузки
+    video.setAttribute('loop', '');
+    video.loop = true;
+    // гарантируем атрибуты для автоплея
+    video.setAttribute('muted', '');
+    video.muted = true;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('autoplay', '');
+    tryReveal();
+  };
+
+  // Любое из событий загрузки подойдёт
+  video.addEventListener('canplaythrough', onReady, {
+    once: true
+  });
+  video.addEventListener('loadeddata', onReady, {
+    once: true
+  });
+  video.addEventListener('loadedmetadata', onReady, {
+    once: true
+  });
+
+  // Отслеживаем появление секции в зоне видимости
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        isVisible = true;
+        // пытаемся запустить воспроизведение сразу при входе во вьюпорт
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+        tryReveal();
+      } else {
+        isVisible = false;
+      }
+    });
+  }, {
+    threshold: 0.1
+  });
+  io.observe(section);
+})();
+
+/***/ }),
+
 /***/ "./src/js/components/gsap.js":
 /*!***********************************!*\
   !*** ./src/js/components/gsap.js ***!
@@ -97088,6 +97167,87 @@ if (horScrollWraps.length > 0) {
     });
   });
 }
+
+// (function initDifferentParallax() {
+//   const section = document.querySelector('.different')
+//   if (!section) return
+
+//   const videoWrap = section.querySelector('.different__video')
+//   if (!videoWrap) return
+
+//   const shift = () => Math.round(Math.min(200, section.clientHeight * 0.2))
+
+//   gsap.fromTo(
+//     videoWrap,
+//     { y: () => -shift() },
+//     {
+//       y: () => shift(),
+//       ease: 'none',
+//       scrollTrigger: {
+//         trigger: section,
+//         start: 'top bottom',
+//         end: 'bottom top',
+//         scrub: true,
+//         invalidateOnRefresh: true
+//       }
+//     }
+//   )
+// })()
+
+/***/ }),
+
+/***/ "./src/js/components/preloader.js":
+/*!****************************************!*\
+  !*** ./src/js/components/preloader.js ***!
+  \****************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var gsap__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! gsap */ "./node_modules/gsap/index.js");
+
+(function initPreloader() {
+  const preloader = document.querySelector(".preloader");
+  if (!preloader) return;
+  const svg = preloader.querySelector(".preloader__svg");
+  const logo = preloader.querySelector(".preloader__logo");
+  if (!svg || !logo) return;
+
+  // Блокируем взаимодействие под прелоадером до завершения
+  document.documentElement.style.overflow = "hidden";
+  const MIN_DELAY_MS = 800; // искусственная минимальная задержка показа прелоадера
+
+  const reveal = () => {
+    const tl = gsap__WEBPACK_IMPORTED_MODULE_0__.gsap.timeline({
+      defaults: {
+        ease: "power3.inOut"
+      }
+    });
+    tl.to(preloader, {
+      duration: 0.5,
+      "--pre-white-opacity": 0
+    }, 0);
+    tl.to(logo, {
+      duration: 1,
+      scale: 20
+    });
+    tl.add(() => {
+      // preloader.remove();
+      document.documentElement.style.overflow = "";
+    });
+  };
+  const onAllLoaded = () => {
+    // Ждём искусственную задержку, затем запускаем анимацию
+    setTimeout(reveal, MIN_DELAY_MS);
+  };
+  if (document.readyState === "complete") {
+    onAllLoaded();
+  } else {
+    window.addEventListener("load", onAllLoaded, {
+      once: true
+    });
+  }
+})();
 
 /***/ })
 

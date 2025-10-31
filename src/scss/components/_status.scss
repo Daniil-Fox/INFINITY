@@ -1,0 +1,58 @@
+.status {
+
+  mask-image: url('./../img/svg/status-mask.svg');
+  mask-size: 100% 100%;
+  mask-position: top left;
+  mask-repeat: no-repeat;
+  background-color: var(--it-white);
+
+  aspect-ratio: 894 / 429;
+  width: 89.4rem;
+  height: 42.9rem;
+  overflow: hidden;
+
+  color: var(--it-black);
+
+  padding: 8rem 7rem;
+
+  &__row {
+    display: flex;
+    gap: 6rem;
+
+    margin-bottom: 4.8rem;
+  }
+
+  &__col {
+
+    color: var(--it-black);
+
+    &_everywhere {
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+  &__capture {
+    margin: 0;
+    font-weight: 300;
+    font-size: 2.4rem;
+    line-height: 130%;
+  }
+  &__price {
+    margin: 0;
+    font-weight: 600;
+    font-size: 7.8rem;
+    line-height: 130%;
+    white-space: nowrap;
+  }
+  &__diff {
+    margin: 0;
+    margin-top: 1rem;
+    font-weight: 500;
+    font-size: 2rem;
+    line-height: 100%;
+    color: var(--it-pink);
+  }
+
+  &__btn {
+    width: 100%;
+  }
+}

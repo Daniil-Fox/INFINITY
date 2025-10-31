@@ -27,3 +27,29 @@ if (horScrollWraps.length > 0) {
     })
   })
 }
+
+// (function initDifferentParallax() {
+//   const section = document.querySelector('.different')
+//   if (!section) return
+
+//   const videoWrap = section.querySelector('.different__video')
+//   if (!videoWrap) return
+
+//   const shift = () => Math.round(Math.min(200, section.clientHeight * 0.2))
+
+//   gsap.fromTo(
+//     videoWrap,
+//     { y: () => -shift() },
+//     {
+//       y: () => shift(),
+//       ease: 'none',
+//       scrollTrigger: {
+//         trigger: section,
+//         start: 'top bottom',
+//         end: 'bottom top',
+//         scrub: true,
+//         invalidateOnRefresh: true
+//       }
+//     }
+//   )
+// })()

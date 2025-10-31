@@ -1,10 +1,30 @@
 .clients {
   padding: 10rem 0;
-
+  position: relative;
+  z-index: 2;
   &__title {
     margin-bottom: 5rem;
   }
+  &__wrapper {
+    position: relative;
 
+    &::after {
+      content: "";
+      background-image: url('./../img/blur-sphere-all.svg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+
+      position: absolute;
+      z-index: -1;
+      left: 50%;
+      top: 70%;
+      transform: translateY(-50%);
+      width: 240rem;
+      aspect-ratio: 1 / 1;
+      pointer-events: none;
+    }
+  }
   &__container {
     display: flex;
     flex-wrap: nowrap;
@@ -34,7 +54,7 @@
     height: 28rem;
     overflow: hidden;
     padding: 5rem 4rem;
-    backdrop-filter: blur(39px);
+    backdrop-filter: blur(1rem);
     mask-image:  url('./../img/clients/card.svg');
     mask-size: 100% 100%;
     mask-repeat: no-repeat;

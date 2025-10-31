@@ -1,0 +1,46 @@
+.why {
+  padding: 10rem 0;
+  position: relative;
+
+  &::before {
+    content: "";
+    background-image: url('./../img/blur-sphere-all.svg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    position: absolute;
+    z-index: -1;
+    right: 70%;
+    top: 90%;
+    width: 240rem;
+    aspect-ratio: 1 / 1;
+
+    animation: shake 4s linear infinite;
+  }
+  &__container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+  }
+
+  &__item {
+    color: var(--it-black);
+    background-color: var(--it-white);
+    padding: 6rem;
+
+    mask-image: url('./../img/svg/why-mask.svg');
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    mask-position: left top;
+  }
+
+  &__item-capture {
+    margin: 0;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    font-size: 2.8rem;
+    line-height: 120%;
+    color: var(--it-black);
+  }
+}

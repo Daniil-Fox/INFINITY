@@ -16,6 +16,7 @@
     background-size: contain, auto 100%;
     background-repeat: no-repeat;
     background-position: right;
+    pointer-events: none;
   }
   &__logo {
     margin-bottom: 9.5rem;
