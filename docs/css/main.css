@@ -1710,6 +1710,9 @@ ul li:not(:last-child) {
   color: #ff50d4;
 }
 
+.footer {
+  margin: 10rem 0 6rem;
+}
 .footer__container {
   --row-gap: 3rem;
   padding: 5rem 4rem;
