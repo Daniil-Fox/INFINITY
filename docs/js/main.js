@@ -96782,6 +96782,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_gsap_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/gsap.js */ "./src/js/components/gsap.js");
 /* harmony import */ var _components_different_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/different.js */ "./src/js/components/different.js");
 /* harmony import */ var _components_preloader_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/preloader.js */ "./src/js/components/preloader.js");
+/* harmony import */ var _components_master_card_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./components/master-card.js */ "./src/js/components/master-card.js");
+
 
 
 
@@ -97196,6 +97198,136 @@ if (horScrollWraps.length > 0) {
 
 /***/ }),
 
+/***/ "./src/js/components/master-card.js":
+/*!******************************************!*\
+  !*** ./src/js/components/master-card.js ***!
+  \******************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/**
+ * Master Card - Steam-like card hover effect
+ * Creates an interactive 3D tilt effect on hover, similar to Steam trading cards
+ */
+(function initMasterCard() {
+  const card = document.querySelector(".master__card");
+  const container = document.querySelector(".master__container");
+  if (!card) return;
+  let isHovered = false;
+  let currentX = 0;
+  let currentY = 0;
+  let targetX = 0;
+  let targetY = 0;
+
+  // Расширенная зона наведения (в пикселях) - создает буфер вокруг карточки
+  const hoverPadding = 80;
+
+  // Smooth animation for tilt effect
+  const animate = () => {
+    // Easing for smooth movement
+    currentX += (targetX - currentX) * 0.1;
+    currentY += (targetY - currentY) * 0.1;
+    if (isHovered) {
+      const rotateX = currentY * 8; // Max 8 degrees tilt
+      const rotateY = currentX * 8;
+      card.style.transform = `
+        translateY(-2.5rem)
+        scale(1.08)
+        rotateX(${-rotateX}deg)
+        rotateY(${rotateY}deg)
+      `;
+      requestAnimationFrame(animate);
+    } else {
+      // Smooth return to default position
+      const threshold = 0.01;
+      if (Math.abs(currentX) > threshold || Math.abs(currentY) > threshold) {
+        currentX += (0 - currentX) * 0.15;
+        currentY += (0 - currentY) * 0.15;
+        const rotateX = currentY * 8;
+        const rotateY = currentX * 8;
+        card.style.transform = `
+          translateY(-2rem)
+          scale(1.05)
+          rotateX(${-rotateX}deg)
+          rotateY(${rotateY}deg)
+        `;
+        requestAnimationFrame(animate);
+      } else {
+        // Reset to default
+        currentX = 0;
+        currentY = 0;
+        targetX = 0;
+        targetY = 0;
+        card.style.transform = "";
+        card.classList.remove("is-hovered");
+      }
+    }
+  };
+
+  // Проверка, находится ли мышь в расширенной зоне наведения
+  const isInHoverZone = (x, y) => {
+    const rect = card.getBoundingClientRect();
+    const expandedLeft = rect.left - hoverPadding;
+    const expandedRight = rect.right + hoverPadding;
+    const expandedTop = rect.top - hoverPadding;
+    const expandedBottom = rect.bottom + hoverPadding;
+    return x >= expandedLeft && x <= expandedRight && y >= expandedTop && y <= expandedBottom;
+  };
+  const handleMouseMove = e => {
+    const rect = card.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Проверяем, находимся ли в расширенной зоне наведения
+    const inHoverZone = isInHoverZone(e.clientX, e.clientY);
+    if (inHoverZone && !isHovered) {
+      // Входим в зону наведения
+      isHovered = true;
+      card.classList.add("is-hovered");
+      animate();
+    } else if (!inHoverZone && isHovered) {
+      // Выходим из зоны наведения
+      isHovered = false;
+      targetX = 0;
+      targetY = 0;
+      animate();
+    }
+    if (isHovered) {
+      // Calculate mouse position relative to card center (-1 to 1)
+      targetX = (e.clientX - centerX) / (rect.width / 2);
+      targetY = (e.clientY - centerY) / (rect.height / 2);
+
+      // Clamp values to prevent extreme tilting
+      targetX = Math.max(-1, Math.min(1, targetX));
+      targetY = Math.max(-1, Math.min(1, targetY));
+    }
+  };
+
+  // Обработчик ухода мыши с контейнера
+  const handleMouseLeave = () => {
+    if (isHovered) {
+      isHovered = false;
+      targetX = 0;
+      targetY = 0;
+      animate();
+    }
+  };
+
+  // Отслеживаем движение мыши на контейнере для расширенной зоны
+  const parentElement = container || card.parentElement;
+  if (parentElement) {
+    parentElement.addEventListener("mousemove", handleMouseMove);
+    parentElement.addEventListener("mouseleave", handleMouseLeave);
+  } else {
+    // Fallback на саму карточку, если контейнер не найден
+    card.addEventListener("mousemove", handleMouseMove);
+    card.addEventListener("mouseleave", handleMouseLeave);
+  }
+})();
+
+/***/ }),
+
 /***/ "./src/js/components/preloader.js":
 /*!****************************************!*\
   !*** ./src/js/components/preloader.js ***!
@@ -97209,9 +97341,8 @@ __webpack_require__.r(__webpack_exports__);
 (function initPreloader() {
   const preloader = document.querySelector(".preloader");
   if (!preloader) return;
-  const svg = preloader.querySelector(".preloader__svg");
-  const logo = preloader.querySelector(".preloader__logo");
-  if (!svg || !logo) return;
+  const logoVisual = preloader.querySelector(".preloader__logo-visual");
+  if (!logoVisual) return;
 
   // Блокируем взаимодействие под прелоадером до завершения
   document.documentElement.style.overflow = "hidden";
@@ -97223,16 +97354,80 @@ __webpack_require__.r(__webpack_exports__);
         ease: "power3.inOut"
       }
     });
+
+    // Находим целевой элемент логотипа в hero
+    const targetLogo = document.querySelector(".logo_symbol");
+    if (!targetLogo) {
+      // Если логотип не найден, делаем простую анимацию
+      tl.to(preloader, {
+        duration: 0.5,
+        "--pre-white-opacity": 0
+      }, 0);
+      tl.to(logoVisual, {
+        duration: 1,
+        scale: 2
+      });
+      tl.to(preloader, {
+        duration: 0.3,
+        opacity: 0
+      }, "-=0.2");
+      tl.add(() => {
+        preloader.remove();
+        document.documentElement.style.overflow = "";
+      });
+      return;
+    }
+
+    // Получаем позиции и размеры обоих элементов (в viewport координатах)
+    const targetRect = targetLogo.getBoundingClientRect();
+    const logoVisualRect = logoVisual.getBoundingClientRect();
+
+    // Центры элементов в viewport координатах
+    const logoCenterX = logoVisualRect.left + logoVisualRect.width / 2;
+    const logoCenterY = logoVisualRect.top + logoVisualRect.height / 2;
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    const targetCenterY = targetRect.top + targetRect.height / 2;
+
+    // Вычисляем смещение в пикселях (относительно текущей позиции)
+    const deltaX = targetCenterX - logoCenterX;
+    const deltaY = targetCenterY - logoCenterY;
+
+    // Вычисляем целевой масштаб
+    // Базовая ширина логотипа (без scale) = 20rem
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const baseWidth = 20 * rem; // ширина без учета scale
+    const targetWidth = targetRect.width;
+
+    // GSAP заменит текущий transform, поэтому используем абсолютное значение scale
+    // Чтобы итоговый размер был targetWidth, нужен scale = targetWidth / baseWidth
+    const targetScale = targetWidth / baseWidth;
+
+    // Убираем белый фон
     tl.to(preloader, {
       duration: 0.5,
       "--pre-white-opacity": 0
     }, 0);
-    tl.to(logo, {
-      duration: 1,
-      scale: 20
-    });
+
+    // Анимируем визуальный белый логотип к целевой позиции
+    // Используем xPercent и yPercent для сохранения центрирования
+    tl.to(logoVisual, {
+      duration: 2,
+      xPercent: -50,
+      yPercent: -50,
+      x: deltaX,
+      y: deltaY,
+      scale: targetScale,
+      ease: "power2.inOut"
+    }, 0.2);
+
+    // Плавно скрываем прелоадер
+    tl.to(preloader, {
+      duration: 1.4,
+      opacity: 0,
+      pointerEvents: "none"
+    }, "-=0.2");
     tl.add(() => {
-      // preloader.remove();
+      preloader.remove();
       document.documentElement.style.overflow = "";
     });
   };
