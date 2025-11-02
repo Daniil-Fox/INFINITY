@@ -54,7 +54,10 @@ import { gsap } from "gsap";
     // GSAP заменит текущий transform, поэтому используем абсолютное значение scale
     // Чтобы итоговый размер был targetWidth, нужен scale = targetWidth / baseWidth
     const targetScale = targetWidth / baseWidth;
-
+    tl.add(() => {
+      // Убеждаемся, что страница наверху после завершения прелоадера
+      window.scrollTo(0, 0);
+    });
     // Убираем белый фон
     tl.to(preloader, { duration: 0.5, "--pre-white-opacity": 0 }, 0);
 

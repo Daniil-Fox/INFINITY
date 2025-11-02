@@ -1,0 +1,52 @@
+.footer {
+  &__container {
+    --row-gap: 3rem;
+    padding: 5rem 4rem;
+    background-image: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.01) 0%,
+      rgba(255, 255, 255, 0.2) 48.04%,
+      rgba(255, 255, 255, 0.2) 59.03%,
+      rgba(255, 255, 255, 0.01) 100%
+    );
+    backdrop-filter: blur(2rem);
+    border-radius: 2rem;
+    border: 2px solid rgba(#fff, 0.2);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__socials {
+    justify-content: flex-end;
+  }
+
+  &__left,
+  &__right {
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--row-gap);
+  }
+
+  &__right {
+    align-items: flex-end;
+  }
+
+  &__link {
+    margin: 0;
+    font-weight: 300;
+    font-size: 2.2rem;
+
+    a {
+      color: inherit;
+    }
+  }
+
+  &__policy {
+    a {
+      text-decoration: underline;
+      color: inherit;
+    }
+  }
+}

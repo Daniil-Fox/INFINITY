@@ -185,3 +185,47 @@ ul {
     }
   }
 }
+
+.socials {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem 3rem;
+  flex-wrap: wrap;
+  li::before {
+    display: none;
+  }
+  li {
+    padding: 0;
+    width: 2.1rem;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+    &:not(:last-child) {
+      margin-bottom: 0;
+    }
+
+    a,
+    a > img {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+.link-btn {
+  display: inline-block;
+  transition-duration: 0.3s;
+  transition-property: color;
+  transition-timing-function: ease;
+
+  @include hover {
+    color: var(--it-pink);
+  }
+  &:focus-visible {
+    outline: none;
+    color: var(--it-pink);
+  }
+  &:active {
+    color: var(--it-pink);
+  }
+}

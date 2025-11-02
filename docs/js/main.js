@@ -97401,7 +97401,10 @@ __webpack_require__.r(__webpack_exports__);
     // GSAP заменит текущий transform, поэтому используем абсолютное значение scale
     // Чтобы итоговый размер был targetWidth, нужен scale = targetWidth / baseWidth
     const targetScale = targetWidth / baseWidth;
-
+    tl.add(() => {
+      // Убеждаемся, что страница наверху после завершения прелоадера
+      window.scrollTo(0, 0);
+    });
     // Убираем белый фон
     tl.to(preloader, {
       duration: 0.5,
@@ -97526,6 +97529,24 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rellax__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! rellax */ "./node_modules/rellax/rellax.js");
 
 
+
+// Отключаем автоматическое восстановление позиции скролла
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
+// Всегда скроллим наверх при загрузке/перезагрузке страницы
+window.scrollTo(0, 0);
+
+// Дополнительно скроллим наверх после полной загрузки страницы
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.scrollTo(0, 0);
+  });
+}
+window.addEventListener('load', () => {
+  window.scrollTo(0, 0);
+});
 const rellax = new rellax__WEBPACK_IMPORTED_MODULE_1__('.rellax', {
   center: true
 });
