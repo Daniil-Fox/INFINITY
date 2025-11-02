@@ -1,6 +1,23 @@
 .give {
   padding: 10rem 0;
+  position: relative;
 
+  &::after {
+    content: "";
+    background-image: url("./../img/blur-sphere-all.svg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    position: absolute;
+    z-index: -1;
+    right: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 240rem;
+    aspect-ratio: 1 / 1;
+    pointer-events: none;
+  }
   &__container {
     display: flex;
     gap: 3rem;

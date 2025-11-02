@@ -9,7 +9,6 @@
   pointer-events: none;
 
   img {
-
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -30,7 +29,6 @@
     object-fit: contain;
   }
 }
-
 
 .long {
   position: absolute;
@@ -53,6 +51,20 @@
   aspect-ratio: 1 / 1;
   right: -15rem;
   top: 40rem;
+  pointer-events: none;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.arc {
+  position: absolute;
+  width: 72.4rem;
+  aspect-ratio: 1 / 1;
+  right: -40rem;
+  top: 45rem;
   pointer-events: none;
   img {
     width: 100%;

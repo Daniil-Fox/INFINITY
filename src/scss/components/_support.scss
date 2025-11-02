@@ -1,6 +1,23 @@
 .support {
   padding: 10rem 0;
+  position: relative;
 
+  &::after {
+    content: "";
+    background-image: url("./../img/blur-sphere-all.svg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    position: absolute;
+    z-index: -1;
+    left: 60%;
+    top: 70%;
+    transform: translateY(-50%);
+    width: 240rem;
+    aspect-ratio: 1 / 1;
+    pointer-events: none;
+  }
   &__title {
     margin-bottom: 2rem;
   }
