@@ -6,12 +6,8 @@
     left: 0;
     top: 0;
     width: 100%;
-    z-index: 100;
+    z-index: 1001;
     padding: 2rem var(--container-offset);
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
 
     transition: transform 0.3s ease-in-out;
     transform: translateY(0);
@@ -22,8 +18,17 @@
 
     &.header--visible {
       transform: translateY(0);
-      backdrop-filter: blur(4px);
-      background-color: rgba(#000, 0.2);
+      border-radius: 0 0 1rem 1rem;
+      background-color: rgba(#000, 1);
+    }
+  }
+  &__container {
+    @include mobile {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
   }
   &__burger {
