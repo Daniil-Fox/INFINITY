@@ -97713,7 +97713,7 @@ __webpack_require__.r(__webpack_exports__);
     } else {
       burger?.setAttribute("aria-expanded", "false");
       burger?.setAttribute("aria-label", "Открыть меню");
-      document.body.style.overflow = "hidden";
+      (0,_functions_enable_scroll_js__WEBPACK_IMPORTED_MODULE_1__.enableScroll)();
     }
   });
   overlay?.addEventListener("click", () => {
@@ -97721,7 +97721,7 @@ __webpack_require__.r(__webpack_exports__);
     burger?.setAttribute("aria-label", "Открыть меню");
     burger.classList.remove("burger--active");
     menu.classList.remove("menu--active");
-    document.body.style.overflow = null;
+    (0,_functions_enable_scroll_js__WEBPACK_IMPORTED_MODULE_1__.enableScroll)();
   });
   menuItems?.forEach(el => {
     el.addEventListener("click", () => {
@@ -97729,7 +97729,7 @@ __webpack_require__.r(__webpack_exports__);
       burger?.setAttribute("aria-label", "Открыть меню");
       burger.classList.remove("burger--active");
       menu.classList.remove("menu--active");
-      document.body.style.overflow = null;
+      (0,_functions_enable_scroll_js__WEBPACK_IMPORTED_MODULE_1__.enableScroll)();
     });
   });
 })();

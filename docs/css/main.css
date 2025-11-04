@@ -816,48 +816,7 @@ ul li:not(:last-child) {
   -ms-transform: scale(0.98);
   transform: scale(0.98);
 }
-@-webkit-keyframes menuItemSlideIn {
-  0% {
-    opacity: 0;
-    -webkit-transform: translateY(4rem) scale(0.9);
-    transform: translateY(4rem) scale(0.9);
-    -webkit-filter: blur(10px);
-    filter: blur(10px);
-  }
-  50% {
-    opacity: 0.6;
-    -webkit-filter: blur(5px);
-    filter: blur(5px);
-  }
-  100% {
-    opacity: 1;
-    -webkit-transform: translateY(0) scale(1);
-    transform: translateY(0) scale(1);
-    -webkit-filter: blur(0);
-    filter: blur(0);
-  }
-}
-@keyframes menuItemSlideIn {
-  0% {
-    opacity: 0;
-    -webkit-transform: translateY(4rem) scale(0.9);
-    transform: translateY(4rem) scale(0.9);
-    -webkit-filter: blur(10px);
-    filter: blur(10px);
-  }
-  50% {
-    opacity: 0.6;
-    -webkit-filter: blur(5px);
-    filter: blur(5px);
-  }
-  100% {
-    opacity: 1;
-    -webkit-transform: translateY(0) scale(1);
-    transform: translateY(0) scale(1);
-    -webkit-filter: blur(0);
-    filter: blur(0);
-  }
-}
+
 .hero {
   position: relative;
   height: 100vh;

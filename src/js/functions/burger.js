@@ -18,7 +18,7 @@ import { enableScroll } from "../functions/enable-scroll.js";
     } else {
       burger?.setAttribute("aria-expanded", "false");
       burger?.setAttribute("aria-label", "Открыть меню");
-      document.body.style.overflow = "hidden";
+      enableScroll();
     }
   });
 
@@ -27,7 +27,7 @@ import { enableScroll } from "../functions/enable-scroll.js";
     burger?.setAttribute("aria-label", "Открыть меню");
     burger.classList.remove("burger--active");
     menu.classList.remove("menu--active");
-    document.body.style.overflow = null;
+    enableScroll();
   });
 
   menuItems?.forEach((el) => {
@@ -36,7 +36,7 @@ import { enableScroll } from "../functions/enable-scroll.js";
       burger?.setAttribute("aria-label", "Открыть меню");
       burger.classList.remove("burger--active");
       menu.classList.remove("menu--active");
-      document.body.style.overflow = null;
+      enableScroll();
     });
   });
 })();
