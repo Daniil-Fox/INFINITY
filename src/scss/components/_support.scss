@@ -17,6 +17,10 @@
     width: 240rem;
     aspect-ratio: 1 / 1;
     pointer-events: none;
+
+    @include mobile {
+      display: none;
+    }
   }
   &__title {
     margin-bottom: 2rem;
@@ -29,6 +33,15 @@
     display: flex;
     flex-wrap: wrap;
     gap: 3rem;
+
+    @include mobile {
+      flex-wrap: nowrap;
+      gap: 2rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin: 0 calc(-1 * var(--container-offset));
+      padding: 0 var(--container-offset);
+    }
   }
 
   &__item {
@@ -47,6 +60,13 @@
 
     &:not(:last-child) {
       margin-bottom: 0;
+    }
+
+    @include mobile {
+      flex-basis: 46rem;
+      flex-grow: 0;
+      flex-shrink: 0;
+      padding: 4rem;
     }
   }
 
