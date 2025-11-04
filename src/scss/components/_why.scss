@@ -1,10 +1,12 @@
 .why {
   padding: 10rem 0;
   position: relative;
-
+  @include mobile {
+    padding: 7.5rem 0;
+  }
   &::before {
     content: "";
-    background-image: url('./../img/blur-sphere-all.svg');
+    background-image: url("./../img/blur-sphere-all.svg");
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -22,17 +24,53 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 3rem;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
   }
 
   &__item {
     color: var(--it-black);
-    background-color: var(--it-white);
     padding: 6rem;
 
-    mask-image: url('./../img/svg/why-mask.svg');
+    mask-image: url("./../img/svg/why-mask.svg");
     mask-size: 100% 100%;
     mask-repeat: no-repeat;
     mask-position: left top;
+
+    @include mobile {
+      mask: none;
+      position: relative;
+      z-index: 2;
+      padding: 5rem 4rem 4rem;
+      &::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 5.5rem;
+        background-color: var(--it-white);
+        mask-image: url("./../img/svg/why-mask-mob.svg");
+        mask-size: 100% auto;
+        mask-repeat: no-repeat;
+        mask-position: top;
+      }
+      &::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: calc(100% - 5rem);
+        background-color: var(--it-white);
+        border-radius: 0 0 2rem 2rem;
+      }
+    }
   }
 
   &__item-capture {
@@ -42,5 +80,41 @@
     font-size: 2.8rem;
     line-height: 120%;
     color: var(--it-black);
+
+    @include mobile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+
+      &::after {
+        content: "";
+        display: block;
+        width: 4rem;
+        height: 4rem;
+        aspect-ratio: 1 / 1;
+        background-image: url("./../img/svg/arrow-down.svg");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transition-duration: 0.3s;
+        transition-property: transform;
+      }
+    }
+  }
+
+  &__item.active &__item-capture::after {
+    transform: rotateX(180deg);
+  }
+
+  &__item-desc {
+    @include mobile {
+      max-height: 0;
+      overflow: hidden;
+      will-change: max-height;
+
+      transition-duration: 0.3s;
+      transition-property: max-height;
+    }
   }
 }

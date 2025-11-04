@@ -28,6 +28,12 @@
     height: 100%;
     object-fit: contain;
   }
+
+  @include mobile {
+    width: 70rem;
+    right: -20rem;
+    bottom: -30rem;
+  }
 }
 
 .long {

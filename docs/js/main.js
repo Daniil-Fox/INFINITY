@@ -96783,11 +96783,35 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_different_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/different.js */ "./src/js/components/different.js");
 /* harmony import */ var _components_preloader_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/preloader.js */ "./src/js/components/preloader.js");
 /* harmony import */ var _components_master_card_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./components/master-card.js */ "./src/js/components/master-card.js");
+/* harmony import */ var _components_why_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./components/why.js */ "./src/js/components/why.js");
+/* harmony import */ var _components_header_scroll_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./components/header-scroll.js */ "./src/js/components/header-scroll.js");
 
 
 
 
 
+
+
+
+/***/ }),
+
+/***/ "./src/js/_vars.js":
+/*!*************************!*\
+  !*** ./src/js/_vars.js ***!
+  \*************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  windowEl: window,
+  documentEl: document,
+  htmlEl: document.documentElement,
+  bodyEl: document.body
+});
 
 /***/ }),
 
@@ -96806,10 +96830,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const canvas = document.getElementById('scene');
+const canvas = document.getElementById("scene");
 
 // GUI setup - показываем только если в URL есть #debug
-const isDebugMode = window.location.hash === '#debug';
+const isDebugMode = window.location.hash === "#debug";
 const gui = new lil_gui__WEBPACK_IMPORTED_MODULE_3__.GUI();
 if (!isDebugMode) {
   gui.hide();
@@ -96820,8 +96844,8 @@ let spinYRemaining = 0; // радианы, оставшиеся для докр�
 let clickCounter = 0; // счетчик кликов подряд
 const MAX_CLICKS = 5; // максимум кликов подряд
 
-// Параметры для GUI
-const coinParams = {
+// Параметры монетки (Desktop/Mobile)
+const coinParamsDesktop = {
   positionX: 2,
   positionY: 0,
   positionZ: -0.8,
@@ -96831,17 +96855,65 @@ const coinParams = {
   scale: 2.1
 };
 
+// Значения по умолчанию для мобильной версии можно будет подправить в процессе
+const coinParamsMobile = {
+  positionX: 0,
+  positionY: -1.3,
+  positionZ: -0.8,
+  rotationX: -0.353,
+  rotationY: -0.62,
+  rotationZ: -0.1,
+  scale: 1.4
+};
+const BREAKPOINT_MOBILE = 576;
+const isMobileViewport = () => sizes.width <= BREAKPOINT_MOBILE;
+const getCurrentCoinParams = () => isMobileViewport() ? coinParamsMobile : coinParamsDesktop;
+const applyCoinParams = params => {
+  if (!coinModel) return;
+  coinModel.scale.set(params.scale, params.scale, params.scale);
+  coinModel.position.set(params.positionX, params.positionY, params.positionZ);
+  coinModel.rotation.set(params.rotationX, params.rotationY, params.rotationZ);
+};
+
+// Троттлинг для частых событий resize
+const throttle = (fn, wait) => {
+  let last = 0;
+  let timeoutId = null;
+  let lastArgs = null;
+  return function throttled(...args) {
+    const now = Date.now();
+    const remaining = wait - (now - last);
+    lastArgs = args;
+    if (remaining <= 0) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      last = now;
+      fn.apply(this, lastArgs);
+      lastArgs = null;
+    } else if (!timeoutId) {
+      timeoutId = setTimeout(() => {
+        last = Date.now();
+        timeoutId = null;
+        fn.apply(this, lastArgs);
+        lastArgs = null;
+      }, remaining);
+    }
+  };
+};
+
 // Параметры для освещения
 const lightParams = {
   ambientIntensity: 0.6,
-  ambientColor: '#ffffff',
+  ambientColor: "#ffffff",
   directional1Intensity: 1,
-  directional1Color: '#ffffff',
+  directional1Color: "#ffffff",
   directional1X: -10,
   directional1Y: 1.1,
   directional1Z: 3.7,
   directional2Intensity: 6,
-  directional2Color: '#ffffff',
+  directional2Color: "#ffffff",
   directional2X: -1,
   directional2Y: -1.5,
   directional2Z: 0.6
@@ -96880,124 +96952,130 @@ scene.add(directionLightTopRight);
 
 // LOADER
 const loader = new three_addons_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_2__.GLTFLoader();
-loader.load('./models/gltf/bitcoin6/bitcoin.gltf', function (gltf) {
+loader.load("./models/gltf/bitcoin6/bitcoin.gltf", function (gltf) {
   coinModel = gltf.scene;
 
-  // Применяем параметры из GUI
-  coinModel.scale.set(coinParams.scale, coinParams.scale, coinParams.scale);
-  coinModel.position.set(coinParams.positionX, coinParams.positionY, coinParams.positionZ);
-  coinModel.rotation.set(coinParams.rotationX, coinParams.rotationY, coinParams.rotationZ);
+  // Применяем параметры в зависимости от вьюпорта
+  applyCoinParams(getCurrentCoinParams());
   scene.add(coinModel);
 },
 // called while loading is progressing
 function (xhr) {
-  console.log(xhr.loaded / xhr.total * 100 + '% loaded');
+  console.log(xhr.loaded / xhr.total * 100 + "% loaded");
 },
 // called when loading has errors
 function (error) {
-  console.log('Bitcoin loading error: ' + error);
+  console.log("Bitcoin loading error: " + error);
 });
 
 // Создаем GUI контролы для монетки
-const coinFolder = gui.addFolder('Монетка');
+const coinFolder = gui.addFolder("Монетка (Desktop)");
 
 // Позиция
-const positionFolder = coinFolder.addFolder('Позиция');
-positionFolder.add(coinParams, 'positionX', -10, 10, 0.1).onChange(value => {
+const positionFolder = coinFolder.addFolder("Позиция");
+positionFolder.add(coinParamsDesktop, "positionX", -10, 10, 0.1).onChange(value => {
   coinModel.position.x = value;
 });
-positionFolder.add(coinParams, 'positionY', -10, 10, 0.1).onChange(value => {
+positionFolder.add(coinParamsDesktop, "positionY", -10, 10, 0.1).onChange(value => {
   coinModel.position.y = value;
 });
-positionFolder.add(coinParams, 'positionZ', -10, 10, 0.1).onChange(value => {
+positionFolder.add(coinParamsDesktop, "positionZ", -10, 10, 0.1).onChange(value => {
   coinModel.position.z = value;
 });
 
 // Поворот
-const rotationFolder = coinFolder.addFolder('Поворот');
-rotationFolder.add(coinParams, 'rotationX', -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+const rotationFolder = coinFolder.addFolder("Поворот");
+rotationFolder.add(coinParamsDesktop, "rotationX", -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
   coinModel.rotation.x = value;
 });
-rotationFolder.add(coinParams, 'rotationY', -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+rotationFolder.add(coinParamsDesktop, "rotationY", -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
   coinModel.rotation.y = value;
 });
-rotationFolder.add(coinParams, 'rotationZ', -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+rotationFolder.add(coinParamsDesktop, "rotationZ", -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
   coinModel.rotation.z = value;
 });
 
 // Масштаб
-coinFolder.add(coinParams, 'scale', 0.1, 5, 0.1).onChange(value => {
+coinFolder.add(coinParamsDesktop, "scale", 0.1, 5, 0.1).onChange(value => {
   coinModel.scale.set(value, value, value);
 });
 coinFolder.open();
 
 // Создаем GUI контролы для освещения
-const lightFolder = gui.addFolder('Освещение');
+const lightFolder = gui.addFolder("Освещение");
 
 // Ambient Light
-const ambientFolder = lightFolder.addFolder('Рассеянный свет');
-ambientFolder.add(lightParams, 'ambientIntensity', 0, 5, 0.1).onChange(value => {
+const ambientFolder = lightFolder.addFolder("Рассеянный свет");
+ambientFolder.add(lightParams, "ambientIntensity", 0, 5, 0.1).onChange(value => {
   ambientLight.intensity = value;
 });
-ambientFolder.addColor(lightParams, 'ambientColor').onChange(value => {
-  ambientLight.color.setHex(value.replace('#', '0x'));
+ambientFolder.addColor(lightParams, "ambientColor").onChange(value => {
+  ambientLight.color.setHex(value.replace("#", "0x"));
 });
 
 // Directional Light 1
-const directional1Folder = lightFolder.addFolder('Направленный свет 1');
-directional1Folder.add(lightParams, 'directional1Intensity', 0, 10, 0.1).onChange(value => {
+const directional1Folder = lightFolder.addFolder("Направленный свет 1");
+directional1Folder.add(lightParams, "directional1Intensity", 0, 10, 0.1).onChange(value => {
   directionLightBottomLeft.intensity = value;
 });
-directional1Folder.addColor(lightParams, 'directional1Color').onChange(value => {
-  directionLightBottomLeft.color.setHex(value.replace('#', '0x'));
+directional1Folder.addColor(lightParams, "directional1Color").onChange(value => {
+  directionLightBottomLeft.color.setHex(value.replace("#", "0x"));
 });
-directional1Folder.add(lightParams, 'directional1X', -10, 10, 0.1).onChange(value => {
+directional1Folder.add(lightParams, "directional1X", -10, 10, 0.1).onChange(value => {
   directionLightBottomLeft.position.x = value;
 });
-directional1Folder.add(lightParams, 'directional1Y', -10, 10, 0.1).onChange(value => {
+directional1Folder.add(lightParams, "directional1Y", -10, 10, 0.1).onChange(value => {
   directionLightBottomLeft.position.y = value;
 });
-directional1Folder.add(lightParams, 'directional1Z', -10, 10, 0.1).onChange(value => {
+directional1Folder.add(lightParams, "directional1Z", -10, 10, 0.1).onChange(value => {
   directionLightBottomLeft.position.z = value;
 });
 
 // Directional Light 2
-const directional2Folder = lightFolder.addFolder('Направленный свет 2');
-directional2Folder.add(lightParams, 'directional2Intensity', 0, 10, 0.1).onChange(value => {
+const directional2Folder = lightFolder.addFolder("Направленный свет 2");
+directional2Folder.add(lightParams, "directional2Intensity", 0, 10, 0.1).onChange(value => {
   directionLightTopRight.intensity = value;
 });
-directional2Folder.addColor(lightParams, 'directional2Color').onChange(value => {
-  directionLightTopRight.color.setHex(value.replace('#', '0x'));
+directional2Folder.addColor(lightParams, "directional2Color").onChange(value => {
+  directionLightTopRight.color.setHex(value.replace("#", "0x"));
 });
-directional2Folder.add(lightParams, 'directional2X', -10, 10, 0.1).onChange(value => {
+directional2Folder.add(lightParams, "directional2X", -10, 10, 0.1).onChange(value => {
   directionLightTopRight.position.x = value;
 });
-directional2Folder.add(lightParams, 'directional2Y', -10, 10, 0.1).onChange(value => {
+directional2Folder.add(lightParams, "directional2Y", -10, 10, 0.1).onChange(value => {
   directionLightTopRight.position.y = value;
 });
-directional2Folder.add(lightParams, 'directional2Z', -10, 10, 0.1).onChange(value => {
+directional2Folder.add(lightParams, "directional2Z", -10, 10, 0.1).onChange(value => {
   directionLightTopRight.position.z = value;
 });
 lightFolder.open();
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+// Подготовка троттлинга для responsive-параметров
+const applyResponsiveParamsThrottled = throttle(() => {
+  applyCoinParams(getCurrentCoinParams());
+}, 200);
+
 // Resize
-window.addEventListener('resize', () => {
+window.addEventListener("resize", () => {
   sizes.width = window.innerWidth;
   sizes.height = window.innerHeight;
   camera.updateProjectionMatrix();
   camera.aspect = sizes.width / sizes.height;
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Применяем подходящие параметры монетки c троттлингом
+  applyResponsiveParamsThrottled();
 });
-canvas.addEventListener('mousemove', e => {
+canvas.addEventListener("mousemove", e => {
   const mouseX = e.clientX / sizes.width * 2 - 1;
   const mouseY = -(e.clientY / sizes.height) * 2 + 1;
   mouse.x = mouseX;
   mouse.y = mouseY;
 });
-canvas.addEventListener('click', e => {
+canvas.addEventListener("click", e => {
   if (currentIntersect && clickCounter < MAX_CLICKS) {
     spinYRemaining += Math.PI * 2;
     clickCounter++;
@@ -97043,7 +97121,7 @@ const tick = () => {
     const intersects = raycaster.intersectObject(coinModel, true);
     if (intersects.length) {
       if (!currentIntersect) {
-        document.body.style.cursor = 'pointer';
+        document.body.style.cursor = "pointer";
       }
       currentIntersect = intersects[0];
     } else {
@@ -97195,6 +97273,73 @@ if (horScrollWraps.length > 0) {
 //     }
 //   )
 // })()
+
+/***/ }),
+
+/***/ "./src/js/components/header-scroll.js":
+/*!********************************************!*\
+  !*** ./src/js/components/header-scroll.js ***!
+  \********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _functions_throttle_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../functions/throttle.js */ "./src/js/functions/throttle.js");
+// Скрытие/показ header при скролле на мобилке
+
+(function initHeaderScroll() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+  const BREAKPOINT_MOBILE = 576;
+  const isMobileViewport = () => window.innerWidth <= BREAKPOINT_MOBILE;
+  let lastScrollY = window.scrollY;
+  const handleScroll = () => {
+    // Работаем только на мобилке
+    if (!isMobileViewport()) {
+      header.classList.remove('header--hidden');
+      header.classList.remove('header--visible');
+      lastScrollY = window.scrollY;
+      return;
+    }
+    const currentScrollY = window.scrollY;
+
+    // Игнорируем скролл в самом верху страницы
+    if (currentScrollY < 10) {
+      header.classList.remove('header--hidden');
+      header.classList.remove('header--visible');
+      lastScrollY = currentScrollY;
+      return;
+    }
+
+    // Определяем направление скролла
+    if (currentScrollY > lastScrollY) {
+      // Скролл вниз - скрываем
+      header.classList.add('header--hidden');
+      header.classList.remove('header--visible');
+    } else if (currentScrollY < lastScrollY) {
+      // Скролл вверх - показываем
+      header.classList.remove('header--hidden');
+      header.classList.add('header--visible');
+    }
+    lastScrollY = currentScrollY;
+  };
+
+  // Используем throttle для оптимизации (150ms)
+  const throttledHandleScroll = (0,_functions_throttle_js__WEBPACK_IMPORTED_MODULE_0__.throttle)(handleScroll, 150);
+
+  // Инициализация при загрузке
+  handleScroll();
+
+  // Обработчик скролла
+  window.addEventListener('scroll', throttledHandleScroll, {
+    passive: true
+  });
+
+  // Обработка изменения размера окна
+  window.addEventListener('resize', () => {
+    handleScroll();
+  });
+})();
 
 /***/ }),
 
@@ -97447,6 +97592,245 @@ __webpack_require__.r(__webpack_exports__);
   }
 })();
 
+/***/ }),
+
+/***/ "./src/js/components/why.js":
+/*!**********************************!*\
+  !*** ./src/js/components/why.js ***!
+  \**********************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// Аккордеон для секции "why" на мобилке
+(function initWhyAccordion() {
+  const section = document.querySelector('.why');
+  if (!section) return;
+  const BREAKPOINT_MOBILE = 576;
+  const isMobileViewport = () => window.innerWidth <= BREAKPOINT_MOBILE;
+  const items = section.querySelectorAll('.why__item');
+  if (!items.length) return;
+  const toggleItem = (item, isActive) => {
+    const desc = item.querySelector('.why__item-desc');
+    if (!desc) return;
+    if (isActive) {
+      item.classList.add('active');
+      // Временно устанавливаем max-height: none для получения правильного scrollHeight
+      desc.style.maxHeight = 'none';
+      // Используем requestAnimationFrame для корректного вычисления высоты
+      requestAnimationFrame(() => {
+        const height = desc.scrollHeight;
+        desc.style.maxHeight = height + 'px';
+      });
+    } else {
+      item.classList.remove('active');
+      desc.style.maxHeight = '0px';
+    }
+  };
+
+  // Используем делегирование событий для избежания дублирования обработчиков
+  const handleClick = e => {
+    // Работаем только на мобилке
+    if (!isMobileViewport()) return;
+    const capture = e.target.closest('.why__item-capture');
+    if (!capture) return;
+    const item = capture.closest('.why__item');
+    if (!item) return;
+    const isActive = item.classList.contains('active');
+
+    // Закрываем все элементы
+    items.forEach(otherItem => {
+      if (otherItem !== item) {
+        toggleItem(otherItem, false);
+      }
+    });
+
+    // Переключаем текущий элемент
+    toggleItem(item, !isActive);
+  };
+  const initAccordion = () => {
+    if (!isMobileViewport()) {
+      // На десктопе убираем класс active и сбрасываем max-height
+      items.forEach(item => {
+        item.classList.remove('active');
+        const desc = item.querySelector('.why__item-desc');
+        if (desc) {
+          desc.style.maxHeight = '';
+        }
+      });
+      return;
+    }
+
+    // На мобилке активируем функциональность
+    // Первый элемент делаем активным по умолчанию
+    if (items[0]) {
+      toggleItem(items[0], true);
+    }
+  };
+
+  // Инициализация при загрузке
+  initAccordion();
+
+  // Делегирование событий - один обработчик на весь контейнер
+  section.addEventListener('click', handleClick);
+
+  // Обработка изменения размера окна с троттлингом
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      initAccordion();
+    }, 150);
+  });
+})();
+
+/***/ }),
+
+/***/ "./src/js/functions/burger.js":
+/*!************************************!*\
+  !*** ./src/js/functions/burger.js ***!
+  \************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _functions_disable_scroll_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../functions/disable-scroll.js */ "./src/js/functions/disable-scroll.js");
+/* harmony import */ var _functions_enable_scroll_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../functions/enable-scroll.js */ "./src/js/functions/enable-scroll.js");
+
+
+(function () {
+  const burger = document?.querySelector("[data-burger]");
+  const menu = document?.querySelector("[data-menu]");
+  const menuItems = document?.querySelectorAll("[data-menu-item]");
+  const overlay = document?.querySelector("[data-menu-overlay]");
+  burger?.addEventListener("click", e => {
+    burger?.classList.toggle("burger--active");
+    menu?.classList.toggle("menu--active");
+    if (menu?.classList.contains("menu--active")) {
+      burger?.setAttribute("aria-expanded", "true");
+      burger?.setAttribute("aria-label", "Закрыть меню");
+      (0,_functions_disable_scroll_js__WEBPACK_IMPORTED_MODULE_0__.disableScroll)();
+    } else {
+      burger?.setAttribute("aria-expanded", "false");
+      burger?.setAttribute("aria-label", "Открыть меню");
+      document.body.style.overflow = "hidden";
+    }
+  });
+  overlay?.addEventListener("click", () => {
+    burger?.setAttribute("aria-expanded", "false");
+    burger?.setAttribute("aria-label", "Открыть меню");
+    burger.classList.remove("burger--active");
+    menu.classList.remove("menu--active");
+    document.body.style.overflow = null;
+  });
+  menuItems?.forEach(el => {
+    el.addEventListener("click", () => {
+      burger?.setAttribute("aria-expanded", "false");
+      burger?.setAttribute("aria-label", "Открыть меню");
+      burger.classList.remove("burger--active");
+      menu.classList.remove("menu--active");
+      document.body.style.overflow = null;
+    });
+  });
+})();
+
+/***/ }),
+
+/***/ "./src/js/functions/disable-scroll.js":
+/*!********************************************!*\
+  !*** ./src/js/functions/disable-scroll.js ***!
+  \********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   disableScroll: () => (/* binding */ disableScroll)
+/* harmony export */ });
+/* harmony import */ var _vars_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../_vars.js */ "./src/js/_vars.js");
+
+const disableScroll = () => {
+  const fixBlocks = document?.querySelectorAll('.fixed-block');
+  const pagePosition = window.scrollY;
+  const paddingOffset = `${window.innerWidth - _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.offsetWidth}px`;
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].htmlEl.style.scrollBehavior = 'none';
+  fixBlocks.forEach(el => {
+    el.style.paddingRight = paddingOffset;
+  });
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.style.paddingRight = paddingOffset;
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.classList.add('dis-scroll');
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.dataset.position = pagePosition;
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.style.top = `-${pagePosition}px`;
+};
+
+/***/ }),
+
+/***/ "./src/js/functions/enable-scroll.js":
+/*!*******************************************!*\
+  !*** ./src/js/functions/enable-scroll.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   enableScroll: () => (/* binding */ enableScroll)
+/* harmony export */ });
+/* harmony import */ var _vars_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../_vars.js */ "./src/js/_vars.js");
+
+const enableScroll = () => {
+  const fixBlocks = document?.querySelectorAll('.fixed-block');
+  const body = document.body;
+  const pagePosition = parseInt(_vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.dataset.position, 10);
+  fixBlocks.forEach(el => {
+    el.style.paddingRight = '0px';
+  });
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.style.paddingRight = '0px';
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.style.top = 'auto';
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.classList.remove('dis-scroll');
+  window.scroll({
+    top: pagePosition,
+    left: 0
+  });
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].bodyEl.removeAttribute('data-position');
+  _vars_js__WEBPACK_IMPORTED_MODULE_0__["default"].htmlEl.style.scrollBehavior = 'smooth';
+};
+
+/***/ }),
+
+/***/ "./src/js/functions/throttle.js":
+/*!**************************************!*\
+  !*** ./src/js/functions/throttle.js ***!
+  \**************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   throttle: () => (/* binding */ throttle)
+/* harmony export */ });
+const throttle = (func, delay = 250) => {
+  let isThrottled = false;
+  let savedArgs = null;
+  let savedThis = null;
+  return function wrap(...args) {
+    if (isThrottled) {
+      savedArgs = args, savedThis = this;
+      return;
+    }
+    func.apply(this, args);
+    isThrottled = true;
+    setTimeout(() => {
+      isThrottled = false;
+      if (savedThis) {
+        wrap.apply(savedThis, savedArgs);
+        savedThis = null;
+        savedArgs = null;
+      }
+    }, delay);
+  };
+};
+
 /***/ })
 
 /******/ 	});
@@ -97527,27 +97911,28 @@ var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./_components.js */ "./src/js/_components.js");
 /* harmony import */ var rellax__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! rellax */ "./node_modules/rellax/rellax.js");
+/* harmony import */ var _functions_burger_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./functions/burger.js */ "./src/js/functions/burger.js");
 
 
 
 // Отключаем автоматическое восстановление позиции скролла
-if ('scrollRestoration' in history) {
-  history.scrollRestoration = 'manual';
+if ("scrollRestoration" in history) {
+  history.scrollRestoration = "manual";
 }
 
 // Всегда скроллим наверх при загрузке/перезагрузке страницы
 window.scrollTo(0, 0);
 
 // Дополнительно скроллим наверх после полной загрузки страницы
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
     window.scrollTo(0, 0);
   });
 }
-window.addEventListener('load', () => {
+window.addEventListener("load", () => {
   window.scrollTo(0, 0);
 });
-const rellax = new rellax__WEBPACK_IMPORTED_MODULE_1__('.rellax', {
+const rellax = new rellax__WEBPACK_IMPORTED_MODULE_1__(".rellax", {
   center: true
 });
 })();

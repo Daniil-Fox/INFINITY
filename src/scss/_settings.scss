@@ -11,8 +11,11 @@
   scroll-behavior: smooth;
   font-size: calc(100vw / 192);
 
-  @media screen and (min-width: 2560px){
+  @media screen and (min-width: 2560px) {
     font-size: calc(100vw / 256);
+  }
+  @include mobile {
+    font-size: calc(100vw / 57.6);
   }
 }
 

@@ -1,10 +1,17 @@
 .care {
   padding: 10rem 0;
-
+  @include mobile {
+    padding: 7.5rem 0;
+  }
   &__container {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 3rem;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
   }
 
   &__content {
@@ -17,19 +24,29 @@
     border-radius: 2rem;
     color: var(--it-black);
     overflow: hidden;
-    ul, ol {
+    ul,
+    ol {
       li {
-        &:not(:last-child){
+        &:not(:last-child) {
           margin-bottom: 5rem;
+
+          @include mobile {
+            margin-bottom: 2rem;
+          }
         }
       }
+    }
+
+    @include mobile {
+      padding: 5rem 4rem;
+      grid-column: 1 span;
     }
   }
 
   &__img {
     grid-column: 4 span;
     position: relative;
-    mask-image: url('./../img/care-mask.svg');
+    mask-image: url("./../img/care-mask.svg");
     mask-size: 100% 100%;
     mask-repeat: no-repeat;
     mask-position: center;
@@ -40,6 +57,14 @@
       top: 0;
       width: 100%;
       height: 100%;
+    }
+
+    @include mobile {
+      grid-column: 1 span;
+      order: -1;
+      mask-image: url("./../img/care-mask-mob.svg");
+      aspect-ratio: unset;
+      height: 32.8rem;
     }
   }
 }

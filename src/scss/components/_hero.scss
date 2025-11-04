@@ -3,6 +3,12 @@
   height: 100vh;
   padding: 13rem 7.5rem;
   margin-bottom: 10rem;
+
+  @include mobile {
+    padding: 15rem 0 3rem;
+    height: 100vh;
+  }
+
   &::after {
     content: "";
     position: absolute;
@@ -12,19 +18,48 @@
     width: 100%;
     height: 240rem;
 
-    background-image: url('./../img/blur-sphere.svg'), url('./../img/grid.svg');
+    background-image: url("./../img/blur-sphere.svg"), url("./../img/grid.svg");
     background-size: contain, auto 100%;
     background-repeat: no-repeat;
     background-position: right;
     pointer-events: none;
+
+    @include mobile {
+      background-image: url("./../img/blur-sphere-mob.svg"),
+        url("./../img/grid-mob.svg");
+      background-position: bottom left;
+      height: 100%;
+      top: unset;
+      bottom: 0;
+      background-size: contain, 100% auto;
+    }
   }
-  &__logo {
+
+  & > .container {
+    @include mobile {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  &__header {
     margin-bottom: 9.5rem;
+    @include mobile {
+      margin-bottom: unset;
+    }
   }
   &__content {
     position: relative;
     z-index: 5;
     max-width: 75rem;
+    @include mobile {
+      max-width: unset;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+
+      pointer-events: none;
+    }
   }
 
   &__title {
@@ -34,6 +69,10 @@
     font-size: 7rem;
     line-height: 110%;
 
+    @include mobile {
+      font-size: 4.9rem;
+      margin-bottom: 3.2rem;
+    }
   }
 
   &__desc {
@@ -48,11 +87,23 @@
       display: block;
       color: var(--it-pink);
     }
+
+    @include mobile {
+      margin-bottom: 2rem;
+      font-size: 2.4rem;
+    }
   }
 
   &__btn {
     width: 100%;
     max-width: 51.6rem;
+
+    @include mobile {
+      max-width: 100%;
+      margin-top: auto;
+
+      pointer-events: all;
+    }
   }
 
   &__decor {
@@ -62,6 +113,13 @@
     top: 0;
     height: 100%;
     width: 88.7rem;
+
+    @include mobile {
+      width: 100%;
+      height: auto;
+      top: 25vh;
+      bottom: 0;
+    }
   }
   &__element {
     position: absolute;
@@ -85,6 +143,12 @@
       animation-duration: 4s;
       animation-iteration-count: infinite;
       animation-direction: alternate;
+
+      @include mobile {
+        width: 44rem;
+        right: -12rem;
+        bottom: 0;
+      }
     }
     &_square-second {
       z-index: 2;
@@ -96,10 +160,15 @@
       animation-duration: 4s;
       animation-iteration-count: infinite;
       animation-direction: alternate;
+
+      @include mobile {
+        width: 20rem;
+        top: 10rem;
+      }
     }
     &_square-third {
       top: 4rem;
-      right: 4rem;;
+      right: 4rem;
       z-index: 2;
       width: 16rem;
       filter: blur(3px);
@@ -110,6 +179,12 @@
       animation-duration: 2.5s;
       animation-iteration-count: infinite;
       animation-direction: alternate;
+
+      @include mobile {
+        width: 12rem;
+        right: 0rem;
+        top: 7rem;
+      }
     }
 
     &_diamond {
@@ -123,6 +198,12 @@
       animation-duration: 3.5s;
       animation-iteration-count: infinite;
       animation-direction: alternate;
+
+      @include mobile {
+        width: 18rem;
+        left: 1rem;
+        bottom: 30rem;
+      }
     }
     &_tubus {
       transform: rotate(-45deg);
@@ -135,6 +216,10 @@
       animation-duration: 3s;
       animation-iteration-count: infinite;
       animation-direction: alternate;
+
+      @include mobile {
+        display: none;
+      }
     }
   }
 }

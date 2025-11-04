@@ -1,19 +1,24 @@
 .different {
-  margin-top: 10rem;
-  margin-bottom: 10rem;
+  margin: 10rem 0;
   padding: 20rem 0;
   height: 100vh;
 
   display: flex;
   align-items: center;
 
-  background-image: url('./../img/different.webp');
+  background-image: url("./../img/different.webp");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: bottom;
 
   position: relative;
   z-index: 4;
+
+  @include mobile {
+    padding: 12rem 0;
+    margin: 7.5rem 0;
+    min-height: 100vh;
+  }
   .container {
     position: relative;
     z-index: 3;
@@ -29,7 +34,7 @@
     will-change: transform, opacity;
 
     transition-property: opacity;
-    transition-duration: .3s;
+    transition-duration: 0.3s;
     transition-timing-function: linear;
     pointer-events: none;
     &.is-visible {
@@ -45,6 +50,11 @@
   &__title {
     font-size: 8rem;
     line-height: 110%;
+
+    @include mobile {
+      font-size: 6.4rem;
+      margin-bottom: 2rem;
+    }
   }
   &__subtitle {
     margin: 0;
@@ -52,6 +62,10 @@
     font-weight: 500;
     font-size: 3.2rem;
     line-height: 150%;
-    color: var(--grey1);
+
+    @include mobile {
+      font-size: 2.7rem;
+      margin-bottom: 5rem;
+    }
   }
 }

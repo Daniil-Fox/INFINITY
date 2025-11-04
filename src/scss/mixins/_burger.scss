@@ -1,8 +1,8 @@
 /* stylelint-disable */
 
 @mixin burger {
-  --burger-width: 30px;
-  --burger-height: 30px;
+  --burger-width: 3.2rem;
+  --burger-height: 2.4rem;
   --burger-line-height: 2px;
 
   position: relative;
@@ -10,13 +10,14 @@
   padding: 0;
   width: var(--burger-width);
   height: var(--burger-height);
-  color: #000;
+  color: var(--it-white);
   background-color: transparent;
   cursor: pointer;
-
+  border-radius: 10px;
   &::before,
   &::after {
     content: "";
+    border-radius: 10px;
     position: absolute;
     left: 0;
     width: 100%;

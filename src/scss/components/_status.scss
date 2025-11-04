@@ -1,6 +1,5 @@
 .status {
-
-  mask-image: url('./../img/svg/status-mask.svg');
+  mask-image: url("./../img/svg/status-mask.svg");
   mask-size: 100% 100%;
   mask-position: top left;
   mask-repeat: no-repeat;
@@ -14,16 +13,27 @@
   color: var(--it-black);
 
   padding: 8rem 7rem;
-
+  @include mobile {
+    padding: 6rem;
+    mask-image: url("./../img/svg/status-mask-mob.svg");
+    aspect-ratio: unset;
+    width: 100%;
+    height: auto;
+  }
   &__row {
     display: flex;
     gap: 6rem;
 
     margin-bottom: 4.8rem;
+
+    @include mobile {
+      flex-direction: column;
+      margin-bottom: 4rem;
+      gap: 4rem;
+    }
   }
 
   &__col {
-
     color: var(--it-black);
 
     &_everywhere {
@@ -35,6 +45,10 @@
     font-weight: 300;
     font-size: 2.4rem;
     line-height: 130%;
+
+    @include mobile {
+      font-size: 2rem;
+    }
   }
   &__price {
     margin: 0;
@@ -42,6 +56,11 @@
     font-size: 7.8rem;
     line-height: 130%;
     white-space: nowrap;
+
+    @include mobile {
+      font-size: 6rem;
+      line-height: 140%;
+    }
   }
   &__diff {
     margin: 0;
@@ -50,6 +69,11 @@
     font-size: 2rem;
     line-height: 100%;
     color: var(--it-pink);
+
+    @include mobile {
+      margin-top: 0.5rem;
+      font-size: 2.4rem;
+    }
   }
 
   &__btn {

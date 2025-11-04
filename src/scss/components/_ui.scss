@@ -94,6 +94,10 @@ h2 {
   &:not(:first-child) {
     margin-top: 2rem;
   }
+
+  @include mobile {
+    font-size: 4.4rem;
+  }
 }
 
 [data-video] {
@@ -106,6 +110,11 @@ h2 {
     aspect-ratio: 16 / 9;
     max-height: 70rem;
     object-fit: cover;
+
+    @include mobile {
+      aspect-ratio: 9 / 16;
+      max-height: unset;
+    }
   }
 }
 [data-video-play] {

@@ -1,7 +1,9 @@
 .about {
   padding: 10rem 0;
   position: relative;
-
+  @include mobile {
+    padding: 7.5rem 0;
+  }
   &::after {
     content: "";
     background-image: url("./../img/blur-sphere-all.svg");
@@ -17,5 +19,27 @@
     width: 240rem;
     aspect-ratio: 1 / 1;
     pointer-events: none;
+
+    @include mobile {
+      left: unset;
+      right: -4%;
+      top: 100%;
+    }
+  }
+
+  &__video {
+    @include mobile {
+      display: none;
+    }
+
+    &_mob {
+      display: none;
+      @include mobile {
+        display: block;
+        mask-image: url("./../img/video-mask-mob.svg");
+        mask-size: 100% 100%;
+        mask-position: bottom;
+      }
+    }
   }
 }
