@@ -1610,6 +1610,7 @@ ul li:not(:last-child) {
 .why__item {
   color: var(--it-black);
   padding: 6rem;
+  background-color: #fff;
   -webkit-mask-image: url("./../img/svg/why-mask.svg");
   mask-image: url("./../img/svg/why-mask.svg");
   -webkit-mask-size: 100% 100%;
