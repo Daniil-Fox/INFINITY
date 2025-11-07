@@ -1,7 +1,11 @@
 // Контроллер валют: загрузка курсов, переключение валюты, обновление UI
 
-import { fetchBtcUsdPrice, fetchUsdRates } from "./rates-api";
-import { getSelectedCurrency, convertFromUsd, formatCurrency } from "./currency-utils";
+import { fetchBtcUsdPrice, fetchUsdRates } from "./rates-api.js";
+import {
+  getSelectedCurrency,
+  convertFromUsd,
+  formatCurrency,
+} from "./currency-utils.js";
 
 export function initCurrencyController(formEl, options = {}) {
   if (!formEl) return null;
@@ -61,5 +65,3 @@ export function initCurrencyController(formEl, options = {}) {
 }
 
 export default { initCurrencyController };
-
-

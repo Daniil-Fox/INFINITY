@@ -1,31 +1,10 @@
 import noUiSlider from "nouislider";
 
-const calculatorForm = document.querySelector(".calculator__form");
-
-if (calculatorForm) {
-  const controls = [
-    {
-      input: calculatorForm.querySelector("#loanAmountInput"),
-      slider: calculatorForm.querySelector("#loanAmountSlider"),
-    },
-    {
-      input: calculatorForm.querySelector("#loanPowerInput"),
-      slider: calculatorForm.querySelector("#loanPowerSlider"),
-    },
-    {
-      input: calculatorForm.querySelector("#loanCourseInput"),
-      slider: calculatorForm.querySelector("#loanCourseSlider"),
-    },
-  ].filter(({ input, slider }) => input && slider);
-
-  controls.forEach(({ input, slider }) => {
-    initRangeControl({ input, slider });
-  });
-
-  setupCurrencySuffix(calculatorForm);
-}
-
 export function initRangeControl({ input, slider }) {
+  // Проверяем, не инициализирован ли слайдер уже
+  if (slider.noUiSlider) {
+    return;
+  }
   const min = readNumberAttribute(
     input,
     "min",
@@ -66,6 +45,10 @@ export function initRangeControl({ input, slider }) {
     }
 
     setInputValue(input, numericValue, precision);
+    // Триггерим кастомное событие для синхронизации с калькулятором
+    input.dispatchEvent(
+      new CustomEvent("slider-update", { detail: { value: numericValue } })
+    );
   });
 
   const syncSlider = (value) => {

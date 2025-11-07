@@ -5,9 +5,9 @@ import {
   initRangeControl,
   setupCurrencySuffix,
   updateFilledState,
-} from "./loan";
-import { initCurrencyController } from "./currency-controller";
-import { convertFromUsd, formatCurrency } from "./currency-utils";
+} from "./loan.js";
+import { initCurrencyController } from "./currency-controller.js";
+import { convertFromUsd, formatCurrency } from "./currency-utils.js";
 
 window.INFINITY_ENV = {
   OURPOOL_ACCOUNT: "your-account",
@@ -67,9 +67,70 @@ export function initCalculator(formEl, options = {}) {
   const powerInput = query(formEl, "#loanPowerInput");
   const priceInput = query(formEl, "#loanAmountInput");
   const courseInput = query(formEl, "#loanCourseInput");
+  const pricePerThEl = query(formEl, ".calculator__info span");
+  const resetBtn = query(formEl, ".course__btn");
+  const periodTabs = Array.from(
+    formEl.querySelectorAll('input[name="доходность"]')
+  );
 
-  const render = async () => {
+  // Обновление курса BTC в поле при загрузке из API
+  if (currencyCtl) {
+    currencyCtl.onChange((state) => {
+      if (Number.isFinite(state.btcUsd) && courseInput) {
+        courseInput.value = String(Math.round(state.btcUsd));
+        courseInput.setAttribute("value", courseInput.value);
+        updateFilledState(courseInput);
+        // Обновляем слайдер курса, если он есть
+        const courseSlider = query(formEl, "#loanCourseSlider");
+        if (courseSlider?.noUiSlider) {
+          courseSlider.noUiSlider.set(state.btcUsd);
+        }
+        render();
+      }
+    });
+  }
+
+  // Кнопка "Сброс" курса
+  if (resetBtn && currencyCtl) {
+    resetBtn.addEventListener("click", async () => {
+      const state = currencyCtl.getState();
+      if (Number.isFinite(state.btcUsd)) {
+        if (courseInput) {
+          courseInput.value = String(Math.round(state.btcUsd));
+          courseInput.setAttribute("value", courseInput.value);
+          updateFilledState(courseInput);
+        }
+        const courseSlider = query(formEl, "#loanCourseSlider");
+        if (courseSlider?.noUiSlider) {
+          courseSlider.noUiSlider.set(state.btcUsd);
+        }
+        render();
+      }
+    });
+  }
+
+  // Табы периодов
+  let selectedPeriod = "day";
+  periodTabs.forEach((tab, idx) => {
+    const period = idx === 0 ? "day" : idx === 1 ? "week" : "month";
+    tab.addEventListener("change", () => {
+      if (tab.checked) {
+        selectedPeriod = period;
+        render();
+      }
+    });
+  });
+
+  // Флаг для предотвращения циклических обновлений
+  let isUpdating = false;
+
+  const render = async (source = "auto") => {
+    if (isUpdating) return;
+    isUpdating = true;
+
     const powerTh = toNumber(powerInput?.value);
+    const amountUsd = toNumber(priceInput?.value);
+
     // Базово расчет в USD. Если знаем текущий курс BTC в USD — используем его,
     // иначе — берем то, что ввёл пользователь в поле курса.
     const ctlState = currencyCtl?.getState?.() || {};
@@ -78,17 +139,71 @@ export function initCalculator(formEl, options = {}) {
       : toNumber(courseInput?.value);
     const btcPrice = btcUsd;
 
-    const tierPrice = resolveTierPrice(powerTh, config.pricing.tiers);
-    const packageCost = powerTh * tierPrice;
+    let finalPowerTh = powerTh;
+    let finalAmountUsd = amountUsd;
 
-    if (priceInput) {
-      priceInput.value = String(Math.round(packageCost));
-      priceInput.setAttribute("value", priceInput.value);
-      updateFilledState(priceInput);
+    // Если источник изменения - сумма, пересчитываем мощность
+    if (source === "amount" && amountUsd > 0) {
+      const calculatedPower = calculatePowerFromAmount(
+        amountUsd,
+        config.pricing.tiers
+      );
+      if (calculatedPower > 0) {
+        finalPowerTh = calculatedPower;
+        if (powerInput) {
+          powerInput.value = String(Math.round(finalPowerTh));
+          powerInput.setAttribute("value", powerInput.value);
+          updateFilledState(powerInput);
+          // Обновляем слайдер мощности
+          const powerSlider = query(formEl, "#loanPowerSlider");
+          if (powerSlider?.noUiSlider) {
+            powerSlider.noUiSlider.set(finalPowerTh);
+          }
+        }
+      }
+    } else if (source === "power" && powerTh > 0) {
+      // Если источник изменения - мощность, пересчитываем сумму
+      const tierPrice = resolveTierPrice(powerTh, config.pricing.tiers);
+      finalAmountUsd = powerTh * tierPrice;
+      if (priceInput) {
+        priceInput.value = String(Math.round(finalAmountUsd));
+        priceInput.setAttribute("value", priceInput.value);
+        updateFilledState(priceInput);
+        // Обновляем слайдер суммы
+        const amountSlider = query(formEl, "#loanAmountSlider");
+        if (amountSlider?.noUiSlider) {
+          amountSlider.noUiSlider.set(finalAmountUsd);
+        }
+      }
+    } else {
+      // Автоматический расчет: приоритет мощности
+      if (powerTh > 0) {
+        const tierPrice = resolveTierPrice(powerTh, config.pricing.tiers);
+        finalAmountUsd = powerTh * tierPrice;
+        if (priceInput) {
+          priceInput.value = String(Math.round(finalAmountUsd));
+          priceInput.setAttribute("value", priceInput.value);
+          updateFilledState(priceInput);
+          const amountSlider = query(formEl, "#loanAmountSlider");
+          if (amountSlider?.noUiSlider) {
+            amountSlider.noUiSlider.set(finalAmountUsd);
+          }
+        }
+      }
+    }
+
+    const tierPrice = resolveTierPrice(finalPowerTh, config.pricing.tiers);
+
+    // Обновляем цену за 1 TH
+    if (pricePerThEl) {
+      const currency = ctlState.currency || "dollar";
+      const rates = ctlState.usdRates || { USD: 1 };
+      const priceInCurrency = convertFromUsd(tierPrice, currency, rates);
+      pricePerThEl.textContent = formatCurrency(priceInCurrency, currency);
     }
 
     const metrics = computeProfitability({
-      powerTh,
+      powerTh: finalPowerTh,
       btcPrice,
       config,
     });
@@ -97,16 +212,30 @@ export function initCalculator(formEl, options = {}) {
       updateSummary(summary, metrics, {
         currency: ctlState.currency || "dollar",
         rates: ctlState.usdRates || { USD: 1 },
-        packageCostUsd: packageCost,
+        packageCostUsd: finalAmountUsd,
+        selectedPeriod: selectedPeriod,
       });
     }
+
+    isUpdating = false;
   };
 
-  // Подписки на изменения
-  [powerInput, priceInput, courseInput].forEach((el) => {
-    el?.addEventListener("input", render);
-    el?.addEventListener("change", render);
-  });
+  // Подписки на изменения с указанием источника
+  if (powerInput) {
+    powerInput.addEventListener("input", () => render("power"));
+    powerInput.addEventListener("change", () => render("power"));
+    powerInput.addEventListener("slider-update", () => render("power"));
+  }
+  if (priceInput) {
+    priceInput.addEventListener("input", () => render("amount"));
+    priceInput.addEventListener("change", () => render("amount"));
+    priceInput.addEventListener("slider-update", () => render("amount"));
+  }
+  if (courseInput) {
+    courseInput.addEventListener("input", () => render("auto"));
+    courseInput.addEventListener("change", () => render("auto"));
+    courseInput.addEventListener("slider-update", () => render("auto"));
+  }
 
   // При старте: подгружаем удалённую конфигурацию, если указана
   if (remoteConfigUrl) {
@@ -192,6 +321,40 @@ export function resolveTierPrice(powerTh, tiers) {
   return tiers[tiers.length - 1]?.pricePerTh ?? 0;
 }
 
+// Обратный расчет: из суммы получить мощность
+export function calculatePowerFromAmount(amountUsd, tiers) {
+  if (amountUsd <= 0) return 0;
+
+  // Перебираем диапазоны от меньшего к большему
+  for (const tier of tiers) {
+    const minCost = tier.min * tier.pricePerTh;
+    const maxCost = tier.max * tier.pricePerTh;
+
+    // Если сумма попадает в диапазон стоимости этого тира
+    if (amountUsd >= minCost && amountUsd <= maxCost) {
+      const calculatedPower = amountUsd / tier.pricePerTh;
+      // Проверяем, что рассчитанная мощность попадает в диапазон тира
+      if (calculatedPower >= tier.min && calculatedPower <= tier.max) {
+        return Math.round(calculatedPower);
+      }
+    }
+  }
+
+  // Если сумма больше максимального диапазона, возвращаем мощность по последнему тиру
+  const lastTier = tiers[tiers.length - 1];
+  if (lastTier && amountUsd > lastTier.max * lastTier.pricePerTh) {
+    return Math.round(amountUsd / lastTier.pricePerTh);
+  }
+
+  // Если сумма меньше минимального диапазона, используем первый тир
+  const firstTier = tiers[0];
+  if (firstTier && amountUsd < firstTier.min * firstTier.pricePerTh) {
+    return Math.round(amountUsd / firstTier.pricePerTh);
+  }
+
+  return 0;
+}
+
 // --- UI helpers ---
 
 function bindControl(formEl, inputSel, sliderSel) {
@@ -204,15 +367,36 @@ function bindControl(formEl, inputSel, sliderSel) {
 function updateSummary(root, metrics, viewCtx) {
   const profitEl = root.querySelector(".calculator__summary-profit");
   const costEl = root.querySelector(".calculator__summary-cost");
+  const annuallyEl = root.querySelector(".calculator__summary-annually");
 
-  if (profitEl && metrics?.day?.btc != null) {
-    profitEl.textContent = `${metrics.day.btc} BTC`;
+  const period = viewCtx?.selectedPeriod || "day";
+  const periodData = metrics?.[period];
+
+  if (profitEl && periodData?.btc != null) {
+    profitEl.textContent = `${periodData.btc} BTC`;
   }
 
   if (costEl && viewCtx) {
     const { currency, rates, packageCostUsd } = viewCtx;
     const amount = convertFromUsd(packageCostUsd, currency, rates);
     costEl.textContent = formatCurrency(amount, currency);
+  }
+
+  // Окупаемость в процентах годовых
+  if (annuallyEl && viewCtx && periodData) {
+    const { packageCostUsd } = viewCtx;
+    if (packageCostUsd > 0) {
+      const annualReturn = (periodData.usd / packageCostUsd) * 100;
+      const annualized =
+        period === "day"
+          ? annualReturn * 365
+          : period === "week"
+          ? annualReturn * 52
+          : period === "month"
+          ? annualReturn * 12
+          : annualReturn;
+      annuallyEl.textContent = `${Math.round(annualized)}% годовых`;
+    }
   }
 }
 

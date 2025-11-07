@@ -2350,6 +2350,616 @@ function initialize(target, originalOptions) {
 
 /***/ }),
 
+/***/ "./src/js/components/calculator-engine.js":
+/*!************************************************!*\
+  !*** ./src/js/components/calculator-engine.js ***!
+  \************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   calculatePowerFromAmount: () => (/* binding */ calculatePowerFromAmount),
+/* harmony export */   computeProfitability: () => (/* binding */ computeProfitability),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   defaultConfig: () => (/* binding */ defaultConfig),
+/* harmony export */   fetchRewardsStats: () => (/* binding */ fetchRewardsStats),
+/* harmony export */   initCalculator: () => (/* binding */ initCalculator),
+/* harmony export */   resolveTierPrice: () => (/* binding */ resolveTierPrice)
+/* harmony export */ });
+/* harmony import */ var _loan_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./loan.js */ "./src/js/components/loan.js");
+/* harmony import */ var _currency_controller_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./currency-controller.js */ "./src/js/components/currency-controller.js");
+/* harmony import */ var _currency_utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./currency-utils.js */ "./src/js/components/currency-utils.js");
+// Калькулятор доходности и интеграция с OurPool API
+// ВАЖНО: Токен и account читаем из DOM-атрибутов формы или из конфигурации
+
+
+
+
+window.INFINITY_ENV = {
+  OURPOOL_ACCOUNT: "your-account",
+  OURPOOL_TOKEN: "a09be072-d684-4f73-afa1-39f745d98f0c"
+};
+// Конфиг по умолчанию: можно переопределить через data-атрибуты
+const defaultConfig = {
+  ourPool: {
+    baseUrl: "https://ourpool.io",
+    account: "",
+    // data-account на .calculator__form или передать через init
+    token: "" // data-token на .calculator__form или передать через init
+  },
+  pricing: {
+    // Стоимость за 1 TH по диапазонам мощности (из ТЗ/CSV)
+    // Пожалуйста, передайте актуальные значения в init(options)
+    tiers: [{
+      min: 1,
+      max: 188,
+      pricePerTh: 27
+    }, {
+      min: 189,
+      max: 563,
+      pricePerTh: 26
+    }, {
+      min: 564,
+      max: 1127,
+      pricePerTh: 25
+    }, {
+      min: 1128,
+      max: 1879,
+      pricePerTh: 24
+    }, {
+      min: 1880,
+      max: 2820,
+      pricePerTh: 23
+    }]
+  },
+  electricity: {
+    // Стоимость электроэнергии, $ за kWh
+    pricePerKwh: 0.06,
+    // Потребление устройства (Вт). Если есть на 1 TH — передайте deviceWattPerTh и мы пересчитаем.
+    deviceWatt: 3550,
+    deviceTh: 188 // мощность устройства в TH для deviceWatt
+  },
+  yield: {
+    // Базовая доходность BTC на 1 TH в день (из ТЗ/CSV). Просим подтвердить.
+    btcPerThPerDay: 0.0000004,
+    // Uptime в процентах (0..100)
+    uptimePercent: 93.09
+  }
+};
+function initCalculator(formEl, options = {}) {
+  if (!formEl) return;
+  const config = mergeConfigFromDom(defaultConfig, formEl, options);
+  const remoteConfigUrl = formEl.getAttribute("data-config-url");
+
+  // Биндим контролы (ползунок + input) по существующей разметке
+  bindControl(formEl, "#loanAmountInput", "#loanAmountSlider");
+  bindControl(formEl, "#loanPowerInput", "#loanPowerSlider");
+  bindControl(formEl, "#loanCourseInput", "#loanCourseSlider");
+  (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.setupCurrencySuffix)(formEl);
+
+  // Валюты и курс BTC
+  const currencyCtl = (0,_currency_controller_js__WEBPACK_IMPORTED_MODULE_1__.initCurrencyController)(formEl);
+
+  // Инициализация итогового блока (если есть)
+  const summary = query(formEl, ".calculator__summary");
+  const powerInput = query(formEl, "#loanPowerInput");
+  const priceInput = query(formEl, "#loanAmountInput");
+  const courseInput = query(formEl, "#loanCourseInput");
+  const pricePerThEl = query(formEl, ".calculator__info span");
+  const resetBtn = query(formEl, ".course__btn");
+  const periodTabs = Array.from(formEl.querySelectorAll('input[name="доходность"]'));
+
+  // Обновление курса BTC в поле при загрузке из API
+  if (currencyCtl) {
+    currencyCtl.onChange(state => {
+      if (Number.isFinite(state.btcUsd) && courseInput) {
+        courseInput.value = String(Math.round(state.btcUsd));
+        courseInput.setAttribute("value", courseInput.value);
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
+        // Обновляем слайдер курса, если он есть
+        const courseSlider = query(formEl, "#loanCourseSlider");
+        if (courseSlider?.noUiSlider) {
+          courseSlider.noUiSlider.set(state.btcUsd);
+        }
+        render();
+      }
+    });
+  }
+
+  // Кнопка "Сброс" курса
+  if (resetBtn && currencyCtl) {
+    resetBtn.addEventListener("click", async () => {
+      const state = currencyCtl.getState();
+      if (Number.isFinite(state.btcUsd)) {
+        if (courseInput) {
+          courseInput.value = String(Math.round(state.btcUsd));
+          courseInput.setAttribute("value", courseInput.value);
+          (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
+        }
+        const courseSlider = query(formEl, "#loanCourseSlider");
+        if (courseSlider?.noUiSlider) {
+          courseSlider.noUiSlider.set(state.btcUsd);
+        }
+        render();
+      }
+    });
+  }
+
+  // Табы периодов
+  let selectedPeriod = "day";
+  periodTabs.forEach((tab, idx) => {
+    const period = idx === 0 ? "day" : idx === 1 ? "week" : "month";
+    tab.addEventListener("change", () => {
+      if (tab.checked) {
+        selectedPeriod = period;
+        render();
+      }
+    });
+  });
+
+  // Флаг для предотвращения циклических обновлений
+  let isUpdating = false;
+  const render = async (source = "auto") => {
+    if (isUpdating) return;
+    isUpdating = true;
+    const powerTh = toNumber(powerInput?.value);
+    const amountUsd = toNumber(priceInput?.value);
+
+    // Базово расчет в USD. Если знаем текущий курс BTC в USD — используем его,
+    // иначе — берем то, что ввёл пользователь в поле курса.
+    const ctlState = currencyCtl?.getState?.() || {};
+    const btcUsd = Number.isFinite(ctlState.btcUsd) ? ctlState.btcUsd : toNumber(courseInput?.value);
+    const btcPrice = btcUsd;
+    let finalPowerTh = powerTh;
+    let finalAmountUsd = amountUsd;
+
+    // Если источник изменения - сумма, пересчитываем мощность
+    if (source === "amount" && amountUsd > 0) {
+      const calculatedPower = calculatePowerFromAmount(amountUsd, config.pricing.tiers);
+      if (calculatedPower > 0) {
+        finalPowerTh = calculatedPower;
+        if (powerInput) {
+          powerInput.value = String(Math.round(finalPowerTh));
+          powerInput.setAttribute("value", powerInput.value);
+          (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(powerInput);
+          // Обновляем слайдер мощности
+          const powerSlider = query(formEl, "#loanPowerSlider");
+          if (powerSlider?.noUiSlider) {
+            powerSlider.noUiSlider.set(finalPowerTh);
+          }
+        }
+      }
+    } else if (source === "power" && powerTh > 0) {
+      // Если источник изменения - мощность, пересчитываем сумму
+      const tierPrice = resolveTierPrice(powerTh, config.pricing.tiers);
+      finalAmountUsd = powerTh * tierPrice;
+      if (priceInput) {
+        priceInput.value = String(Math.round(finalAmountUsd));
+        priceInput.setAttribute("value", priceInput.value);
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+        // Обновляем слайдер суммы
+        const amountSlider = query(formEl, "#loanAmountSlider");
+        if (amountSlider?.noUiSlider) {
+          amountSlider.noUiSlider.set(finalAmountUsd);
+        }
+      }
+    } else {
+      // Автоматический расчет: приоритет мощности
+      if (powerTh > 0) {
+        const tierPrice = resolveTierPrice(powerTh, config.pricing.tiers);
+        finalAmountUsd = powerTh * tierPrice;
+        if (priceInput) {
+          priceInput.value = String(Math.round(finalAmountUsd));
+          priceInput.setAttribute("value", priceInput.value);
+          (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+          const amountSlider = query(formEl, "#loanAmountSlider");
+          if (amountSlider?.noUiSlider) {
+            amountSlider.noUiSlider.set(finalAmountUsd);
+          }
+        }
+      }
+    }
+    const tierPrice = resolveTierPrice(finalPowerTh, config.pricing.tiers);
+
+    // Обновляем цену за 1 TH
+    if (pricePerThEl) {
+      const currency = ctlState.currency || "dollar";
+      const rates = ctlState.usdRates || {
+        USD: 1
+      };
+      const priceInCurrency = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(tierPrice, currency, rates);
+      pricePerThEl.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(priceInCurrency, currency);
+    }
+    const metrics = computeProfitability({
+      powerTh: finalPowerTh,
+      btcPrice,
+      config
+    });
+    if (summary) {
+      updateSummary(summary, metrics, {
+        currency: ctlState.currency || "dollar",
+        rates: ctlState.usdRates || {
+          USD: 1
+        },
+        packageCostUsd: finalAmountUsd,
+        selectedPeriod: selectedPeriod
+      });
+    }
+    isUpdating = false;
+  };
+
+  // Подписки на изменения с указанием источника
+  if (powerInput) {
+    powerInput.addEventListener("input", () => render("power"));
+    powerInput.addEventListener("change", () => render("power"));
+    powerInput.addEventListener("slider-update", () => render("power"));
+  }
+  if (priceInput) {
+    priceInput.addEventListener("input", () => render("amount"));
+    priceInput.addEventListener("change", () => render("amount"));
+    priceInput.addEventListener("slider-update", () => render("amount"));
+  }
+  if (courseInput) {
+    courseInput.addEventListener("input", () => render("auto"));
+    courseInput.addEventListener("change", () => render("auto"));
+    courseInput.addEventListener("slider-update", () => render("auto"));
+  }
+
+  // При старте: подгружаем удалённую конфигурацию, если указана
+  if (remoteConfigUrl) {
+    loadRemoteConfig(remoteConfigUrl).then(remote => {
+      if (remote && typeof remote === "object") {
+        deepMerge(config, remote);
+      }
+    }).catch(() => {}).finally(() => {
+      render();
+    });
+  } else {
+    render();
+  }
+  return {
+    render,
+    config
+  };
+}
+
+// --- API OurPool (заготовки) ---
+
+async function fetchRewardsStats({
+  baseUrl,
+  account,
+  token
+}) {
+  if (!account || !token) return null;
+  const url = `${baseUrl}/api/v1/accounts/${encodeURIComponent(account)}/btc/rewards-stats?token=${encodeURIComponent(token)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    return null;
+  }
+  return res.json();
+}
+
+// --- Расчёты ---
+
+function computeProfitability({
+  powerTh,
+  btcPrice,
+  config
+}) {
+  const {
+    btcPerThPerDay,
+    uptimePercent
+  } = config.yield;
+  const uptime = Math.max(0, Math.min(100, uptimePercent)) / 100;
+  const dailyBtc = btcPerThPerDay * powerTh * uptime;
+  const periods = {
+    day: 1,
+    week: 7,
+    month: 30.5,
+    year: 365
+  };
+  const deviceWattPerTh = config.electricity.deviceWatt / config.electricity.deviceTh;
+  const totalWatt = deviceWattPerTh * powerTh;
+  const kwhPerDay = totalWatt / 1000 * 24;
+  const electricityPerDay = kwhPerDay * config.electricity.pricePerKwh * uptime;
+  const toUsd = btc => btc * btcPrice;
+  const result = {};
+  Object.entries(periods).forEach(([key, days]) => {
+    const btcGross = dailyBtc * days;
+    const usdGross = toUsd(btcGross);
+    const usdElectricity = electricityPerDay * days;
+    const btcNet = Math.max(0, btcGross - usdElectricity / btcPrice);
+    const usdNet = Math.max(0, usdGross - usdElectricity);
+    result[key] = {
+      btc: round(btcGross, 11),
+      usd: round(usdGross, 2),
+      electricityUsd: round(usdElectricity, 2),
+      accrualBtc: round(btcNet, 11),
+      accrualUsd: round(usdNet, 2)
+    };
+  });
+  return result;
+}
+function resolveTierPrice(powerTh, tiers) {
+  for (const t of tiers) {
+    if (powerTh >= t.min && powerTh <= t.max) return t.pricePerTh;
+  }
+  // Выше верхнего диапазона — нужен менеджер
+  return tiers[tiers.length - 1]?.pricePerTh ?? 0;
+}
+
+// Обратный расчет: из суммы получить мощность
+function calculatePowerFromAmount(amountUsd, tiers) {
+  if (amountUsd <= 0) return 0;
+
+  // Перебираем диапазоны от меньшего к большему
+  for (const tier of tiers) {
+    const minCost = tier.min * tier.pricePerTh;
+    const maxCost = tier.max * tier.pricePerTh;
+
+    // Если сумма попадает в диапазон стоимости этого тира
+    if (amountUsd >= minCost && amountUsd <= maxCost) {
+      const calculatedPower = amountUsd / tier.pricePerTh;
+      // Проверяем, что рассчитанная мощность попадает в диапазон тира
+      if (calculatedPower >= tier.min && calculatedPower <= tier.max) {
+        return Math.round(calculatedPower);
+      }
+    }
+  }
+
+  // Если сумма больше максимального диапазона, возвращаем мощность по последнему тиру
+  const lastTier = tiers[tiers.length - 1];
+  if (lastTier && amountUsd > lastTier.max * lastTier.pricePerTh) {
+    return Math.round(amountUsd / lastTier.pricePerTh);
+  }
+
+  // Если сумма меньше минимального диапазона, используем первый тир
+  const firstTier = tiers[0];
+  if (firstTier && amountUsd < firstTier.min * firstTier.pricePerTh) {
+    return Math.round(amountUsd / firstTier.pricePerTh);
+  }
+  return 0;
+}
+
+// --- UI helpers ---
+
+function bindControl(formEl, inputSel, sliderSel) {
+  const input = query(formEl, inputSel);
+  const slider = query(formEl, sliderSel);
+  if (!input || !slider) return;
+  (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.initRangeControl)({
+    input,
+    slider
+  });
+}
+function updateSummary(root, metrics, viewCtx) {
+  const profitEl = root.querySelector(".calculator__summary-profit");
+  const costEl = root.querySelector(".calculator__summary-cost");
+  const annuallyEl = root.querySelector(".calculator__summary-annually");
+  const period = viewCtx?.selectedPeriod || "day";
+  const periodData = metrics?.[period];
+  if (profitEl && periodData?.btc != null) {
+    profitEl.textContent = `${periodData.btc} BTC`;
+  }
+  if (costEl && viewCtx) {
+    const {
+      currency,
+      rates,
+      packageCostUsd
+    } = viewCtx;
+    const amount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(packageCostUsd, currency, rates);
+    costEl.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(amount, currency);
+  }
+
+  // Окупаемость в процентах годовых
+  if (annuallyEl && viewCtx && periodData) {
+    const {
+      packageCostUsd
+    } = viewCtx;
+    if (packageCostUsd > 0) {
+      const annualReturn = periodData.usd / packageCostUsd * 100;
+      const annualized = period === "day" ? annualReturn * 365 : period === "week" ? annualReturn * 52 : period === "month" ? annualReturn * 12 : annualReturn;
+      annuallyEl.textContent = `${Math.round(annualized)}% годовых`;
+    }
+  }
+}
+
+// --- Utils ---
+
+function mergeConfigFromDom(base, formEl, overrides) {
+  const cfg = JSON.parse(JSON.stringify(base));
+  // 1) Переменные окружения (глобалка)
+  const env = typeof window !== "undefined" && window.INFINITY_ENV || {};
+  if (env.OURPOOL_TOKEN) cfg.ourPool.token = env.OURPOOL_TOKEN;
+  if (env.OURPOOL_ACCOUNT) cfg.ourPool.account = env.OURPOOL_ACCOUNT;
+
+  // 2) Meta-теги в <head>
+  const metaToken = document.querySelector('meta[name="ourpool-token"]')?.getAttribute("content");
+  const metaAccount = document.querySelector('meta[name="ourpool-account"]')?.getAttribute("content");
+  if (metaToken) cfg.ourPool.token = metaToken;
+  if (metaAccount) cfg.ourPool.account = metaAccount;
+
+  // 3) data-атрибуты формы (dev fallback)
+  const token = formEl.getAttribute("data-token");
+  const account = formEl.getAttribute("data-account");
+  if (token) cfg.ourPool.token = token;
+  if (account) cfg.ourPool.account = account;
+  return deepMerge(cfg, overrides || {});
+}
+function deepMerge(target, source) {
+  if (!source) return target;
+  Object.keys(source).forEach(key => {
+    const s = source[key];
+    if (s && typeof s === "object" && !Array.isArray(s)) {
+      target[key] = deepMerge(target[key] || {}, s);
+    } else {
+      target[key] = s;
+    }
+  });
+  return target;
+}
+function query(root, sel) {
+  return root?.querySelector(sel) || null;
+}
+function toNumber(v) {
+  const n = Number(String(v || "").replace(/[^0-9.\-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+function round(n, digits = 2) {
+  const p = Math.pow(10, digits);
+  return Math.round(n * p) / p;
+}
+async function loadRemoteConfig(url) {
+  try {
+    const res = await fetch(url, {
+      credentials: "omit"
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data;
+  } catch (_e) {
+    return null;
+  }
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  initCalculator,
+  computeProfitability,
+  resolveTierPrice,
+  fetchRewardsStats
+});
+
+/***/ }),
+
+/***/ "./src/js/components/currency-controller.js":
+/*!**************************************************!*\
+  !*** ./src/js/components/currency-controller.js ***!
+  \**************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   initCurrencyController: () => (/* binding */ initCurrencyController)
+/* harmony export */ });
+/* harmony import */ var _rates_api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./rates-api.js */ "./src/js/components/rates-api.js");
+/* harmony import */ var _currency_utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./currency-utils.js */ "./src/js/components/currency-utils.js");
+// Контроллер валют: загрузка курсов, переключение валюты, обновление UI
+
+
+
+function initCurrencyController(formEl, options = {}) {
+  if (!formEl) return null;
+  let state = {
+    currency: (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.getSelectedCurrency)(formEl),
+    btcUsd: null,
+    usdRates: null
+  };
+  const listeners = new Set();
+  const notify = () => listeners.forEach(cb => cb({
+    ...state
+  }));
+  const updateCourseView = () => {
+    const out = formEl.querySelector(".course__value");
+    if (!out || state.btcUsd == null || !state.usdRates) return;
+    const value = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.convertFromUsd)(state.btcUsd, state.currency, state.usdRates);
+    out.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.formatCurrency)(value, state.currency);
+  };
+  const load = async () => {
+    try {
+      const [btcUsd, usdRates] = await Promise.all([(0,_rates_api_js__WEBPACK_IMPORTED_MODULE_0__.fetchBtcUsdPrice)(options), (0,_rates_api_js__WEBPACK_IMPORTED_MODULE_0__.fetchUsdRates)(options)]);
+      state.btcUsd = btcUsd;
+      state.usdRates = usdRates;
+      updateCourseView();
+      notify();
+    } catch (_e) {
+      // тихо игнорируем, UI останется как есть
+    }
+  };
+  const onCurrencyChange = () => {
+    state.currency = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.getSelectedCurrency)(formEl);
+    updateCourseView();
+    notify();
+  };
+  Array.from(formEl.querySelectorAll('input[name="currency"]')).forEach(r => {
+    r.addEventListener("change", onCurrencyChange);
+  });
+  load();
+  return {
+    onChange(cb) {
+      if (typeof cb === "function") listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    getState() {
+      return {
+        ...state
+      };
+    }
+  };
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  initCurrencyController
+});
+
+/***/ }),
+
+/***/ "./src/js/components/currency-utils.js":
+/*!*********************************************!*\
+  !*** ./src/js/components/currency-utils.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   convertFromUsd: () => (/* binding */ convertFromUsd),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   formatCurrency: () => (/* binding */ formatCurrency),
+/* harmony export */   getSelectedCurrency: () => (/* binding */ getSelectedCurrency)
+/* harmony export */ });
+// Утилиты конвертации и форматирования валют
+
+function convertFromUsd(amountUsd, currency, rates) {
+  if (!Number.isFinite(amountUsd)) return 0;
+  switch (currency) {
+    case "ruble":
+      return amountUsd * (rates?.RUB ?? 0);
+    case "euro":
+      return amountUsd * (rates?.EUR ?? 0);
+    case "dollar":
+    default:
+      return amountUsd;
+  }
+}
+function formatCurrency(value, currency) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "";
+  const locales = {
+    ruble: "ru-RU",
+    dollar: "en-US",
+    euro: "de-DE"
+  };
+  const codes = {
+    ruble: "RUB",
+    dollar: "USD",
+    euro: "EUR"
+  };
+  return new Intl.NumberFormat(locales[currency] || "en-US", {
+    style: "currency",
+    currency: codes[currency] || "USD",
+    maximumFractionDigits: currency === "ruble" ? 0 : 2
+  }).format(n);
+}
+function getSelectedCurrency(formEl) {
+  const checked = formEl.querySelector('input[name="currency"]:checked');
+  return checked ? checked.value : "dollar";
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  convertFromUsd,
+  formatCurrency,
+  getSelectedCurrency
+});
+
+/***/ }),
+
 /***/ "./src/js/components/loan.js":
 /*!***********************************!*\
   !*** ./src/js/components/loan.js ***!
@@ -2371,36 +2981,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var nouislider__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! nouislider */ "./node_modules/nouislider/dist/nouislider.mjs");
 
-const calculatorForm = document.querySelector(".calculator__form");
-if (calculatorForm) {
-  const controls = [{
-    input: calculatorForm.querySelector("#loanAmountInput"),
-    slider: calculatorForm.querySelector("#loanAmountSlider")
-  }, {
-    input: calculatorForm.querySelector("#loanPowerInput"),
-    slider: calculatorForm.querySelector("#loanPowerSlider")
-  }, {
-    input: calculatorForm.querySelector("#loanCourseInput"),
-    slider: calculatorForm.querySelector("#loanCourseSlider")
-  }].filter(({
-    input,
-    slider
-  }) => input && slider);
-  controls.forEach(({
-    input,
-    slider
-  }) => {
-    initRangeControl({
-      input,
-      slider
-    });
-  });
-  setupCurrencySuffix(calculatorForm);
-}
 function initRangeControl({
   input,
   slider
 }) {
+  // Проверяем, не инициализирован ли слайдер уже
+  if (slider.noUiSlider) {
+    return;
+  }
   const min = readNumberAttribute(input, "min", readNumberAttribute(slider, "data-min", 0));
   const max = readNumberAttribute(input, "max", readNumberAttribute(slider, "data-max", min + 1));
   const step = resolveStep(input);
@@ -2424,6 +3012,12 @@ function initRangeControl({
       return;
     }
     setInputValue(input, numericValue, precision);
+    // Триггерим кастомное событие для синхронизации с калькулятором
+    input.dispatchEvent(new CustomEvent("slider-update", {
+      detail: {
+        value: numericValue
+      }
+    }));
   });
   const syncSlider = value => {
     slider.noUiSlider.set(clamp(value));
@@ -2552,6 +3146,79 @@ function updateFilledState(input) {
   updateFilledState
 });
 
+/***/ }),
+
+/***/ "./src/js/components/rates-api.js":
+/*!****************************************!*\
+  !*** ./src/js/components/rates-api.js ***!
+  \****************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   fetchBtcUsdPrice: () => (/* binding */ fetchBtcUsdPrice),
+/* harmony export */   fetchUsdRates: () => (/* binding */ fetchUsdRates)
+/* harmony export */ });
+// Получение курсов: BTC (в USD) и фиатных курсов USD→EUR,RUB
+
+const DEFAULTS = {
+  coinpaprikaTickerUrl: "https://api.coinpaprika.com/v1/tickers/btc-bitcoin",
+  fiatRatesUrl: "https://api.exchangerate.host/latest?base=USD&symbols=EUR,RUB",
+  cacheTtlMs: 60_000
+};
+const cache = new Map();
+function getCache(key) {
+  const item = cache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.t > (item.ttl ?? DEFAULTS.cacheTtlMs)) return null;
+  return item.v;
+}
+function setCache(key, value, ttl) {
+  cache.set(key, {
+    v: value,
+    t: Date.now(),
+    ttl
+  });
+}
+async function fetchBtcUsdPrice(overrides = {}) {
+  const url = overrides.coinpaprikaTickerUrl || DEFAULTS.coinpaprikaTickerUrl;
+  const cached = getCache(url);
+  if (cached) return cached;
+  const res = await fetch(url, {
+    credentials: "omit"
+  });
+  if (!res.ok) throw new Error("BTC price fetch failed");
+  const data = await res.json();
+  const price = Number(data?.quotes?.USD?.price);
+  if (!Number.isFinite(price)) throw new Error("Invalid BTC price");
+  setCache(url, price);
+  return price;
+}
+async function fetchUsdRates(overrides = {}) {
+  const url = overrides.fiatRatesUrl || DEFAULTS.fiatRatesUrl;
+  const cached = getCache(url);
+  if (cached) return cached;
+  const res = await fetch(url, {
+    credentials: "omit"
+  });
+  if (!res.ok) throw new Error("Fiat rates fetch failed");
+  const data = await res.json();
+  const eur = Number(data?.rates?.EUR);
+  const rub = Number(data?.rates?.RUB);
+  const rates = {
+    EUR: eur,
+    RUB: rub,
+    USD: 1
+  };
+  setCache(url, rates);
+  return rates;
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  fetchBtcUsdPrice,
+  fetchUsdRates
+});
+
 /***/ })
 
 /******/ 	});
@@ -2618,7 +3285,15 @@ var __webpack_exports__ = {};
   \***************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_loan_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/loan.js */ "./src/js/components/loan.js");
+/* harmony import */ var _components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/calculator-engine.js */ "./src/js/components/calculator-engine.js");
 
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector(".calculator__form");
+  if (form) {
+    (0,_components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_1__.initCalculator)(form);
+  }
+});
 })();
 
 /******/ })()
