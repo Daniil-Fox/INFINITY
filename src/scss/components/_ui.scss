@@ -239,3 +239,70 @@ ul {
     color: var(--it-pink);
   }
 }
+
+.hint {
+  cursor: help;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2.1rem;
+  aspect-ratio: 1 / 1;
+
+  border-radius: 100rem;
+  background-color: #e6e6e6;
+  padding: 0.5rem;
+
+  position: relative;
+
+  &::after {
+    content: "i";
+
+    font-family: var(--third-family);
+    font-weight: 400;
+    font-size: 1.4rem;
+    line-height: 120%;
+    color: var(--it-black);
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    transition-property: color;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+  }
+
+  transition-property: background-color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+
+  @include hover {
+    &::after {
+      color: var(--it-white);
+    }
+    background-color: var(--it-pink-hover);
+  }
+
+  &:focus-visible {
+    &::after {
+      color: var(--it-white);
+    }
+    outline: none;
+    background-color: var(--it-pink-hover);
+  }
+
+  &:active {
+    &::after {
+      color: var(--it-white);
+    }
+    background-color: var(--it-pink);
+  }
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  /* display: none; <- Crashes Chrome on hover */
+  -webkit-appearance: none;
+  margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}

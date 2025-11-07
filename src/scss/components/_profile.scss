@@ -1,0 +1,29 @@
+.profile {
+  min-height: 100vh;
+  padding-top: 19rem;
+  padding-bottom: 6rem;
+  position: relative;
+
+  &::after {
+    content: "";
+    background-image: url("./../img/blur-sphere-all.svg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 100%;
+    transform: translateY(-50%);
+    width: 240rem;
+    aspect-ratio: 1 / 1;
+    pointer-events: none;
+
+    @include mobile {
+      left: unset;
+      right: -4%;
+      top: 100%;
+    }
+  }
+}

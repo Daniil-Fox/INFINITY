@@ -1,0 +1,25 @@
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  label {
+    font-weight: 400;
+    font-size: 2.2rem;
+    line-height: 120%;
+    color: rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+  }
+
+  span {
+    transition-property: color;
+    transition-duration: 0.1s;
+  }
+
+  input:checked ~ span {
+    color: var(--it-black);
+  }
+}

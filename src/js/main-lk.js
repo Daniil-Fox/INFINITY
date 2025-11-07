@@ -1,1 +1,1 @@
-console.log("main-lk");
+import "./components/loan.js";

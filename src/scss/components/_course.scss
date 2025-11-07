@@ -1,0 +1,46 @@
+.course {
+  &__caption {
+    margin: 0;
+    font-size: 1.4rem;
+    line-height: 120%;
+  }
+
+  &__value {
+    margin: 0;
+
+    font-size: 2.2rem;
+    line-height: 120%;
+    color: var(--it-black);
+  }
+
+  &__btn {
+    padding: 1.4rem 2rem;
+    border-radius: 1rem;
+    background-color: #e6e6e6;
+    flex-shrink: 0;
+
+    font-weight: 700;
+    font-size: 1.6rem;
+    line-height: 140%;
+    color: var(--it-black);
+    transition-property: color, background-color;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+
+    @include hover {
+      color: var(--it-white);
+      background-color: var(--it-pink-hover);
+    }
+
+    &:focus-visible {
+      color: var(--it-white);
+      outline: none;
+      background-color: var(--it-pink-hover);
+    }
+
+    &:active {
+      color: var(--it-white);
+      background-color: var(--it-pink);
+    }
+  }
+}
