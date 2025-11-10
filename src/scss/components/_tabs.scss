@@ -12,6 +12,14 @@
     line-height: 120%;
     color: rgba(0, 0, 0, 0.45);
     cursor: pointer;
+
+    @include hover {
+      color: rgba(0, 0, 0, 0.8);
+    }
+    &:focus-visible {
+      outline: none;
+      color: rgba(0, 0, 0, 0.8);
+    }
   }
 
   span {
@@ -20,6 +28,9 @@
   }
 
   input:checked ~ span {
+    color: var(--it-black);
+  }
+  input[data-selected="1"] ~ span {
     color: var(--it-black);
   }
 }

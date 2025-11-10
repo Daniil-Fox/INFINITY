@@ -9,6 +9,11 @@
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
   }
+  &__patterns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
   &__row {
     display: flex;
     gap: 2rem;

@@ -552,6 +552,7 @@ input::-webkit-inner-spin-button {
   background-color: var(--it-white);
   border: 1px solid #e6e6e6;
   color: var(--it-black);
+  font-size: 1.6rem;
 }
 
 .star {

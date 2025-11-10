@@ -7851,11 +7851,39 @@ function initCalculator(formEl, options = {}) {
   const pricePerThEl = query(formEl, ".calculator__info span");
   const resetBtn = query(formEl, ".course__btn");
   const buyButton = query(formEl, ".calculator__btn");
+  const powerSliderEl = query(formEl, "#loanPowerSlider");
   const periodTabs = Array.from(formEl.querySelectorAll('input[name="доходность"]'));
 
   // Флаг для отслеживания инициализации слайдера суммы (используем объект для передачи по ссылке)
   const amountSliderInitialized = {
     current: false
+  };
+  const afterRenderListeners = new Set();
+  let lastRenderContext = {
+    powerTh: toNumber(powerInput?.value),
+    amountUsd: 0,
+    btcPrice: 109500,
+    currencyState: {
+      currency: "dollar",
+      usdRates: {
+        USD: 1
+      },
+      btcUsd: 109500
+    }
+  };
+  const getPublicContext = () => ({
+    config,
+    ...lastRenderContext
+  });
+  const notifyAfterRender = () => {
+    const context = getPublicContext();
+    afterRenderListeners.forEach(cb => {
+      try {
+        cb(context);
+      } catch (error) {
+        console.error("Calculator post-render listener failed", error);
+      }
+    });
   };
 
   // Обновление курса BTC в поле при загрузке из API и при изменении валюты
@@ -7968,15 +7996,35 @@ function initCalculator(formEl, options = {}) {
     });
   }
 
-  // Табы периодов
-  let selectedPeriod = "day";
+  // Табы периодов: по умолчанию показываем "год", радиокнопки не активны
+  let selectedPeriod = "year";
+  // Сбрасываем любые предзаданные checked в разметке
+  periodTabs.forEach(r => {
+    if (r.checked) r.checked = false;
+    r.dataset.selected = "0";
+  });
   periodTabs.forEach((tab, idx) => {
     const period = idx === 0 ? "day" : idx === 1 ? "week" : "month";
-    tab.addEventListener("change", () => {
-      if (tab.checked) {
-        selectedPeriod = period;
+    tab.addEventListener("click", e => {
+      e.preventDefault();
+      const isCurrentlySelected = tab.dataset.selected === "1";
+      if (isCurrentlySelected) {
+        // Повторный клик по выбранному периоду — вернуться к "год"
+        tab.checked = false;
+        tab.dataset.selected = "0";
+        selectedPeriod = "year";
         render();
+        return;
       }
+      // Выбор нового периода
+      periodTabs.forEach(r => {
+        r.checked = false;
+        r.dataset.selected = "0";
+      });
+      tab.checked = true;
+      tab.dataset.selected = "1";
+      selectedPeriod = period;
+      render();
     });
   });
 
@@ -7993,29 +8041,19 @@ function initCalculator(formEl, options = {}) {
     };
     // Читаем сумму из инпута и конвертируем в USD в зависимости от выбранной валюты
     const rawAmount = toNumber(priceInput?.value);
-    const amountUsd = currency === "dollar" ? rawAmount : currency === "euro" ? rates?.EUR ? rawAmount / rates.EUR : rawAmount : currency === "ruble" ? rates?.RUB ? rawAmount / rates.RUB : rawAmount : rawAmount;
+    const amountUsd = convertToUsd(rawAmount, currency, rates);
 
     // Получаем курс BTC: приоритет у значения из поля курса (если пользователь изменил),
     // иначе используем курс из API
-    // В поле хранится обратное значение: 1 доллар = X биткоина
-    const ctlState2 = ctlState;
-
     // Читаем значение напрямую из поля, чтобы сохранить точность для маленьких чисел
     const courseInputRaw = courseInput?.value?.trim() || "";
     const courseInputValue = courseInputRaw ? parseFloat(courseInputRaw) : 0;
 
-    // Конвертируем обратное значение в btcUsd: если в поле 0.000009132, то btcUsd = 1 / 0.000009132 = 109500
-    let btcUsd;
-    if (Number.isFinite(courseInputValue) && courseInputValue > 0) {
-      // Значение из поля - это обратное значение, конвертируем обратно
-      btcUsd = 1 / courseInputValue;
-    } else if (Number.isFinite(ctlState.btcUsd) && ctlState.btcUsd > 0) {
-      // Используем курс из API
-      btcUsd = ctlState.btcUsd;
-    } else {
-      // Fallback к примерному курсу если нет данных
-      btcUsd = 109500;
-    }
+    // Разделяем рыночный курс из API и "пользовательский" курс из инпута
+    const apiBtcUsd = Number.isFinite(ctlState.btcUsd) && ctlState.btcUsd > 0 ? ctlState.btcUsd : 109500;
+    const userOverrideBtcUsd = Number.isFinite(courseInputValue) && courseInputValue > 0 ? 1 / courseInputValue : null;
+    // В расчетах калькулятора используем пользовательский курс, если он задан; иначе курс API
+    const btcUsd = userOverrideBtcUsd ?? apiBtcUsd;
     const btcPrice = btcUsd > 0 ? btcUsd : 109500; // Fallback к примерному курсу если нет данных
 
     let finalPowerTh = powerTh;
@@ -8051,9 +8089,8 @@ function initCalculator(formEl, options = {}) {
           powerInput.setAttribute("value", powerInput.value);
           (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(powerInput);
           // Обновляем слайдер мощности
-          const powerSlider = query(formEl, "#loanPowerSlider");
-          if (powerSlider?.noUiSlider) {
-            powerSlider.noUiSlider.set(finalPowerTh);
+          if (powerSliderEl?.noUiSlider) {
+            powerSliderEl.noUiSlider.set(finalPowerTh);
           }
         }
         // Обновляем границы суммы, так как мощность могла измениться (переход в другой тир)
@@ -8099,12 +8136,24 @@ function initCalculator(formEl, options = {}) {
 
     // Обновляем цену за 1 TH (только если есть валидный тир)
     if (pricePerThEl && tierPrice !== null) {
-      const currency = ctlState.currency || "dollar";
-      const rates = ctlState.usdRates || {
-        USD: 1
-      };
       const priceInCurrency = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(tierPrice, currency, rates);
-      pricePerThEl.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(priceInCurrency, currency);
+      const locales = {
+        ruble: "ru-RU",
+        dollar: "en-US",
+        euro: "de-DE"
+      };
+      const codes = {
+        ruble: "RUB",
+        dollar: "USD",
+        euro: "EUR"
+      };
+      const formatted = new Intl.NumberFormat(locales[currency] || "en-US", {
+        style: "currency",
+        currency: codes[currency] || "USD",
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0
+      }).format(Number(priceInCurrency));
+      pricePerThEl.textContent = formatted;
     } else if (pricePerThEl && finalPowerTh > 2820) {
       // Для диапазона 2821-3760 скрываем или показываем сообщение
       pricePerThEl.textContent = "Индивидуальные условия";
@@ -8130,7 +8179,19 @@ function initCalculator(formEl, options = {}) {
         selectedPeriod: selectedPeriod
       });
     }
+    lastRenderContext = {
+      powerTh: finalPowerTh,
+      amountUsd: finalAmountUsd,
+      btcPrice,
+      currencyState: {
+        currency,
+        usdRates: rates,
+        // Сохраняем в контекст именно рыночный курс из API — для паттернов
+        btcUsd: apiBtcUsd
+      }
+    };
     isUpdating = false;
+    notifyAfterRender();
   };
 
   // Подписки на изменения с указанием источника
@@ -8183,6 +8244,38 @@ function initCalculator(formEl, options = {}) {
     courseInput.addEventListener("change", updateCourseDisplay);
     courseInput.addEventListener("slider-update", updateCourseDisplay);
   }
+  const setPowerTh = (value, options = {}) => {
+    if (!powerInput) return;
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return;
+    const min = Number(powerInput.getAttribute("min")) || 0;
+    const maxAttr = Number(powerInput.getAttribute("max"));
+    const max = Number.isFinite(maxAttr) ? maxAttr : 3760;
+    const clamped = Math.max(min, Math.min(max, Math.round(numeric)));
+    if (clamped !== toNumber(powerInput.value)) {
+      powerInput.value = String(clamped);
+      powerInput.setAttribute("value", powerInput.value);
+      (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(powerInput);
+      if (powerSliderEl?.noUiSlider) {
+        try {
+          powerSliderEl.noUiSlider.set(clamped);
+        } catch (_e) {
+          // игнорируем ошибки noUiSlider
+        }
+      }
+    }
+    if (options.focus) {
+      requestAnimationFrame(() => powerInput?.focus());
+    }
+    render("power");
+  };
+  const onAfterRender = cb => {
+    if (typeof cb === "function") {
+      afterRenderListeners.add(cb);
+      return () => afterRenderListeners.delete(cb);
+    }
+    return () => {};
+  };
 
   // При старте: подгружаем удалённую конфигурацию, если указана
   // Параллельно тянем статистику из OurPool (если заданы account и token)
@@ -8205,7 +8298,10 @@ function initCalculator(formEl, options = {}) {
   });
   return {
     render,
-    config
+    config,
+    setPowerTh,
+    getContext: getPublicContext,
+    onAfterRender
   };
 }
 
@@ -8392,9 +8488,15 @@ function updateAmountBounds(formEl, powerTh, tiers, initializedRef, targetAmount
   const rates = currencyCtx?.rates || {
     USD: 1
   };
-  const minAmount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(minAmountUsd, currency, rates);
-  const maxAmount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(maxAmountUsd, currency, rates);
-  const step = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(stepUsd, currency, rates);
+  const decimals = currency === "ruble" ? 0 : 2;
+  const normalize = value => Number.isFinite(value) ? Number(value.toFixed(decimals)) : value;
+  const minAmount = normalize((0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(minAmountUsd, currency, rates));
+  const maxAmount = normalize((0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(maxAmountUsd, currency, rates));
+  const stepRaw = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(stepUsd, currency, rates);
+  const stepConverted = Number(Number(stepRaw).toFixed(decimals === 0 ? 0 : decimals));
+  const stepSafe = Number.isFinite(stepConverted) ? stepConverted : decimals === 0 ? 1 : Number.EPSILON;
+  const minStep = decimals === 0 ? 1 : Number((1 / Math.pow(10, decimals)).toFixed(decimals));
+  const step = decimals === 0 ? Math.max(stepSafe, minStep) : Math.max(stepSafe, minStep);
 
   // Обновляем атрибуты input
   priceInput.setAttribute("min", String(minAmount));
@@ -8406,7 +8508,7 @@ function updateAmountBounds(formEl, powerTh, tiers, initializedRef, targetAmount
   if (amountValueUsd === null) {
     const currentValue = toNumber(priceInput.value);
     // currentValue в отображаемой валюте → конвертируем в USD для внутренней логики
-    const currentValueUsd = currency === "dollar" ? currentValue : currency === "euro" ? rates?.EUR ? currentValue / rates.EUR : currentValue : currency === "ruble" ? rates?.RUB ? currentValue / rates.RUB : currentValue : currentValue;
+    const currentValueUsd = convertToUsd(currentValue, currency, rates);
     const minUsd = minAmountUsd;
     const maxUsd = maxAmountUsd;
     if (currentValueUsd && currentValueUsd >= minUsd && currentValueUsd <= maxUsd) {
@@ -8419,7 +8521,7 @@ function updateAmountBounds(formEl, powerTh, tiers, initializedRef, targetAmount
 
   // Ограничиваем значение границами
   amountValueUsd = Math.max(minAmountUsd, Math.min(maxAmountUsd, Math.round(amountValueUsd)));
-  const amountValue = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(amountValueUsd, currency, rates);
+  const amountValue = normalize((0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(amountValueUsd, currency, rates));
 
   // Обновляем слайдер, если он уже инициализирован
   if (amountSlider.noUiSlider) {
@@ -8522,6 +8624,20 @@ function updateSummary(root, metrics, viewCtx) {
     }
   }
 }
+function convertToUsd(amount, currency, rates) {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return 0;
+  if (currency === "dollar") return value;
+  if (currency === "euro") {
+    const eur = Number(rates?.EUR);
+    return eur ? value / eur : value;
+  }
+  if (currency === "ruble") {
+    const rub = Number(rates?.RUB);
+    return rub ? value / rub : value;
+  }
+  return value;
+}
 
 // --- Utils ---
 
@@ -8585,6 +8701,162 @@ async function loadRemoteConfig(url) {
   computeProfitability,
   resolveTierPrice,
   fetchRewardsStats
+});
+
+/***/ }),
+
+/***/ "./src/js/components/calculator-patterns.js":
+/*!**************************************************!*\
+  !*** ./src/js/components/calculator-patterns.js ***!
+  \**************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   initCalculatorPatterns: () => (/* binding */ initCalculatorPatterns)
+/* harmony export */ });
+/* harmony import */ var _calculator_engine_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./calculator-engine.js */ "./src/js/components/calculator-engine.js");
+/* harmony import */ var _currency_utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./currency-utils.js */ "./src/js/components/currency-utils.js");
+
+
+const CURRENCY_SYMBOLS = {
+  dollar: "$",
+  euro: "€",
+  ruble: "₽"
+};
+function formatPower(powerTh) {
+  const formatted = Number(powerTh).toLocaleString("ru-RU");
+  return `${formatted} TH`;
+}
+function formatProfitBtc(value) {
+  if (!Number.isFinite(value)) return "-";
+  return `${value} BTC`;
+}
+function formatFiat(amountUsd, currencyState) {
+  const currency = currencyState?.currency || "dollar";
+  const rates = currencyState?.usdRates || {
+    USD: 1
+  };
+  const converted = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.convertFromUsd)(amountUsd, currency, rates);
+  if (!Number.isFinite(converted)) return "-";
+  const symbol = CURRENCY_SYMBOLS[currency] || "$";
+  const formatted = converted.toLocaleString("ru-RU", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+  return `${formatted} ${symbol}`;
+}
+function formatPricePerTh(pricePerThUsd, currencyState) {
+  const currency = currencyState?.currency || "dollar";
+  const rates = currencyState?.usdRates || {
+    USD: 1
+  };
+  const converted = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.convertFromUsd)(pricePerThUsd, currency, rates);
+  if (!Number.isFinite(converted)) return "-";
+
+  // Для компактного отображения убираем валютный символ в начале
+  const symbol = CURRENCY_SYMBOLS[currency] || "$";
+  const formatted = converted.toLocaleString("ru-RU", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+  return `${formatted} ${symbol}`;
+}
+function formatAnnualPercent(packageCostUsd, metrics) {
+  if (!metrics?.year || !Number.isFinite(packageCostUsd) || packageCostUsd <= 0) {
+    return "-";
+  }
+  const net = metrics.year.accrualUsd;
+  if (!Number.isFinite(net)) return "-";
+  const percent = net / packageCostUsd * 100;
+  if (!Number.isFinite(percent)) return "-";
+  return `${Math.round(percent)}%`;
+}
+function updatePatternCard(patternEl, calculatorContext) {
+  const powerTh = Number(patternEl.dataset.power);
+  if (!Number.isFinite(powerTh) || powerTh <= 0) {
+    return;
+  }
+  const {
+    config,
+    currencyState,
+    powerTh: currentPowerTh
+  } = calculatorContext;
+  const isActive = Number.isFinite(currentPowerTh) && Math.round(currentPowerTh) === Math.round(powerTh);
+  patternEl.classList.toggle("pattern--active", isActive);
+  if (!config) return;
+
+  // Для карточек всегда используем рыночный курс BTC из API,
+  // игнорируя пользовательские изменения курса в калькуляторе.
+  const marketBtcPrice = Number(currencyState?.btcUsd) && currencyState.btcUsd > 0 ? Number(currencyState.btcUsd) : 109500;
+  const tierPrice = (0,_calculator_engine_js__WEBPACK_IMPORTED_MODULE_0__.resolveTierPrice)(powerTh, config.pricing.tiers);
+  if (tierPrice === null) {
+    return;
+  }
+  const packageCostUsd = Math.round(powerTh * tierPrice);
+  const metrics = (0,_calculator_engine_js__WEBPACK_IMPORTED_MODULE_0__.computeProfitability)({
+    powerTh,
+    btcPrice: marketBtcPrice,
+    config
+  });
+  const profitEl = patternEl.querySelector('[data-field="profit"]');
+  const powerEl = patternEl.querySelector('[data-field="power"]');
+  const costEl = patternEl.querySelector('[data-field="cost"]');
+  const priceEl = patternEl.querySelector('[data-field="price"]');
+  const annualEl = patternEl.querySelector('[data-field="annual"]');
+  if (profitEl) {
+    const profitBtc = metrics?.day?.accrualBtc ?? metrics?.day?.btc ?? Number.NaN;
+    profitEl.textContent = formatProfitBtc(profitBtc);
+  }
+  if (powerEl) {
+    powerEl.textContent = formatPower(powerTh);
+  }
+  if (costEl) {
+    costEl.textContent = formatFiat(packageCostUsd, currencyState);
+  }
+  if (priceEl) {
+    priceEl.textContent = formatPricePerTh(tierPrice, currencyState);
+  }
+  if (annualEl) {
+    annualEl.textContent = formatAnnualPercent(packageCostUsd, metrics);
+  }
+}
+function initCalculatorPatterns(rootEl, calculatorApi) {
+  if (!calculatorApi) return null;
+  const calculatorRoot = rootEl?.closest?.(".calculator") || document.querySelector(".calculator");
+  if (!calculatorRoot) return null;
+  const patternEls = Array.from(calculatorRoot.querySelectorAll(".calculator__pattern[data-power]"));
+  if (!patternEls.length) return null;
+  const refresh = () => {
+    const context = calculatorApi.getContext?.();
+    if (!context) return;
+    patternEls.forEach(pattern => updatePatternCard(pattern, context));
+  };
+  patternEls.forEach(pattern => {
+    pattern.addEventListener("click", event => {
+      event.preventDefault();
+      const powerTh = Number(pattern.dataset.power);
+      if (Number.isFinite(powerTh) && powerTh > 0) {
+        calculatorApi.setPowerTh?.(powerTh, {
+          focus: true
+        });
+      }
+    });
+  });
+  refresh();
+  const unsubscribe = calculatorApi.onAfterRender?.(() => {
+    refresh();
+  }) || (() => {});
+  return {
+    refresh,
+    destroy() {
+      unsubscribe();
+    }
+  };
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  initCalculatorPatterns
 });
 
 /***/ }),
@@ -9294,13 +9566,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_loan_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/loan.js */ "./src/js/components/loan.js");
 /* harmony import */ var _components_tooltips_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/tooltips.js */ "./src/js/components/tooltips.js");
 /* harmony import */ var _components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/calculator-engine.js */ "./src/js/components/calculator-engine.js");
+/* harmony import */ var _components_calculator_patterns_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/calculator-patterns.js */ "./src/js/components/calculator-patterns.js");
+
 
 
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".calculator__form");
   if (form) {
-    (0,_components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_2__.initCalculator)(form);
+    const calculatorApi = (0,_components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_2__.initCalculator)(form);
+    (0,_components_calculator_patterns_js__WEBPACK_IMPORTED_MODULE_3__.initCalculatorPatterns)(form, calculatorApi);
   }
 });
 })();
