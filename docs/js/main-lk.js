@@ -2364,6 +2364,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   defaultConfig: () => (/* binding */ defaultConfig),
 /* harmony export */   fetchRewardsStats: () => (/* binding */ fetchRewardsStats),
 /* harmony export */   initCalculator: () => (/* binding */ initCalculator),
+/* harmony export */   resolveTier: () => (/* binding */ resolveTier),
 /* harmony export */   resolveTierPrice: () => (/* binding */ resolveTierPrice)
 /* harmony export */ });
 /* harmony import */ var _loan_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./loan.js */ "./src/js/components/loan.js");
@@ -2376,7 +2377,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 window.INFINITY_ENV = {
-  OURPOOL_ACCOUNT: "your-account",
+  OURPOOL_ACCOUNT: "olegkarpun",
   OURPOOL_TOKEN: "a09be072-d684-4f73-afa1-39f745d98f0c"
 };
 // Конфиг по умолчанию: можно переопределить через data-атрибуты
@@ -2391,7 +2392,7 @@ const defaultConfig = {
     // Стоимость за 1 TH по диапазонам мощности (из ТЗ/CSV)
     // Пожалуйста, передайте актуальные значения в init(options)
     tiers: [{
-      min: 1,
+      min: 8,
       max: 188,
       pricePerTh: 27
     }, {
@@ -2430,11 +2431,14 @@ function initCalculator(formEl, options = {}) {
   if (!formEl) return;
   const config = mergeConfigFromDom(defaultConfig, formEl, options);
   const remoteConfigUrl = formEl.getAttribute("data-config-url");
+  const ourPoolCfg = config.ourPool || {};
 
   // Биндим контролы (ползунок + input) по существующей разметке
-  bindControl(formEl, "#loanAmountInput", "#loanAmountSlider");
+  // Сумма будет инициализирована динамически на основе мощности
   bindControl(formEl, "#loanPowerInput", "#loanPowerSlider");
-  bindControl(formEl, "#loanCourseInput", "#loanCourseSlider");
+  // Слайдер курса будет инициализирован после загрузки курса из API
+  // bindControl(formEl, "#loanCourseInput", "#loanCourseSlider");
+
   (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.setupCurrencySuffix)(formEl);
 
   // Валюты и курс BTC
@@ -2447,22 +2451,93 @@ function initCalculator(formEl, options = {}) {
   const courseInput = query(formEl, "#loanCourseInput");
   const pricePerThEl = query(formEl, ".calculator__info span");
   const resetBtn = query(formEl, ".course__btn");
+  const buyButton = query(formEl, ".calculator__btn");
   const periodTabs = Array.from(formEl.querySelectorAll('input[name="доходность"]'));
 
-  // Обновление курса BTC в поле при загрузке из API
+  // Флаг для отслеживания инициализации слайдера суммы (используем объект для передачи по ссылке)
+  const amountSliderInitialized = {
+    current: false
+  };
+
+  // Обновление курса BTC в поле при загрузке из API и при изменении валюты
   if (currencyCtl) {
+    let courseSliderInitialized = false;
     currencyCtl.onChange(state => {
-      if (Number.isFinite(state.btcUsd) && courseInput) {
-        courseInput.value = String(Math.round(state.btcUsd));
+      // Обновляем курс при загрузке из API
+      if (Number.isFinite(state.btcUsd) && courseInput && state.btcUsd > 0) {
+        // Конвертируем в обратное значение: 1 доллар = X биткоина
+        const btcPerUsd = 1 / state.btcUsd;
+        const btcPerUsdFormatted = btcPerUsd.toFixed(9);
+        courseInput.value = btcPerUsdFormatted;
         courseInput.setAttribute("value", courseInput.value);
         (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
-        // Обновляем слайдер курса, если он есть
+
+        // Настраиваем диапазон слайдера курса (80%-120% от текущего курса)
+        // Для обратного значения: если курс 109500, то обратное = 0.000009132
+        // Диапазон 80%-120%: 0.000007306 - 0.000010958
         const courseSlider = query(formEl, "#loanCourseSlider");
-        if (courseSlider?.noUiSlider) {
-          courseSlider.noUiSlider.set(state.btcUsd);
+        if (courseSlider && state.btcUsd > 0) {
+          const minBtcPerUsd = (1 / (state.btcUsd * 1.2)).toFixed(9); // 120% курса = меньше BTC за доллар
+          const maxBtcPerUsd = (1 / (state.btcUsd * 0.8)).toFixed(9); // 80% курса = больше BTC за доллар
+
+          courseInput.setAttribute("min", minBtcPerUsd);
+          courseInput.setAttribute("max", maxBtcPerUsd);
+          courseInput.setAttribute("step", "0.000000001"); // Шаг 0.000000001 (9 знаков)
+
+          if (!courseSliderInitialized) {
+            // Убеждаемся, что значение установлено правильно перед инициализацией
+            // Устанавливаем значение с точностью до 9 знаков
+            courseInput.value = btcPerUsdFormatted;
+            courseInput.setAttribute("value", btcPerUsdFormatted);
+
+            // Инициализируем слайдер курса
+            (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.initRangeControl)({
+              input: courseInput,
+              slider: courseSlider
+            });
+
+            // После инициализации проверяем и восстанавливаем точное значение
+            // (на случай если initRangeControl изменил его из-за округления)
+            const currentValue = parseFloat(courseInput.value);
+            const expectedValue = parseFloat(btcPerUsdFormatted);
+            if (Math.abs(currentValue - expectedValue) > 0.0000000001) {
+              courseInput.value = btcPerUsdFormatted;
+              courseInput.setAttribute("value", btcPerUsdFormatted);
+              (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
+            }
+            courseSliderInitialized = true;
+          } else {
+            // Обновляем диапазон существующего слайдера
+            if (courseSlider.noUiSlider) {
+              const minNum = parseFloat(minBtcPerUsd);
+              const maxNum = parseFloat(maxBtcPerUsd);
+              const currentNum = parseFloat(btcPerUsdFormatted);
+              courseSlider.noUiSlider.updateOptions({
+                range: {
+                  min: minNum,
+                  max: maxNum
+                },
+                step: 0.000000001,
+                format: {
+                  to: function (value) {
+                    // Сохраняем точность до 9 знаков с помощью Math.round
+                    const multiplier = 1000000000; // 10^9
+                    return Math.round(value * multiplier) / multiplier;
+                  },
+                  from: function (value) {
+                    return parseFloat(value);
+                  }
+                }
+              });
+
+              // Устанавливаем значение с точностью до 9 знаков
+              courseSlider.noUiSlider.set(currentNum);
+            }
+          }
         }
-        render();
       }
+      // Всегда обновляем калькулятор при изменении состояния (курс или валюта)
+      render();
     });
   }
 
@@ -2470,15 +2545,24 @@ function initCalculator(formEl, options = {}) {
   if (resetBtn && currencyCtl) {
     resetBtn.addEventListener("click", async () => {
       const state = currencyCtl.getState();
-      if (Number.isFinite(state.btcUsd)) {
+      if (Number.isFinite(state.btcUsd) && state.btcUsd > 0) {
+        // Конвертируем в обратное значение: 1 доллар = X биткоина
+        const btcPerUsd = (1 / state.btcUsd).toFixed(9);
+        const btcPerUsdNum = parseFloat(btcPerUsd);
         if (courseInput) {
-          courseInput.value = String(Math.round(state.btcUsd));
-          courseInput.setAttribute("value", courseInput.value);
+          // Устанавливаем значение с точностью до 9 знаков
+          courseInput.value = btcPerUsd;
+          courseInput.setAttribute("value", btcPerUsd);
           (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
         }
         const courseSlider = query(formEl, "#loanCourseSlider");
         if (courseSlider?.noUiSlider) {
-          courseSlider.noUiSlider.set(state.btcUsd);
+          courseSlider.noUiSlider.set(btcPerUsdNum);
+        }
+
+        // Обновляем отображение курса
+        if (currencyCtl) {
+          currencyCtl.updateCourseView?.(state.btcUsd);
         }
         render();
       }
@@ -2503,15 +2587,60 @@ function initCalculator(formEl, options = {}) {
     if (isUpdating) return;
     isUpdating = true;
     const powerTh = toNumber(powerInput?.value);
-    const amountUsd = toNumber(priceInput?.value);
-
-    // Базово расчет в USD. Если знаем текущий курс BTC в USD — используем его,
-    // иначе — берем то, что ввёл пользователь в поле курса.
     const ctlState = currencyCtl?.getState?.() || {};
-    const btcUsd = Number.isFinite(ctlState.btcUsd) ? ctlState.btcUsd : toNumber(courseInput?.value);
-    const btcPrice = btcUsd;
+    const currency = ctlState.currency || "dollar";
+    const rates = ctlState.usdRates || {
+      USD: 1
+    };
+    // Читаем сумму из инпута и конвертируем в USD в зависимости от выбранной валюты
+    const rawAmount = toNumber(priceInput?.value);
+    const amountUsd = currency === "dollar" ? rawAmount : currency === "euro" ? rates?.EUR ? rawAmount / rates.EUR : rawAmount : currency === "ruble" ? rates?.RUB ? rawAmount / rates.RUB : rawAmount : rawAmount;
+
+    // Получаем курс BTC: приоритет у значения из поля курса (если пользователь изменил),
+    // иначе используем курс из API
+    // В поле хранится обратное значение: 1 доллар = X биткоина
+    const ctlState2 = ctlState;
+
+    // Читаем значение напрямую из поля, чтобы сохранить точность для маленьких чисел
+    const courseInputRaw = courseInput?.value?.trim() || "";
+    const courseInputValue = courseInputRaw ? parseFloat(courseInputRaw) : 0;
+
+    // Конвертируем обратное значение в btcUsd: если в поле 0.000009132, то btcUsd = 1 / 0.000009132 = 109500
+    let btcUsd;
+    if (Number.isFinite(courseInputValue) && courseInputValue > 0) {
+      // Значение из поля - это обратное значение, конвертируем обратно
+      btcUsd = 1 / courseInputValue;
+    } else if (Number.isFinite(ctlState.btcUsd) && ctlState.btcUsd > 0) {
+      // Используем курс из API
+      btcUsd = ctlState.btcUsd;
+    } else {
+      // Fallback к примерному курсу если нет данных
+      btcUsd = 109500;
+    }
+    const btcPrice = btcUsd > 0 ? btcUsd : 109500; // Fallback к примерному курсу если нет данных
+
     let finalPowerTh = powerTh;
     let finalAmountUsd = amountUsd;
+
+    // Обновляем границы суммы на основе текущей мощности
+    const hasValidTier = updateAmountBounds(formEl, finalPowerTh, config.pricing.tiers, amountSliderInitialized, null, {
+      currency,
+      rates
+    });
+
+    // Обрабатываем диапазон 2821-3760 TH (нужен менеджер)
+    if (finalPowerTh > 2820 && finalPowerTh <= 3760) {
+      if (buyButton) {
+        buyButton.textContent = "Связаться для индивидуальных условий";
+        buyButton.classList.add("calculator__btn--contact");
+      }
+      // Продолжаем расчеты для показа доходности, но не показываем сумму
+    } else {
+      if (buyButton) {
+        buyButton.textContent = "Купить";
+        buyButton.classList.remove("calculator__btn--contact");
+      }
+    }
 
     // Если источник изменения - сумма, пересчитываем мощность
     if (source === "amount" && amountUsd > 0) {
@@ -2528,60 +2657,77 @@ function initCalculator(formEl, options = {}) {
             powerSlider.noUiSlider.set(finalPowerTh);
           }
         }
+        // Обновляем границы суммы, так как мощность могла измениться (переход в другой тир)
+        // Передаем текущую сумму как целевое значение
+        updateAmountBounds(formEl, finalPowerTh, config.pricing.tiers, amountSliderInitialized, amountUsd, {
+          currency,
+          rates
+        });
+        finalAmountUsd = amountUsd; // Используем исходную сумму
       }
-    } else if (source === "power" && powerTh > 0) {
+    } else if (source === "power" && powerTh > 0 && hasValidTier) {
       // Если источник изменения - мощность, пересчитываем сумму
       const tierPrice = resolveTierPrice(powerTh, config.pricing.tiers);
-      finalAmountUsd = powerTh * tierPrice;
-      if (priceInput) {
-        priceInput.value = String(Math.round(finalAmountUsd));
-        priceInput.setAttribute("value", priceInput.value);
-        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
-        // Обновляем слайдер суммы
-        const amountSlider = query(formEl, "#loanAmountSlider");
-        if (amountSlider?.noUiSlider) {
-          amountSlider.noUiSlider.set(finalAmountUsd);
-        }
+      if (tierPrice !== null) {
+        finalAmountUsd = Math.round(powerTh * tierPrice);
+        // Обновляем границы и значение суммы
+        updateAmountBounds(formEl, powerTh, config.pricing.tiers, amountSliderInitialized, finalAmountUsd, {
+          currency,
+          rates
+        });
       }
     } else {
       // Автоматический расчет: приоритет мощности
-      if (powerTh > 0) {
+      if (powerTh > 0 && hasValidTier) {
         const tierPrice = resolveTierPrice(powerTh, config.pricing.tiers);
-        finalAmountUsd = powerTh * tierPrice;
-        if (priceInput) {
-          priceInput.value = String(Math.round(finalAmountUsd));
-          priceInput.setAttribute("value", priceInput.value);
-          (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
-          const amountSlider = query(formEl, "#loanAmountSlider");
-          if (amountSlider?.noUiSlider) {
-            amountSlider.noUiSlider.set(finalAmountUsd);
-          }
+        if (tierPrice !== null) {
+          finalAmountUsd = Math.round(powerTh * tierPrice);
+          // Обновляем границы и значение суммы
+          updateAmountBounds(formEl, powerTh, config.pricing.tiers, amountSliderInitialized, finalAmountUsd, {
+            currency,
+            rates
+          });
         }
+      } else if (powerTh > 0) {
+        // Если мощность есть, но нет валидного тира, просто обновляем границы (скроет поле)
+        updateAmountBounds(formEl, powerTh, config.pricing.tiers, amountSliderInitialized, null, {
+          currency,
+          rates
+        });
       }
     }
     const tierPrice = resolveTierPrice(finalPowerTh, config.pricing.tiers);
 
-    // Обновляем цену за 1 TH
-    if (pricePerThEl) {
+    // Обновляем цену за 1 TH (только если есть валидный тир)
+    if (pricePerThEl && tierPrice !== null) {
       const currency = ctlState.currency || "dollar";
       const rates = ctlState.usdRates || {
         USD: 1
       };
       const priceInCurrency = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(tierPrice, currency, rates);
       pricePerThEl.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(priceInCurrency, currency);
+    } else if (pricePerThEl && finalPowerTh > 2820) {
+      // Для диапазона 2821-3760 скрываем или показываем сообщение
+      pricePerThEl.textContent = "Индивидуальные условия";
     }
+
+    // Всегда вычисляем доходность, даже для диапазона 2821-3760
+    // (курс BTC влияет на доходность независимо от диапазона мощности)
+
     const metrics = computeProfitability({
       powerTh: finalPowerTh,
       btcPrice,
       config
     });
     if (summary) {
+      // Для диапазона 2821-3760 используем 0 как стоимость пакета
+      const packageCost = tierPrice !== null && finalPowerTh <= 2820 ? finalAmountUsd : 0;
       updateSummary(summary, metrics, {
         currency: ctlState.currency || "dollar",
         rates: ctlState.usdRates || {
           USD: 1
         },
-        packageCostUsd: finalAmountUsd,
+        packageCostUsd: packageCost,
         selectedPeriod: selectedPeriod
       });
     }
@@ -2590,33 +2736,74 @@ function initCalculator(formEl, options = {}) {
 
   // Подписки на изменения с указанием источника
   if (powerInput) {
-    powerInput.addEventListener("input", () => render("power"));
-    powerInput.addEventListener("change", () => render("power"));
-    powerInput.addEventListener("slider-update", () => render("power"));
+    powerInput.addEventListener("input", () => {
+      if (!isUpdating) render("power");
+    });
+    powerInput.addEventListener("change", () => {
+      if (!isUpdating) render("power");
+    });
+    powerInput.addEventListener("slider-update", () => {
+      if (!isUpdating) render("power");
+    });
   }
   if (priceInput) {
-    priceInput.addEventListener("input", () => render("amount"));
-    priceInput.addEventListener("change", () => render("amount"));
-    priceInput.addEventListener("slider-update", () => render("amount"));
+    priceInput.addEventListener("input", () => {
+      if (!isUpdating) render("amount");
+    });
+    priceInput.addEventListener("change", () => {
+      if (!isUpdating) render("amount");
+    });
+    priceInput.addEventListener("slider-update", e => {
+      // Предотвращаем циклические обновления при программном обновлении слайдера
+      if (!isUpdating && e.detail?.source !== "programmatic") {
+        render("amount");
+      }
+    });
   }
   if (courseInput) {
-    courseInput.addEventListener("input", () => render("auto"));
-    courseInput.addEventListener("change", () => render("auto"));
-    courseInput.addEventListener("slider-update", () => render("auto"));
+    const updateCourseDisplay = () => {
+      // Читаем значение напрямую из поля, чтобы сохранить точность
+      const rawValue = courseInput.value.trim();
+      if (!rawValue) return;
+
+      // Парсим значение, сохраняя точность
+      const courseValue = parseFloat(rawValue);
+      if (!Number.isFinite(courseValue) || courseValue <= 0) return;
+
+      // Форматируем значение с 9 знаками после запятой
+      const formattedValue = courseValue.toFixed(9);
+      // Обновляем только если значение изменилось (чтобы избежать циклов)
+      if (courseInput.value !== formattedValue && !isUpdating) {
+        courseInput.value = formattedValue;
+        courseInput.setAttribute("value", formattedValue);
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
+      }
+      if (!isUpdating) render("auto");
+    };
+    courseInput.addEventListener("input", updateCourseDisplay);
+    courseInput.addEventListener("change", updateCourseDisplay);
+    courseInput.addEventListener("slider-update", updateCourseDisplay);
   }
 
   // При старте: подгружаем удалённую конфигурацию, если указана
-  if (remoteConfigUrl) {
-    loadRemoteConfig(remoteConfigUrl).then(remote => {
-      if (remote && typeof remote === "object") {
-        deepMerge(config, remote);
-      }
-    }).catch(() => {}).finally(() => {
-      render();
-    });
-  } else {
+  // Параллельно тянем статистику из OurPool (если заданы account и token)
+  const remoteCfgPromise = remoteConfigUrl ? loadRemoteConfig(remoteConfigUrl).then(remote => {
+    if (remote && typeof remote === "object") {
+      deepMerge(config, remote);
+    }
+  }).catch(() => {}) : Promise.resolve();
+  const ourPoolStatsPromise = ourPoolCfg?.account && ourPoolCfg?.token ? fetchRewardsStats({
+    baseUrl: ourPoolCfg.baseUrl || "https://ourpool.io",
+    account: ourPoolCfg.account,
+    token: ourPoolCfg.token
+  }).then(stats => {
+    if (stats) {
+      applyRewardsStatsToConfig(config, stats);
+    }
+  }).catch(() => {}) : Promise.resolve();
+  Promise.allSettled([remoteCfgPromise, ourPoolStatsPromise]).finally(() => {
     render();
-  }
+  });
   return {
     render,
     config
@@ -2641,6 +2828,25 @@ async function fetchRewardsStats({
 
 // --- Расчёты ---
 
+// Нестрогая мапа статистики OurPool в конфиг калькулятора
+function applyRewardsStatsToConfig(config, stats) {
+  if (!config || !stats) return;
+  // Ищем btcPerThPerDay
+  const btcPerThCandidates = [stats.btcPerThPerDay, stats.btc_per_th_per_day, stats.btc_per_th_day, stats.perThPerDayBtc, stats.per_th_per_day_btc, stats?.daily?.btcPerTh, stats?.daily?.btc_per_th].filter(v => typeof v === "number" && isFinite(v) && v > 0);
+  if (btcPerThCandidates.length) {
+    config.yield.btcPerThPerDay = btcPerThCandidates[0];
+  }
+  // Ищем uptime в процентах (допускаем 0..1 и 0..100)
+  const uptimeCandidates = [stats.uptimePercent, stats.uptime_percent, stats.uptime, stats.uptime_avg, stats?.daily?.uptime].filter(v => typeof v === "number" && isFinite(v) && v >= 0);
+  if (uptimeCandidates.length) {
+    let u = uptimeCandidates[0];
+    // Если 0..1, конвертируем в проценты
+    if (u <= 1) u = u * 100;
+    // Нормализуем в 0..100
+    u = Math.max(0, Math.min(100, u));
+    config.yield.uptimePercent = u;
+  }
+}
 function computeProfitability({
   powerTh,
   btcPrice,
@@ -2684,8 +2890,17 @@ function resolveTierPrice(powerTh, tiers) {
   for (const t of tiers) {
     if (powerTh >= t.min && powerTh <= t.max) return t.pricePerTh;
   }
-  // Выше верхнего диапазона — нужен менеджер
-  return tiers[tiers.length - 1]?.pricePerTh ?? 0;
+  // Выше верхнего диапазона (2821-3760) — нужен менеджер
+  return null;
+}
+
+// Получить текущий тир по мощности
+function resolveTier(powerTh, tiers) {
+  for (const t of tiers) {
+    if (powerTh >= t.min && powerTh <= t.max) return t;
+  }
+  // Выше верхнего диапазона (2821-3760)
+  return null;
 }
 
 // Обратный расчет: из суммы получить мощность
@@ -2732,34 +2947,179 @@ function bindControl(formEl, inputSel, sliderSel) {
     slider
   });
 }
+
+// Обновить границы и шаг для поля суммы на основе текущей мощности
+function updateAmountBounds(formEl, powerTh, tiers, initializedRef, targetAmount = null, currencyCtx = null) {
+  const priceInput = query(formEl, "#loanAmountInput");
+  const amountSlider = query(formEl, "#loanAmountSlider");
+  if (!priceInput || !amountSlider) return false;
+  const tier = resolveTier(powerTh, tiers);
+
+  // Находим родительский элемент calculator__field для скрытия/показа
+  const fieldElement = priceInput.closest(".calculator__field");
+
+  // Если мощность выше 2820 TH, скрываем поле суммы и показываем кнопку "Связаться"
+  if (!tier || powerTh > 2820) {
+    if (fieldElement) {
+      fieldElement.style.display = "none";
+    }
+    if (amountSlider) {
+      amountSlider.style.display = "none";
+    }
+    // Уничтожаем слайдер, если он был инициализирован
+    if (amountSlider?.noUiSlider) {
+      amountSlider.noUiSlider.destroy();
+      amountSlider.noUiSlider = null;
+      initializedRef.current = false;
+    }
+    return false;
+  }
+
+  // Показываем поле суммы
+  if (fieldElement) {
+    fieldElement.style.display = "";
+  }
+  if (amountSlider) {
+    amountSlider.style.display = "";
+  }
+
+  // Вычисляем границы суммы на основе диапазона тира
+  const minAmountUsd = Math.round(tier.min * tier.pricePerTh);
+  const maxAmountUsd = Math.round(tier.max * tier.pricePerTh);
+  const stepUsd = tier.pricePerTh; // Шаг равен цене за 1 TH
+
+  // Конвертация для отображения в выбранной валюте
+  const currency = currencyCtx?.currency || "dollar";
+  const rates = currencyCtx?.rates || {
+    USD: 1
+  };
+  const minAmount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(minAmountUsd, currency, rates);
+  const maxAmount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(maxAmountUsd, currency, rates);
+  const step = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(stepUsd, currency, rates);
+
+  // Обновляем атрибуты input
+  priceInput.setAttribute("min", String(minAmount));
+  priceInput.setAttribute("max", String(maxAmount));
+  priceInput.setAttribute("step", String(step));
+
+  // Определяем целевое значение суммы
+  let amountValueUsd = targetAmount;
+  if (amountValueUsd === null) {
+    const currentValue = toNumber(priceInput.value);
+    // currentValue в отображаемой валюте → конвертируем в USD для внутренней логики
+    const currentValueUsd = currency === "dollar" ? currentValue : currency === "euro" ? rates?.EUR ? currentValue / rates.EUR : currentValue : currency === "ruble" ? rates?.RUB ? currentValue / rates.RUB : currentValue : currentValue;
+    const minUsd = minAmountUsd;
+    const maxUsd = maxAmountUsd;
+    if (currentValueUsd && currentValueUsd >= minUsd && currentValueUsd <= maxUsd) {
+      amountValueUsd = currentValueUsd;
+    } else {
+      // Устанавливаем значение по умолчанию (текущая мощность * цена) в USD
+      amountValueUsd = Math.round(powerTh * tier.pricePerTh);
+    }
+  }
+
+  // Ограничиваем значение границами
+  amountValueUsd = Math.max(minAmountUsd, Math.min(maxAmountUsd, Math.round(amountValueUsd)));
+  const amountValue = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(amountValueUsd, currency, rates);
+
+  // Обновляем слайдер, если он уже инициализирован
+  if (amountSlider.noUiSlider) {
+    try {
+      // Получаем текущее значение слайдера
+      const currentSliderValue = parseFloat(amountSlider.noUiSlider.get());
+
+      // Обновляем границы слайдера
+      amountSlider.noUiSlider.updateOptions({
+        range: {
+          min: minAmount,
+          max: maxAmount
+        },
+        step: step
+      });
+
+      // Проверяем, нужно ли обновить значение
+      // Обновляем, если:
+      // 1. Значение было явно задано (targetAmount !== null)
+      // 2. Текущее значение вне новых границ
+      // 3. Текущее значение значительно отличается от целевого
+      const shouldUpdateValue = targetAmount !== null && (currentSliderValue < minAmount || currentSliderValue > maxAmount || Math.abs(currentSliderValue - amountValue) > 1);
+      if (shouldUpdateValue) {
+        // Обновляем значение слайдера
+        // Флаг isUpdating предотвратит циклические обновления
+        amountSlider.noUiSlider.set(amountValue);
+      }
+    } catch (e) {
+      // Если не удалось обновить, пересоздаем слайдер
+      console.warn("Failed to update slider options, recreating:", e);
+      amountSlider.noUiSlider.destroy();
+      amountSlider.noUiSlider = null;
+      initializedRef.current = false;
+      // Продолжаем инициализацию ниже
+    }
+  }
+
+  // Инициализируем слайдер, если он еще не инициализирован
+  if (!amountSlider.noUiSlider && tier) {
+    // Устанавливаем значение в input перед инициализацией
+    priceInput.value = String(amountValue);
+    priceInput.setAttribute("value", priceInput.value);
+    (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+
+    // Инициализируем слайдер
+    (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.initRangeControl)({
+      input: priceInput,
+      slider: amountSlider
+    });
+    initializedRef.current = true;
+  } else if (amountSlider.noUiSlider && targetAmount !== null) {
+    // Обновляем значение в input, если оно было задано явно
+    priceInput.value = String(amountValue);
+    priceInput.setAttribute("value", priceInput.value);
+    (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+  }
+  return true;
+}
 function updateSummary(root, metrics, viewCtx) {
   const profitEl = root.querySelector(".calculator__summary-profit");
   const costEl = root.querySelector(".calculator__summary-cost");
   const annuallyEl = root.querySelector(".calculator__summary-annually");
   const period = viewCtx?.selectedPeriod || "day";
   const periodData = metrics?.[period];
-  if (profitEl && periodData?.btc != null) {
-    profitEl.textContent = `${periodData.btc} BTC`;
+
+  // Показываем клиенту чистую прибыль в BTC
+  if (profitEl && periodData?.accrualBtc != null) {
+    profitEl.textContent = `${periodData.accrualBtc} BTC`;
   }
   if (costEl && viewCtx) {
     const {
       currency,
-      rates,
-      packageCostUsd
+      rates
     } = viewCtx;
-    const amount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(packageCostUsd, currency, rates);
-    costEl.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(amount, currency);
+    // Показываем клиенту чистую прибыль в валюте интерфейса
+    const netUsd = periodData && typeof periodData.accrualUsd === "number" ? periodData.accrualUsd : null;
+    if (netUsd != null) {
+      const amount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(netUsd, currency, rates);
+      costEl.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(amount, currency);
+    } else {
+      costEl.textContent = "-";
+    }
   }
 
   // Окупаемость в процентах годовых
+  // Используем чистую прибыль (accrualUsd), а не валовой доход (usd)
   if (annuallyEl && viewCtx && periodData) {
     const {
       packageCostUsd
     } = viewCtx;
-    if (packageCostUsd > 0) {
-      const annualReturn = periodData.usd / packageCostUsd * 100;
-      const annualized = period === "day" ? annualReturn * 365 : period === "week" ? annualReturn * 52 : period === "month" ? annualReturn * 12 : annualReturn;
+    if (packageCostUsd > 0 && periodData.accrualUsd != null) {
+      // Рассчитываем доходность на основе чистой прибыли за выбранный период
+      const periodReturn = periodData.accrualUsd / packageCostUsd * 100;
+      // Годовых (annualized): умножаем на количество периодов в году
+      const annualized = period === "day" ? periodReturn * 365 : period === "week" ? periodReturn * 52 : period === "month" ? periodReturn * 12 : periodReturn;
       annuallyEl.textContent = `${Math.round(annualized)}% годовых`;
+    } else if (annuallyEl) {
+      // Если нет стоимости пакета или данных, показываем прочерк
+      annuallyEl.textContent = "-";
     }
   }
 }
@@ -2858,11 +3218,21 @@ function initCurrencyController(formEl, options = {}) {
   const notify = () => listeners.forEach(cb => cb({
     ...state
   }));
-  const updateCourseView = () => {
+  const updateCourseView = (btcUsdValue = null) => {
     const out = formEl.querySelector(".course__value");
-    if (!out || state.btcUsd == null || !state.usdRates) return;
-    const value = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.convertFromUsd)(state.btcUsd, state.currency, state.usdRates);
-    out.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.formatCurrency)(value, state.currency);
+    if (!out) return;
+
+    // Используем переданное значение или значение из state
+    const btcUsd = btcUsdValue !== null ? btcUsdValue : state.btcUsd;
+    if (btcUsd == null || btcUsd <= 0) return;
+
+    // Показываем обратное значение: 1 доллар = X биткоина
+    // btcUsd - это стоимость 1 BTC в USD
+    // 1 USD = 1/btcUsd BTC
+    const btcPerUsd = 1 / btcUsd;
+
+    // Форматируем с точностью до 9 знаков после запятой
+    out.textContent = btcPerUsd.toFixed(9);
   };
   const load = async () => {
     try {
@@ -2893,6 +3263,9 @@ function initCurrencyController(formEl, options = {}) {
       return {
         ...state
       };
+    },
+    updateCourseView(btcUsdValue) {
+      updateCourseView(btcUsdValue);
     }
   };
 }
@@ -2921,9 +3294,13 @@ function convertFromUsd(amountUsd, currency, rates) {
   if (!Number.isFinite(amountUsd)) return 0;
   switch (currency) {
     case "ruble":
-      return amountUsd * (rates?.RUB ?? 0);
+      // Если курс не загружен, возвращаем исходное значение
+      if (!rates || !rates.RUB || rates.RUB === 0) return amountUsd;
+      return amountUsd * rates.RUB;
     case "euro":
-      return amountUsd * (rates?.EUR ?? 0);
+      // Если курс не загружен, возвращаем исходное значение
+      if (!rates || !rates.EUR || rates.EUR === 0) return amountUsd;
+      return amountUsd * rates.EUR;
     case "dollar":
     default:
       return amountUsd;
@@ -2992,35 +3369,112 @@ function initRangeControl({
   const min = readNumberAttribute(input, "min", readNumberAttribute(slider, "data-min", 0));
   const max = readNumberAttribute(input, "max", readNumberAttribute(slider, "data-max", min + 1));
   const step = resolveStep(input);
-  const precision = getPrecision(step);
+  // Для шага читаем из атрибута напрямую, чтобы сохранить точность
+  const stepAttr = input.getAttribute("step");
+  const precision = stepAttr && stepAttr !== "any" ? stepAttr.includes(".") ? stepAttr.split(".")[1].length : 0 : getPrecision(step);
   const clamp = value => Math.min(Math.max(value, min), max);
   const initialCandidate = readInitialValue(input);
   const startValue = clamp(Number.isFinite(initialCandidate) ? initialCandidate : min);
   setInputValue(input, startValue, precision);
-  nouislider__WEBPACK_IMPORTED_MODULE_0__["default"].create(slider, {
+
+  // Для поля курса биткоина настраиваем форматирование значений
+  const isCourseInput = input.id === "loanCourseInput" || input.getAttribute("step") && parseFloat(input.getAttribute("step")) === 0.000000001;
+
+  // Для поля курса используем минимальный шаг на основе текущего значения
+  // Шаг должен быть достаточно маленьким, чтобы не терять точность
+  let actualStep = step;
+  if (isCourseInput) {
+    // Для очень маленьких чисел используем минимальный шаг
+    // который позволит точно позиционировать до 9 знака
+    actualStep = 0.000000001; // 1 нанобиткоин - минимальный шаг
+  }
+  const sliderOptions = {
     start: [startValue],
     range: {
       min,
       max
     },
-    step,
+    step: actualStep,
     connect: "lower"
-  });
-  slider.noUiSlider.on("update", values => {
-    const numericValue = parseFloat(values[0]);
-    if (!Number.isFinite(numericValue)) {
+  };
+
+  // Для поля курса добавляем форматирование для правильного отображения
+  if (isCourseInput) {
+    sliderOptions.format = {
+      to: function (value) {
+        // Возвращаем значение с точностью до 9 знаков, но не округляем раньше
+        // Используем Math.round для точного округления до 9 знака
+        const multiplier = 1000000000; // 10^9
+        const rounded = Math.round(value * multiplier) / multiplier;
+        return rounded;
+      },
+      from: function (value) {
+        // Парсим значение обратно, сохраняя точность
+        return parseFloat(value);
+      }
+    };
+  }
+  nouislider__WEBPACK_IMPORTED_MODULE_0__["default"].create(slider, sliderOptions);
+  slider.noUiSlider.on("update", (values, handle, unencoded, tap, positions) => {
+    // Для поля курса используем unencoded значение для максимальной точности
+    // unencoded - это значение до применения форматирования (если доступно)
+    let rawValue;
+    if (isCourseInput) {
+      // Для поля курса пытаемся использовать unencoded, если доступно
+      if (unencoded && Array.isArray(unencoded) && unencoded.length > 0) {
+        rawValue = unencoded[0];
+      } else {
+        // Если unencoded недоступно, используем значение из слайдера
+        // и округляем его до 9 знаков с помощью Math.round для точности
+        const sliderValue = parseFloat(String(values[0]));
+        const multiplier = 1000000000; // 10^9
+        rawValue = Math.round(sliderValue * multiplier) / multiplier;
+      }
+    } else {
+      // Для других полей используем обычное значение
+      rawValue = parseFloat(String(values[0]));
+    }
+    if (!Number.isFinite(rawValue) || rawValue <= 0) {
       return;
     }
-    setInputValue(input, numericValue, precision);
-    // Триггерим кастомное событие для синхронизации с калькулятором
-    input.dispatchEvent(new CustomEvent("slider-update", {
-      detail: {
-        value: numericValue
-      }
-    }));
+
+    // Для поля курса форматируем значение напрямую с точностью до 9 знаков
+    if (isCourseInput) {
+      // Используем Math.round для точного округления до 9 знака
+      const multiplier = 1000000000; // 10^9
+      const rounded = Math.round(rawValue * multiplier) / multiplier;
+      const formatted = rounded.toFixed(9);
+      input.value = formatted;
+      input.setAttribute("value", formatted);
+      updateFilledState(input);
+
+      // Триггерим кастомное событие с точным значением
+      input.dispatchEvent(new CustomEvent("slider-update", {
+        detail: {
+          value: rounded
+        }
+      }));
+    } else {
+      const actualPrecision = precision;
+      setInputValue(input, rawValue, actualPrecision);
+
+      // Триггерим кастомное событие для синхронизации с калькулятором
+      input.dispatchEvent(new CustomEvent("slider-update", {
+        detail: {
+          value: rawValue
+        }
+      }));
+    }
   });
   const syncSlider = value => {
-    slider.noUiSlider.set(clamp(value));
+    // Для поля курса округляем значение до 9 знаков перед установкой
+    if (isCourseInput) {
+      const multiplier = 1000000000; // 10^9
+      const rounded = Math.round(value * multiplier) / multiplier;
+      slider.noUiSlider.set(clamp(rounded));
+    } else {
+      slider.noUiSlider.set(clamp(value));
+    }
   };
   const handleInputChange = () => {
     const raw = input.value.trim();
@@ -3028,7 +3482,10 @@ function initRangeControl({
       updateFilledState(input);
       return;
     }
-    const numericValue = Number(raw);
+
+    // Для поля курса используем parseFloat для сохранения точности маленьких чисел
+    const isCourseInput = input.id === "loanCourseInput";
+    const numericValue = isCourseInput ? parseFloat(raw) : Number(raw);
     if (!Number.isFinite(numericValue)) {
       return;
     }
@@ -3061,6 +3518,38 @@ function resolveStep(input) {
 function getPrecision(step) {
   if (!Number.isFinite(step)) {
     return 0;
+  }
+
+  // Для очень маленьких чисел toString() может вернуть научную нотацию (например, "1e-9")
+  // В этом случае вычисляем precision из самого числа
+  if (step < 1 && step > 0) {
+    // Для чисел меньше 1 вычисляем количество знаков после запятой
+    // Умножаем на 10^9, чтобы получить целое число, и считаем нули
+    let precision = 0;
+    let temp = step;
+    while (temp < 1 && precision < 20) {
+      temp *= 10;
+      precision++;
+      // Проверяем, что следующая цифра не равна 0 (чтобы не считать лишние нули)
+      if (Math.floor(temp) > 0) {
+        break;
+      }
+    }
+    // Если число очень маленькое, используем альтернативный метод
+    if (precision >= 20 || temp >= 10) {
+      // Используем строковое представление из атрибута, если доступно
+      const stepString = step.toString();
+      if (stepString.includes("e-")) {
+        // Научная нотация: "1e-9" -> precision = 9
+        const match = stepString.match(/e-(\d+)/);
+        if (match) {
+          return parseInt(match[1], 10);
+        }
+      } else if (stepString.includes(".")) {
+        return stepString.split(".")[1].length;
+      }
+    }
+    return precision;
   }
   const stepString = step.toString();
   if (!stepString.includes(".")) {
@@ -3097,7 +3586,10 @@ function formatValue(value, precision) {
   if (precision === 0) {
     return String(Math.round(value));
   }
-  return Number(value).toFixed(precision);
+
+  // Используем toFixed для форматирования с нужной точностью
+  // toFixed всегда работает корректно для любого числа, включая очень маленькие
+  return value.toFixed(precision);
 }
 function setupCurrencySuffix(form) {
   const amountInput = form.querySelector("#loanAmountInput");
@@ -3164,8 +3656,10 @@ __webpack_require__.r(__webpack_exports__);
 
 const DEFAULTS = {
   coinpaprikaTickerUrl: "https://api.coinpaprika.com/v1/tickers/btc-bitcoin",
-  fiatRatesUrl: "https://api.exchangerate.host/latest?base=USD&symbols=EUR,RUB",
-  cacheTtlMs: 60_000
+  // Используем несколько источников для надежности
+  fiatRatesUrls: ["https://api.exchangerate-api.com/v4/latest/USD", "https://api.frankfurter.app/latest?from=USD&to=EUR,RUB", "https://api.exchangerate.host/latest?base=USD&symbols=EUR,RUB"],
+  // Уменьшаем время кеширования для более актуальных курсов (30 секунд)
+  cacheTtlMs: 30_000
 };
 const cache = new Map();
 function getCache(key) {
@@ -3195,29 +3689,130 @@ async function fetchBtcUsdPrice(overrides = {}) {
   setCache(url, price);
   return price;
 }
+
+// Попытка получить курсы из одного источника
+async function tryFetchRates(url) {
+  // Создаем AbortController для таймаута (совместимость со старыми браузерами)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(url, {
+      credentials: "omit",
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // Поддержка разных форматов API
+    let ratesObj = null;
+
+    // exchangerate-api.com: { rates: { EUR: 0.92, RUB: 92 } }
+    if (data?.rates && typeof data.rates === 'object') {
+      ratesObj = data.rates;
+    }
+    // exchangerate.host: { rates: { EUR: 0.92, RUB: 92 } }
+    else if (data?.result?.rates && typeof data.result.rates === 'object') {
+      ratesObj = data.result.rates;
+    }
+    // frankfurter.app: { rates: { EUR: 0.92, RUB: 92 } }
+    else if (data?.rates && typeof data.rates === 'object' && (data.rates.EUR || data.rates.RUB)) {
+      ratesObj = data.rates;
+    }
+    // Некоторые API могут возвращать напрямую в корне
+    else if ((data?.EUR || data?.RUB) && !data.rates) {
+      ratesObj = data;
+    }
+    if (!ratesObj) {
+      console.warn("Unknown API format:", url, data);
+      throw new Error("Unknown API format");
+    }
+    const eur = Number(ratesObj.EUR);
+    const rub = Number(ratesObj.RUB);
+
+    // Проверяем, что курсы валидны
+    if (!Number.isFinite(eur) || !Number.isFinite(rub)) {
+      throw new Error("Invalid exchange rates: non-finite values");
+    }
+
+    // Проверка разумности курсов (EUR обычно 0.8-1.2, RUB обычно 50-150)
+    // Эти проверки помогают отсеять неактуальные данные
+    if (eur < 0.5 || eur > 1.5) {
+      throw new Error(`EUR rate out of range: ${eur}`);
+    }
+    if (rub < 30 || rub > 200) {
+      throw new Error(`RUB rate out of range: ${rub}`);
+    }
+    return {
+      EUR: eur,
+      RUB: rub,
+      USD: 1
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    // Прокидываем ошибку дальше, но добавляем информацию об URL
+    if (error.name === 'AbortError') {
+      const timeoutError = new Error('Request timeout');
+      timeoutError.url = url;
+      throw timeoutError;
+    }
+    error.url = url;
+    throw error;
+  }
+}
 async function fetchUsdRates(overrides = {}) {
-  const url = overrides.fiatRatesUrl || DEFAULTS.fiatRatesUrl;
-  const cached = getCache(url);
+  const urls = overrides.fiatRatesUrls || overrides.fiatRatesUrl ? [overrides.fiatRatesUrl || overrides.fiatRatesUrls].flat() : DEFAULTS.fiatRatesUrls;
+
+  // Проверяем кеш по первому URL
+  const cacheKey = urls[0];
+  const cached = getCache(cacheKey);
   if (cached) return cached;
-  const res = await fetch(url, {
-    credentials: "omit"
-  });
-  if (!res.ok) throw new Error("Fiat rates fetch failed");
-  const data = await res.json();
-  const eur = Number(data?.rates?.EUR);
-  const rub = Number(data?.rates?.RUB);
-  const rates = {
-    EUR: eur,
-    RUB: rub,
+
+  // Пробуем получить курсы из разных источников по очереди
+  let lastError = null;
+  for (const url of urls) {
+    try {
+      const rates = await tryFetchRates(url);
+      // Кешируем успешный результат
+      setCache(cacheKey, rates);
+      return rates;
+    } catch (error) {
+      lastError = error;
+      console.warn(`Failed to fetch from ${url}:`, error.message);
+      // Продолжаем пробовать следующие источники
+      continue;
+    }
+  }
+
+  // Если все источники не сработали
+  console.error("All exchange rate APIs failed, using fallback rates");
+  console.error("Last error:", lastError);
+
+  // Возвращаем fallback с более актуальными значениями (обновить при необходимости)
+  // По состоянию на ноябрь 2024: EUR ~0.92, RUB ~92
+  const fallbackRates = {
+    EUR: 0.92,
+    RUB: 92,
     USD: 1
   };
-  setCache(url, rates);
-  return rates;
+  // Не кешируем fallback, чтобы при следующей попытке снова попробовать API
+  return fallbackRates;
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   fetchBtcUsdPrice,
   fetchUsdRates
 });
+
+/***/ }),
+
+/***/ "./src/js/components/tooltips.js":
+/*!***************************************!*\
+  !*** ./src/js/components/tooltips.js ***!
+  \***************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+
 
 /***/ })
 
@@ -3285,13 +3880,15 @@ var __webpack_exports__ = {};
   \***************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_loan_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/loan.js */ "./src/js/components/loan.js");
-/* harmony import */ var _components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/calculator-engine.js */ "./src/js/components/calculator-engine.js");
+/* harmony import */ var _components_tooltips_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/tooltips.js */ "./src/js/components/tooltips.js");
+/* harmony import */ var _components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/calculator-engine.js */ "./src/js/components/calculator-engine.js");
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".calculator__form");
   if (form) {
-    (0,_components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_1__.initCalculator)(form);
+    (0,_components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_2__.initCalculator)(form);
   }
 });
 })();

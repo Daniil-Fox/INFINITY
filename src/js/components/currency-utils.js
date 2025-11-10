@@ -4,9 +4,13 @@ export function convertFromUsd(amountUsd, currency, rates) {
   if (!Number.isFinite(amountUsd)) return 0;
   switch (currency) {
     case "ruble":
-      return amountUsd * (rates?.RUB ?? 0);
+      // Если курс не загружен, возвращаем исходное значение
+      if (!rates || !rates.RUB || rates.RUB === 0) return amountUsd;
+      return amountUsd * rates.RUB;
     case "euro":
-      return amountUsd * (rates?.EUR ?? 0);
+      // Если курс не загружен, возвращаем исходное значение
+      if (!rates || !rates.EUR || rates.EUR === 0) return amountUsd;
+      return amountUsd * rates.EUR;
     case "dollar":
     default:
       return amountUsd;

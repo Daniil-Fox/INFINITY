@@ -16,7 +16,14 @@ export function initRangeControl({ input, slider }) {
     readNumberAttribute(slider, "data-max", min + 1)
   );
   const step = resolveStep(input);
-  const precision = getPrecision(step);
+  // Для шага читаем из атрибута напрямую, чтобы сохранить точность
+  const stepAttr = input.getAttribute("step");
+  const precision =
+    stepAttr && stepAttr !== "any"
+      ? stepAttr.includes(".")
+        ? stepAttr.split(".")[1].length
+        : 0
+      : getPrecision(step);
 
   const clamp = (value) => Math.min(Math.max(value, min), max);
 
@@ -27,32 +34,113 @@ export function initRangeControl({ input, slider }) {
 
   setInputValue(input, startValue, precision);
 
-  noUiSlider.create(slider, {
+  // Для поля курса биткоина настраиваем форматирование значений
+  const isCourseInput =
+    input.id === "loanCourseInput" ||
+    (input.getAttribute("step") &&
+      parseFloat(input.getAttribute("step")) === 0.000000001);
+
+  // Для поля курса используем минимальный шаг на основе текущего значения
+  // Шаг должен быть достаточно маленьким, чтобы не терять точность
+  let actualStep = step;
+  if (isCourseInput) {
+    // Для очень маленьких чисел используем минимальный шаг
+    // который позволит точно позиционировать до 9 знака
+    actualStep = 0.000000001; // 1 нанобиткоин - минимальный шаг
+  }
+
+  const sliderOptions = {
     start: [startValue],
     range: {
       min,
       max,
     },
-    step,
+    step: actualStep,
     connect: "lower",
-  });
+  };
 
-  slider.noUiSlider.on("update", (values) => {
-    const numericValue = parseFloat(values[0]);
+  // Для поля курса добавляем форматирование для правильного отображения
+  if (isCourseInput) {
+    sliderOptions.format = {
+      to: function (value) {
+        // Возвращаем значение с точностью до 9 знаков, но не округляем раньше
+        // Используем Math.round для точного округления до 9 знака
+        const multiplier = 1000000000; // 10^9
+        const rounded = Math.round(value * multiplier) / multiplier;
+        return rounded;
+      },
+      from: function (value) {
+        // Парсим значение обратно, сохраняя точность
+        return parseFloat(value);
+      },
+    };
+  }
 
-    if (!Number.isFinite(numericValue)) {
-      return;
+  noUiSlider.create(slider, sliderOptions);
+
+  slider.noUiSlider.on(
+    "update",
+    (values, handle, unencoded, tap, positions) => {
+      // Для поля курса используем unencoded значение для максимальной точности
+      // unencoded - это значение до применения форматирования (если доступно)
+      let rawValue;
+
+      if (isCourseInput) {
+        // Для поля курса пытаемся использовать unencoded, если доступно
+        if (unencoded && Array.isArray(unencoded) && unencoded.length > 0) {
+          rawValue = unencoded[0];
+        } else {
+          // Если unencoded недоступно, используем значение из слайдера
+          // и округляем его до 9 знаков с помощью Math.round для точности
+          const sliderValue = parseFloat(String(values[0]));
+          const multiplier = 1000000000; // 10^9
+          rawValue = Math.round(sliderValue * multiplier) / multiplier;
+        }
+      } else {
+        // Для других полей используем обычное значение
+        rawValue = parseFloat(String(values[0]));
+      }
+
+      if (!Number.isFinite(rawValue) || rawValue <= 0) {
+        return;
+      }
+
+      // Для поля курса форматируем значение напрямую с точностью до 9 знаков
+      if (isCourseInput) {
+        // Используем Math.round для точного округления до 9 знака
+        const multiplier = 1000000000; // 10^9
+        const rounded = Math.round(rawValue * multiplier) / multiplier;
+        const formatted = rounded.toFixed(9);
+
+        input.value = formatted;
+        input.setAttribute("value", formatted);
+        updateFilledState(input);
+
+        // Триггерим кастомное событие с точным значением
+        input.dispatchEvent(
+          new CustomEvent("slider-update", { detail: { value: rounded } })
+        );
+      } else {
+        const actualPrecision = precision;
+        setInputValue(input, rawValue, actualPrecision);
+
+        // Триггерим кастомное событие для синхронизации с калькулятором
+        input.dispatchEvent(
+          new CustomEvent("slider-update", { detail: { value: rawValue } })
+        );
+      }
     }
-
-    setInputValue(input, numericValue, precision);
-    // Триггерим кастомное событие для синхронизации с калькулятором
-    input.dispatchEvent(
-      new CustomEvent("slider-update", { detail: { value: numericValue } })
-    );
-  });
+  );
 
   const syncSlider = (value) => {
-    slider.noUiSlider.set(clamp(value));
+    // Для поля курса округляем значение до 9 знаков перед установкой
+    if (isCourseInput) {
+      const multiplier = 1000000000; // 10^9
+      const rounded = Math.round(value * multiplier) / multiplier;
+      slider.noUiSlider.set(clamp(rounded));
+    } else {
+      slider.noUiSlider.set(clamp(value));
+    }
   };
 
   const handleInputChange = () => {
@@ -63,7 +151,9 @@ export function initRangeControl({ input, slider }) {
       return;
     }
 
-    const numericValue = Number(raw);
+    // Для поля курса используем parseFloat для сохранения точности маленьких чисел
+    const isCourseInput = input.id === "loanCourseInput";
+    const numericValue = isCourseInput ? parseFloat(raw) : Number(raw);
 
     if (!Number.isFinite(numericValue)) {
       return;
@@ -108,6 +198,38 @@ export function resolveStep(input) {
 export function getPrecision(step) {
   if (!Number.isFinite(step)) {
     return 0;
+  }
+
+  // Для очень маленьких чисел toString() может вернуть научную нотацию (например, "1e-9")
+  // В этом случае вычисляем precision из самого числа
+  if (step < 1 && step > 0) {
+    // Для чисел меньше 1 вычисляем количество знаков после запятой
+    // Умножаем на 10^9, чтобы получить целое число, и считаем нули
+    let precision = 0;
+    let temp = step;
+    while (temp < 1 && precision < 20) {
+      temp *= 10;
+      precision++;
+      // Проверяем, что следующая цифра не равна 0 (чтобы не считать лишние нули)
+      if (Math.floor(temp) > 0) {
+        break;
+      }
+    }
+    // Если число очень маленькое, используем альтернативный метод
+    if (precision >= 20 || temp >= 10) {
+      // Используем строковое представление из атрибута, если доступно
+      const stepString = step.toString();
+      if (stepString.includes("e-")) {
+        // Научная нотация: "1e-9" -> precision = 9
+        const match = stepString.match(/e-(\d+)/);
+        if (match) {
+          return parseInt(match[1], 10);
+        }
+      } else if (stepString.includes(".")) {
+        return stepString.split(".")[1].length;
+      }
+    }
+    return precision;
   }
 
   const stepString = step.toString();
@@ -157,7 +279,9 @@ export function formatValue(value, precision) {
     return String(Math.round(value));
   }
 
-  return Number(value).toFixed(precision);
+  // Используем toFixed для форматирования с нужной точностью
+  // toFixed всегда работает корректно для любого числа, включая очень маленькие
+  return value.toFixed(precision);
 }
 
 export function setupCurrencySuffix(form) {

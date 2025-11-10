@@ -19,11 +19,22 @@ export function initCurrencyController(formEl, options = {}) {
   const listeners = new Set();
   const notify = () => listeners.forEach((cb) => cb({ ...state }));
 
-  const updateCourseView = () => {
+  const updateCourseView = (btcUsdValue = null) => {
     const out = formEl.querySelector(".course__value");
-    if (!out || state.btcUsd == null || !state.usdRates) return;
-    const value = convertFromUsd(state.btcUsd, state.currency, state.usdRates);
-    out.textContent = formatCurrency(value, state.currency);
+    if (!out) return;
+
+    // Используем переданное значение или значение из state
+    const btcUsd = btcUsdValue !== null ? btcUsdValue : state.btcUsd;
+
+    if (btcUsd == null || btcUsd <= 0) return;
+
+    // Показываем обратное значение: 1 доллар = X биткоина
+    // btcUsd - это стоимость 1 BTC в USD
+    // 1 USD = 1/btcUsd BTC
+    const btcPerUsd = 1 / btcUsd;
+
+    // Форматируем с точностью до 9 знаков после запятой
+    out.textContent = btcPerUsd.toFixed(9);
   };
 
   const load = async () => {
@@ -60,6 +71,9 @@ export function initCurrencyController(formEl, options = {}) {
     },
     getState() {
       return { ...state };
+    },
+    updateCourseView(btcUsdValue) {
+      updateCourseView(btcUsdValue);
     },
   };
 }
