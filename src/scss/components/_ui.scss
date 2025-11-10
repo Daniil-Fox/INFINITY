@@ -306,3 +306,26 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
 }
+.tippy-box[data-theme~="tooltip"] {
+  padding: 4rem;
+  border-radius: 2rem;
+  background-color: var(--it-white);
+  border: 1px solid #e6e6e6;
+  color: var(--it-black);
+}
+// .tippy-box[data-theme~="tooltip"][data-placement^="top"]
+//   > .tippy-arrow::before {
+//   border-top-color: var(--it-white);
+// }
+// .tippy-box[data-theme~="tooltip"][data-placement^="bottom"]
+//   > .tippy-arrow::before {
+//   border-bottom-color: var(--it-white);
+// }
+// .tippy-box[data-theme~="tooltip"][data-placement^="left"]
+//   > .tippy-arrow::before {
+//   border-left-color: var(--it-white);
+// }
+// .tippy-box[data-theme~="tooltip"][data-placement^="right"]
+//   > .tippy-arrow::before {
+//   border-right-color: var(--it-white);
+// }

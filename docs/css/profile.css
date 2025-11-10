@@ -546,6 +546,14 @@ input::-webkit-inner-spin-button {
   margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
 }
 
+.tippy-box[data-theme~=tooltip] {
+  padding: 4rem;
+  border-radius: 2rem;
+  background-color: var(--it-white);
+  border: 1px solid #e6e6e6;
+  color: var(--it-black);
+}
+
 .profile {
   min-height: 100vh;
   padding-top: 19rem;
