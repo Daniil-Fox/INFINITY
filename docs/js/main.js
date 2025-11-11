@@ -97377,8 +97377,7 @@ __webpack_require__.r(__webpack_exports__);
       const rotateX = currentY * 8; // Max 8 degrees tilt
       const rotateY = currentX * 8;
       card.style.transform = `
-        translateY(-2.5rem)
-        scale(1.08)
+        translateZ(2.5rem)
         rotateX(${-rotateX}deg)
         rotateY(${rotateY}deg)
       `;
