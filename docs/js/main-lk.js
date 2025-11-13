@@ -24191,9 +24191,6 @@ const hoverZoomPlugin = {
       inChartArea
     } = args;
     if (!inChartArea || event.type !== "mousemove") return;
-
-    // Chart.js автоматически обрабатывает hover, мы только улучшаем визуальные эффекты
-    // Увеличение точек происходит через pointHoverRadius в конфигурации
   }
 };
 chart_js_auto__WEBPACK_IMPORTED_MODULE_0__["default"].register(hoverZoomPlugin);
@@ -25022,47 +25019,63 @@ function setupZoomHandler(chart, canvas, period, userPowerTh, apiStats) {
   const zoomConfig = ZOOM_CONFIG[period];
   let currentZoom = chart.data.datasets[0]._zoomLevel || zoomConfig.default;
   let isZooming = false;
+  let zoomTimeout = null;
   const handleWheel = async e => {
-    if (isZooming) return;
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -zoomConfig.step : zoomConfig.step;
-    const newZoom = Math.max(zoomConfig.min, Math.min(zoomConfig.max, currentZoom + delta));
-    if (newZoom === currentZoom) return;
-    isZooming = true;
-    currentZoom = newZoom;
 
-    // Пытаемся получить данные из API с новым масштабом
-    const config = getOurPoolConfig();
-    let newData = null;
-    if (config.account && config.token) {
-      try {
-        const transactions = await fetchTransactions(config);
-        if (transactions) {
-          const purchaseInfo = getPurchaseInfo(); // Берем из WordPress
-          const chartData = transformTransactionsToChartData(transactions, period, userPowerTh, currentZoom, purchaseInfo);
-          if (chartData && chartData.data.length > 0) {
-            newData = chartData;
+    // Очищаем предыдущий таймер, если он есть
+    if (zoomTimeout) {
+      clearTimeout(zoomTimeout);
+    }
+
+    // Откладываем обновление на небольшую задержку для плавности
+    zoomTimeout = setTimeout(async () => {
+      if (isZooming) return;
+      const delta = e.deltaY > 0 ? -zoomConfig.step : zoomConfig.step;
+      const newZoom = Math.max(zoomConfig.min, Math.min(zoomConfig.max, currentZoom + delta));
+      if (newZoom === currentZoom) return;
+      isZooming = true;
+      currentZoom = newZoom;
+
+      // Пытаемся получить данные из API с новым масштабом
+      const config = getOurPoolConfig();
+      let newData = null;
+      if (config.account && config.token) {
+        try {
+          const transactions = await fetchTransactions(config);
+          if (transactions) {
+            const purchaseInfo = getPurchaseInfo(); // Берем из WordPress
+            const chartData = transformTransactionsToChartData(transactions, period, userPowerTh, currentZoom, purchaseInfo);
+            if (chartData && chartData.data.length > 0) {
+              newData = chartData;
+            }
           }
+        } catch (error) {
+          console.warn("Failed to fetch transactions for zoom", error);
         }
-      } catch (error) {
-        console.warn("Failed to fetch transactions for zoom", error);
       }
-    }
 
-    // Если данных из API нет, генерируем
-    if (!newData) {
-      // Получаем информацию о покупках из WordPress
-      const purchaseInfo = getPurchaseInfo();
-      newData = await generateChartData(period, userPowerTh, apiStats, currentZoom, purchaseInfo);
-    }
+      // Если данных из API нет, генерируем
+      if (!newData) {
+        // Получаем информацию о покупках из WordPress
+        const purchaseInfo = getPurchaseInfo();
+        newData = await generateChartData(period, userPowerTh, apiStats, currentZoom, purchaseInfo);
+      }
 
-    // Обновляем график
-    chart.data.labels = newData.labels;
-    chart.data.datasets[0].data = newData.data.map(row => row.btc);
-    chart.data.datasets[0]._rawData = newData.data;
-    chart.data.datasets[0]._zoomLevel = currentZoom;
-    chart.update("none"); // Обновляем без анимации
-    isZooming = false;
+      // Обновляем график с плавной анимацией
+      chart.data.labels = newData.labels;
+      chart.data.datasets[0].data = newData.data.map(row => row.btc);
+      chart.data.datasets[0]._rawData = newData.data;
+      chart.data.datasets[0]._zoomLevel = currentZoom;
+
+      // Используем плавную анимацию вместо "none"
+      chart.update({
+        duration: 300,
+        // Длительность анимации в миллисекундах
+        easing: "easeOutQuart" // Тип анимации (плавное замедление)
+      });
+      isZooming = false;
+    }, 50); // Небольшая задержка для группировки быстрых скроллов
   };
   canvas.addEventListener("wheel", handleWheel, {
     passive: false
