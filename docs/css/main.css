@@ -81,6 +81,7 @@
 }
 
 .page {
+  background-color: var(--it-black);
   height: 100%;
   font-family: var(--font-family, sans-serif);
   -webkit-text-size-adjust: 100%;
@@ -110,7 +111,6 @@
   -webkit-box-direction: normal;
   -ms-flex-direction: column;
   flex-direction: column;
-  background-color: var(--it-black);
   color: var(--it-white);
 }
 

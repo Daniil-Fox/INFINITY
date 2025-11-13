@@ -1,6 +1,6 @@
 .profile {
   min-height: 100vh;
-  padding-top: 10rem;
+  padding-top: 15rem;
   padding-bottom: 6rem;
   position: relative;
 
@@ -25,5 +25,15 @@
       right: -4%;
       top: 100%;
     }
+  }
+}
+
+.profile-block {
+  background-color: var(--it-white);
+  color: var(--it-black);
+  padding: 5rem 6rem;
+  border-radius: 2rem;
+  &:not(:last-child) {
+    margin-bottom: 3rem;
   }
 }

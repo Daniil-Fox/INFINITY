@@ -1,5 +1,6 @@
 import "./components/loan.js";
 import "./components/tooltips.js";
+import "./components/charts.js";
 import { initCalculator } from "./components/calculator-engine.js";
 import { initCalculatorPatterns } from "./components/calculator-patterns.js";
 

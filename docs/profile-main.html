@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru" class="page">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#111111">
+  <title>INFINITY</title>
+  <link rel="preload" href="fonts/Manrope-Light.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Manrope-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Manrope-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Manrope-Semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Manrope-Bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Inter-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/vendor-profile.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <script defer src="js/main-lk.js"></script>
+</head>
+
+
+<body class="page__body">
+  <div class="site-container">
+    <!-- Плашка загрузки -->
+<div class="loading-overlay" id="loadingOverlay"></div>
+
+<header class="header-profile">
+  <div class="container">
+    <div class="header-profile__container">
+      <a href="/../" class="header-profile__logo">
+        <img src="./img/svg/sign.svg" width="60" height="34" alt="">
+      </a>
+
+      <nav class="header-profile__nav nav">
+        <ul>
+          <li class="current_page_item">
+            <a href="./profile-main.html">главная</a>
+          </li>
+          <li>
+            <a href="./profile-calculator.html">калькулятор</a>
+          </li>
+          <li>
+            <a href="./profile.html">мой профиль</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="header-profile__buttons">
+        <a href="#" class="link-btn header-profile__logout">выйти</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--it-black);
+    z-index: 999999;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+    pointer-events: none;
+  }
+
+  .loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  (function () {
+    const overlay = document.getElementById('loadingOverlay');
+
+    if (!overlay) return;
+
+    // Плавно скрываем плашку после загрузки страницы
+    function hideOverlay() {
+      overlay.classList.add('hidden');
+      // Удаляем элемент из DOM после завершения анимации
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 500); // Время должно совпадать с transition duration
+    }
+
+    // Ждем полной загрузки страницы
+    if (document.readyState === 'complete') {
+      // Страница уже загружена
+      hideOverlay();
+    } else {
+      // Ждем загрузки
+      window.addEventListener('load', hideOverlay);
+    }
+  })();
+</script>
+    <main class="main">
+      <section class="profile">
+        <div class="container">
+          <div class="p-main">
+  <div class="p-main__container">
+    <div class="p-main__content">
+      <div class="p-main__mine profile-block">
+        <p class="p-main__capture">
+          Добыто
+        </p>
+
+        <div class="p-main__row">
+          <div class="p-main__value">
+            0.000234521 BTC
+          </div>
+          <div class="p-main__hint hint">
+            <!-- <p>Начисления происходят
+              каждый день
+            </p>
+
+            <p>
+              Как только сумма начислений достигнет
+              лимита выплаты, биткоин отправляется
+              вам на кошелёк
+            </p> -->
+          </div>
+        </div>
+
+        <div class="p-main__bottom">
+          <div class="p-main__items">
+            <div class="p-main__item">
+              <p class="p-main__item-capture">минимальная выплата</p>
+              <div class="p-main__item-value">
+                0.001 BTC
+              </div>
+            </div>
+            <div class="p-main__item">
+              <p class="p-main__item-capture">до вывода</p>
+              <div class="p-main__item-value">
+                0.000456 BTC
+              </div>
+            </div>
+          </div>
+
+          <div class="p-main__buttons">
+            <a href="#" class="p-main__widthdraw p-main__btn btn btn-reset">
+              Вывести
+            </a>
+            <a href="#" class="p-main__history p-main__btn btn btn_dark btn-reset">
+              История
+            </a>
+          </div>
+        </div>
+
+      </div>
+      <div class="p-main__has profile-block">
+        <div class="p-main__row p-main__row_center p-main__row_jcsb">
+          <p class="p-main__capture">Количество мощностей</p>
+
+          <a href="#" class="p-main__btn btn btn-reset">
+            Докупить
+          </a>
+        </div>
+
+        <div class="p-main__inwallet">
+          100 TH
+        </div>
+      </div>
+    </div>
+
+    <div class="p-main__charts profile-block">
+
+      <div class="p-main__graphs">
+        <div class="p-main__graph p-main__graph_1">
+          <canvas id="chart_day"></canvas>
+        </div>
+        <div class="p-main__graph p-main__graph_2 is_hidden">
+          <canvas id="chart_week"></canvas>
+        </div>
+        <div class="p-main__graph p-main__graph_3 is_hidden">
+          <canvas id="chart_month"></canvas>
+        </div>
+      </div>
+
+      <div class="p-main__tabs tabs">
+        <label>
+          <input type="radio" name="доходность" class="visually-hidden">
+          <span>за день</span>
+        </label>
+        <label>
+          <input type="radio" name="доходность" class="visually-hidden">
+          <span>за неделю</span>
+        </label>
+        <label>
+          <input type="radio" name="доходность" class="visually-hidden">
+          <span>за месяц</span>
+        </label>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>

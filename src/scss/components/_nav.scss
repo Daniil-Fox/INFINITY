@@ -1,0 +1,44 @@
+.nav {
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 5.2rem;
+
+    a {
+      font-weight: 500;
+      font-size: 2.2rem;
+      line-height: 120%;
+      color: rgba(255, 255, 255, 0.45);
+
+      transition-property: color;
+      transition-duration: 0.3s;
+      transition-timing-function: ease;
+
+      @include hover {
+        color: var(--it-pink);
+      }
+      &:focus-visible {
+        outline: none;
+        color: var(--it-pink);
+      }
+      &:active {
+        color: var(--it-pink);
+      }
+    }
+    li:not(:last-child) {
+      margin-bottom: 0;
+    }
+    li::before {
+      display: none;
+    }
+    li.current_page_item {
+      a {
+        color: var(--it-white);
+      }
+    }
+  }
+}

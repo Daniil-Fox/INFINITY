@@ -1,0 +1,78 @@
+<!-- Плашка загрузки -->
+<div class="loading-overlay" id="loadingOverlay"></div>
+
+<header class="header-profile">
+  <div class="container">
+    <div class="header-profile__container">
+      <a href="/../" class="header-profile__logo">
+        <img src="./img/svg/sign.svg" width="60" height="34" alt="">
+      </a>
+
+      <nav class="header-profile__nav nav">
+        <ul>
+          <li class="current_page_item">
+            <a href="./profile-main.html">главная</a>
+          </li>
+          <li>
+            <a href="./profile-calculator.html">калькулятор</a>
+          </li>
+          <li>
+            <a href="./profile.html">мой профиль</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="header-profile__buttons">
+        <a href="#" class="link-btn header-profile__logout">выйти</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--it-black);
+    z-index: 999999;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+    pointer-events: none;
+  }
+
+  .loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  (function () {
+    const overlay = document.getElementById('loadingOverlay');
+
+    if (!overlay) return;
+
+    // Плавно скрываем плашку после загрузки страницы
+    function hideOverlay() {
+      overlay.classList.add('hidden');
+      // Удаляем элемент из DOM после завершения анимации
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 500); // Время должно совпадать с transition duration
+    }
+
+    // Ждем полной загрузки страницы
+    if (document.readyState === 'complete') {
+      // Страница уже загружена
+      hideOverlay();
+    } else {
+      // Ждем загрузки
+      window.addEventListener('load', hideOverlay);
+    }
+  })();
+</script>

@@ -17,8 +17,8 @@ window.INFINITY_ENV = {
 export const defaultConfig = {
   ourPool: {
     baseUrl: "https://ourpool.io",
-    account: "", // data-account на .calculator__form или передать через init
-    token: "", // data-token на .calculator__form или передать через init
+    account: "olegkarpun", // data-account на .calculator__form или передать через init
+    token: "a09be072-d684-4f73-afa1-39f745d98f0c", // data-token на .calculator__form или передать через init
   },
   pricing: {
     // Стоимость за 1 TH по диапазонам мощности (из ТЗ/CSV)
@@ -573,10 +573,19 @@ export function initCalculator(formEl, options = {}) {
 
 export async function fetchRewardsStats({ baseUrl, account, token }) {
   if (!account || !token) return null;
-  const url = `${baseUrl}/api/v1/accounts/${encodeURIComponent(
+  // В режиме разработки используем прокси, в продакшене - прямой запрос
+  const isDev =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  const apiPath = `/api/v1/accounts/${encodeURIComponent(
     account
   )}/btc/rewards-stats?token=${encodeURIComponent(token)}`;
-  const res = await fetch(url);
+  const url = isDev ? apiPath : `${baseUrl}${apiPath}`;
+
+  const res = await fetch(url, {
+    mode: "cors",
+    credentials: "omit",
+  });
   if (!res.ok) {
     return null;
   }
@@ -774,9 +783,7 @@ function updateAmountBounds(
   const rates = currencyCtx?.rates || { USD: 1 };
   const decimals = currency === "ruble" ? 0 : 2;
   const normalize = (value) =>
-    Number.isFinite(value)
-      ? Number(value.toFixed(decimals))
-      : value;
+    Number.isFinite(value) ? Number(value.toFixed(decimals)) : value;
   const minAmount = normalize(convertFromUsd(minAmountUsd, currency, rates));
   const maxAmount = normalize(convertFromUsd(maxAmountUsd, currency, rates));
   const stepRaw = convertFromUsd(stepUsd, currency, rates);
@@ -788,11 +795,10 @@ function updateAmountBounds(
     : decimals === 0
     ? 1
     : Number.EPSILON;
-  const minStep = decimals === 0 ? 1 : Number((1 / Math.pow(10, decimals)).toFixed(decimals));
+  const minStep =
+    decimals === 0 ? 1 : Number((1 / Math.pow(10, decimals)).toFixed(decimals));
   const step =
-    decimals === 0
-      ? Math.max(stepSafe, minStep)
-      : Math.max(stepSafe, minStep);
+    decimals === 0 ? Math.max(stepSafe, minStep) : Math.max(stepSafe, minStep);
 
   // Обновляем атрибуты input
   priceInput.setAttribute("min", String(minAmount));
