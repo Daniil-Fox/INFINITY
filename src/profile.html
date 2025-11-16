@@ -9,7 +9,58 @@
     <main class="main">
       <section class="profile">
         <div class="container">
-          @include('partials/calculator.html')
+          <div class="settings">
+            <div class="settings__container">
+              <div class="settings__col">
+                <div class="settings__header">
+                  <h1 class="settings__title">Общее</h1>
+
+                  <button class="btn-reset settings__btn">
+                    <svg class="" width="40" height="40">
+                      <use xlink:href="img/sprite.svg#pen"></use>
+                    </svg>
+                  </button>
+                </div>
+                <form action="" class="form settings__form">
+                  <div class="form__field">
+                    <div class="form__field-wrapper">
+                      <input type="text" class="form__input input-name" name="Имя" />
+                      <label class="form__label">Имя</label>
+                    </div>
+                  </div>
+                  <div class="form__field">
+                    <div class="form__field-wrapper">
+                      <input type="text" class="form__input input-name" name="Фамилия" />
+                      <label class="form__label">Фамилия</label>
+                    </div>
+                  </div>
+                  <div class="form__field">
+                    <div class="form__field-wrapper">
+                      <input type="text" class="form__input input-only-tel" name="Телефон" />
+                      <label class="form__label">Телефон</label>
+                    </div>
+                  </div>
+                  <div class="form__field">
+                    <div class="form__field-wrapper">
+                      <input type="text" class="form__input input-name" name="Email" />
+                      <label class="form__label">Email</label>
+                    </div>
+                  </div>
+                  <button class="btn btn-reset btn_light form__btn" disabled>
+                    Сохранить
+                  </button>
+                </form>
+              </div>
+              <div class="settings__col">
+                <div class="settings__header">
+                  <h2 class="settings__title">Мои кошельки</h2>
+                </div>
+                <button class="btn-reset btn btn_light settings__add">
+                  Добавить кошелек
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -17,3 +68,32 @@
 </body>
 
 </html>
+
+<!--      <div class="form__field">
+                    <select name="Способ связи" class="visually-hidden select-contact">
+                      <option value="">где с вами связаться?</option>
+                      <option value="Telegram">Telegram</option>
+                      <option value="Whatsapp">Whatsapp</option>
+                      <option value="Email">Email</option>
+                    </select>
+
+                    <div class="dropdown form__dropdown">
+                      <div class="dropdown__header">
+                        <div class="dropdown__label">где с вами связаться?</div>
+                        <div class="dropdown__capture">где с вами связаться?</div>
+                        <div class="dropdown__btn">
+                          <svg class="">
+                            <use xlink:href="img/sprite.svg#arr-down"></use>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="dropdown__body">
+                        <div class="dropdown__content">
+                          <div class="dropdown__item"></div>
+                          <div class="dropdown__item">Telegram</div>
+                          <div class="dropdown__item">Whatsapp</div>
+                          <div class="dropdown__item">Email</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div> -->

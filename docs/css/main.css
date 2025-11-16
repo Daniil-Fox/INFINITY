@@ -277,17 +277,24 @@ a {
 @media (any-hover: hover) {
   .btn:hover {
     background-color: var(--it-pink-hover);
+    color: var(--it-white);
   }
 }
 .btn:focus-visible {
   outline: none;
   background-color: var(--it-pink-hover);
+  color: var(--it-white);
 }
 .btn:active {
   background-color: var(--it-pink);
+  color: var(--it-white);
 }
 .btn_dark {
   background-color: var(--it-black);
+}
+.btn_light {
+  background-color: var(--it-white);
+  color: var(--it-black);
 }
 
 h2 {

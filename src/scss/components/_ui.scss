@@ -65,19 +65,26 @@
 
   @include hover {
     background-color: var(--it-pink-hover);
+    color: var(--it-white);
   }
 
   &:focus-visible {
     outline: none;
     background-color: var(--it-pink-hover);
+    color: var(--it-white);
   }
 
   &:active {
     background-color: var(--it-pink);
+    color: var(--it-white);
   }
 
   &_dark {
     background-color: var(--it-black);
+  }
+  &_light {
+    background-color: var(--it-white);
+    color: var(--it-black);
   }
 }
 

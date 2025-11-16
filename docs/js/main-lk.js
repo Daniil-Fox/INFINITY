@@ -25325,6 +25325,86 @@ function getSelectedCurrency(formEl) {
 
 /***/ }),
 
+/***/ "./src/js/components/dropdown.js":
+/*!***************************************!*\
+  !*** ./src/js/components/dropdown.js ***!
+  \***************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".form__dropdown").forEach(dropdown => {
+    const dropdownHeader = dropdown.querySelector(".dropdown__header");
+    const dropdownBody = dropdown.querySelector(".dropdown__body");
+    const dropdownItems = dropdown.querySelectorAll(".dropdown__item");
+    const capture = dropdown.querySelector(".dropdown__capture");
+    const select = dropdown.parentElement.querySelector("select");
+    dropdownHeader.addEventListener("click", () => {
+      const isOpen = dropdown.classList.toggle("open");
+      if (isOpen) {
+        dropdownBody.style.maxHeight = dropdownBody.scrollHeight + "px";
+      } else {
+        dropdownBody.style.maxHeight = "";
+      }
+    });
+    dropdownItems.forEach((item, idx) => {
+      item.addEventListener("click", () => {
+        capture.textContent = item.textContent;
+        dropdown.classList.remove("open");
+        dropdownBody.style.maxHeight = "";
+        select.selectedIndex = idx;
+        select.dispatchEvent(new Event("change", {
+          bubbles: true
+        }));
+        dropdown.classList.add("filled");
+        console.log("Выбранный пункт селекта:", select.options[select.selectedIndex].text);
+      });
+    });
+    document.addEventListener("click", e => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove("open");
+        dropdownBody.style.maxHeight = "";
+      }
+    });
+  });
+});
+
+/***/ }),
+
+/***/ "./src/js/components/inputs.js":
+/*!*************************************!*\
+  !*** ./src/js/components/inputs.js ***!
+  \*************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+const fields = document.querySelectorAll(".form__field");
+if (fields.length > 0) {
+  fields.forEach(field => {
+    const input = field.querySelector(".form__input");
+    const label = field.querySelector(".form__label");
+    if (input && label) {
+      input.addEventListener("focus", e => {
+        field.classList.add("focus");
+      });
+      input.addEventListener("input", () => {
+        field.classList.add("filled");
+        if (input.value === "") {
+          field.classList.remove("filled");
+        }
+      });
+      input.addEventListener("blur", () => {
+        field.classList.remove("focus");
+        if (input.value === "") {
+          field.classList.remove("filled");
+        }
+      });
+    }
+  });
+}
+
+/***/ }),
+
 /***/ "./src/js/components/loan.js":
 /*!***********************************!*\
   !*** ./src/js/components/loan.js ***!
@@ -25883,8 +25963,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_loan_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/loan.js */ "./src/js/components/loan.js");
 /* harmony import */ var _components_tooltips_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/tooltips.js */ "./src/js/components/tooltips.js");
 /* harmony import */ var _components_charts_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/charts.js */ "./src/js/components/charts.js");
-/* harmony import */ var _components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/calculator-engine.js */ "./src/js/components/calculator-engine.js");
-/* harmony import */ var _components_calculator_patterns_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./components/calculator-patterns.js */ "./src/js/components/calculator-patterns.js");
+/* harmony import */ var _components_inputs_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/inputs.js */ "./src/js/components/inputs.js");
+/* harmony import */ var _components_dropdown_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./components/dropdown.js */ "./src/js/components/dropdown.js");
+/* harmony import */ var _components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./components/calculator-engine.js */ "./src/js/components/calculator-engine.js");
+/* harmony import */ var _components_calculator_patterns_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./components/calculator-patterns.js */ "./src/js/components/calculator-patterns.js");
+
+
 
 
 
@@ -25893,8 +25977,8 @@ __webpack_require__.r(__webpack_exports__);
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".calculator__form");
   if (form) {
-    const calculatorApi = (0,_components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_3__.initCalculator)(form);
-    (0,_components_calculator_patterns_js__WEBPACK_IMPORTED_MODULE_4__.initCalculatorPatterns)(form, calculatorApi);
+    const calculatorApi = (0,_components_calculator_engine_js__WEBPACK_IMPORTED_MODULE_5__.initCalculator)(form);
+    (0,_components_calculator_patterns_js__WEBPACK_IMPORTED_MODULE_6__.initCalculatorPatterns)(form, calculatorApi);
   }
 });
 })();
