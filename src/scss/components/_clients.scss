@@ -32,21 +32,21 @@
     display: flex;
     flex-wrap: nowrap;
     gap: 3rem;
-    width: fit-content;
     padding: 0 calc((100% - var(--content-width)) / 2);
-
+    min-width: 0;
+    max-width: 100%;
     @include mobile {
       padding: 0 var(--container-offset);
     }
   }
 
   &__item {
+    height: 100%;
     flex-shrink: 0;
     width: 43rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    height: auto;
   }
 
   &__item-top {

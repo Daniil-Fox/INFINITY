@@ -109,7 +109,7 @@
                 <div class="settings__header">
                   <h1 class="settings__title">Общее</h1>
 
-                  <button class="btn-reset settings__btn">
+                  <button type="button" class="btn-reset settings__btn">
                     <svg class="" width="40" height="40">
                       <use xlink:href="img/sprite.svg#pen"></use>
                     </svg>
@@ -118,29 +118,38 @@
                 <form action="" class="form settings__form">
                   <div class="form__field">
                     <div class="form__field-wrapper">
-                      <input type="text" class="form__input input-name" name="Имя" />
-                      <label class="form__label">Имя</label>
+                      <input type="text" class="form__input input-name" name="Имя" id="profile-first-name" disabled />
+                      <label class="form__label" for="profile-first-name">
+                        Имя
+                      </label>
                     </div>
                   </div>
                   <div class="form__field">
                     <div class="form__field-wrapper">
-                      <input type="text" class="form__input input-name" name="Фамилия" />
-                      <label class="form__label">Фамилия</label>
+                      <input type="text" class="form__input input-name" name="Фамилия" id="profile-last-name"
+                        disabled />
+                      <label class="form__label" for="profile-last-name">
+                        Фамилия
+                      </label>
                     </div>
                   </div>
                   <div class="form__field">
                     <div class="form__field-wrapper">
-                      <input type="text" class="form__input input-only-tel" name="Телефон" />
-                      <label class="form__label">Телефон</label>
+                      <input type="tel" class="form__input input-only-tel" name="Телефон" id="profile-phone" disabled />
+                      <label class="form__label" for="profile-phone">
+                        Телефон
+                      </label>
                     </div>
                   </div>
                   <div class="form__field">
                     <div class="form__field-wrapper">
-                      <input type="text" class="form__input input-name" name="Email" />
-                      <label class="form__label">Email</label>
+                      <input type="email" class="form__input input-name" name="Email" id="profile-email" disabled />
+                      <label class="form__label" for="profile-email">
+                        Email
+                      </label>
                     </div>
                   </div>
-                  <button class="btn btn-reset btn_light form__btn" disabled>
+                  <button type="submit" class="btn btn-reset btn_light form__btn settings__save" disabled>
                     Сохранить
                   </button>
                 </form>
@@ -149,7 +158,8 @@
                 <div class="settings__header">
                   <h2 class="settings__title">Мои кошельки</h2>
                 </div>
-                <button class="btn-reset btn btn_light settings__add">
+                <div class="settings__wallets" data-wallets></div>
+                <button type="button" class="btn-reset btn btn_light settings__add">
                   Добавить кошелек
                 </button>
               </div>

@@ -57,7 +57,8 @@ export const validateFormsWP = (
   rules,
   checkboxes = [],
   afterSend,
-  action = "submit_form"
+  action = "submit_form",
+  options = {}
 ) => {
   const form = document?.querySelector(selector);
 
@@ -83,6 +84,8 @@ export const validateFormsWP = (
     }
   }
 
+  const { resetOnSuccess = true, clearFilled = true } = options || {};
+
   validation.onSuccess((ev) => {
     let formData = new FormData(ev.target);
     // Добавляем action для WordPress AJAX
@@ -103,10 +106,14 @@ export const validateFormsWP = (
     const path = location.origin + "/wp-admin/admin-ajax.php";
     xhr.open("POST", path, true);
     xhr.send(formData);
-    form
-      .querySelectorAll(".filled")
-      .forEach((el) => el.classList.remove("filled"));
-    ev.target.reset();
+    if (clearFilled) {
+      form
+        .querySelectorAll(".filled")
+        .forEach((el) => el.classList.remove("filled"));
+    }
+    if (resetOnSuccess) {
+      ev.target.reset();
+    }
   });
 };
 

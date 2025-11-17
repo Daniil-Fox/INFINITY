@@ -337,3 +337,12 @@ input::-webkit-inner-spin-button {
 //   > .tippy-arrow::before {
 //   border-right-color: var(--it-white);
 // }
+
+.just-validate-error-label {
+  display: none;
+}
+
+.swiper .swiper-slide {
+  width: auto;
+  height: auto;
+}

@@ -1,0 +1,113 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #020610;
+  background-image: radial-gradient(
+      at 20% 20%,
+      rgba(255, 44, 205, 0.25),
+      transparent 55%
+    ),
+    radial-gradient(at 80% 0%, rgba(64, 153, 255, 0.2), transparent 45%),
+    linear-gradient(180deg, #000512 0%, #020a1c 100%);
+  color: var(--it-white);
+}
+
+.auth-header {
+  padding: 4rem 0 2rem;
+
+  &__container {
+    display: flex;
+    justify-content: center;
+  }
+
+  &__logo {
+    display: inline-flex;
+    transition: opacity 0.3s ease;
+
+    @include hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-bottom: 6rem;
+}
+
+.login {
+  width: 100%;
+
+  &__card {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 4rem;
+    border-radius: 3.2rem;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 3rem 7rem rgba(0, 5, 18, 0.45);
+
+    @include mobile {
+      padding: 3rem 2.4rem;
+    }
+  }
+
+  &__title {
+    margin: 0 0 1.2rem;
+    font-size: 4.2rem;
+    line-height: 1.15;
+    font-weight: 700;
+
+    @include mobile {
+      font-size: 3.2rem;
+    }
+  }
+
+  &__subtitle {
+    margin: 0 0 3.6rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.8rem;
+    line-height: 1.5;
+  }
+
+  &__extras {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -0.6rem;
+    margin-bottom: 2.4rem;
+  }
+
+  &__link {
+    font-size: 1.6rem;
+    color: var(--it-white);
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+
+    @include hover {
+      opacity: 1;
+    }
+  }
+
+  &__submit {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.4rem;
+  }
+
+  &__notice {
+    min-height: 2.4rem;
+    margin-top: 1.6rem;
+    font-size: 1.6rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.85);
+
+    &--error {
+      color: var(--it-pink);
+    }
+  }
+}

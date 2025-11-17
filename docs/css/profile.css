@@ -562,6 +562,15 @@ input::-webkit-inner-spin-button {
   font-size: 1.6rem;
 }
 
+.just-validate-error-label {
+  display: none;
+}
+
+.swiper .swiper-slide {
+  width: auto;
+  height: auto;
+}
+
 .profile {
   min-height: 100vh;
   padding-top: 15rem;
@@ -1409,7 +1418,7 @@ input::-webkit-inner-spin-button {
   -ms-grid-columns: (1fr)[2];
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
-  --gap: -0.6rem;
+  --gap: -1rem;
 }
 @media (max-width: 576px) {
   .form {
@@ -1440,12 +1449,12 @@ input::-webkit-inner-spin-button {
   }
 }
 .form__field-wrapper {
-  height: 6rem;
+  height: 8rem;
   position: relative;
   border-radius: 2rem;
   outline: 2px solid transparent;
-  padding: 1.5rem 2rem;
-  background-color: #f7fafa;
+  padding: 2rem;
+  background-color: #fafafa;
   font-weight: 300;
   font-size: 2.2rem;
   line-height: 150%;
@@ -1457,15 +1466,14 @@ input::-webkit-inner-spin-button {
   height: 14rem;
 }
 .form__field.filled .form__label {
-  font-size: 1.4rem;
-  -webkit-transform: translateY(var(--gap));
-  -ms-transform: translateY(var(--gap));
-  transform: translateY(var(--gap));
+  font-size: 1.6rem;
+  -webkit-transform: translateY(var(--gap, -1rem));
+  -ms-transform: translateY(var(--gap, -1rem));
+  transform: translateY(var(--gap, -1rem));
 }
 .form__field.filled .form__input {
-  -webkit-transform: translateY(-32%);
-  -ms-transform: translateY(-32%);
-  transform: translateY(-32%);
+  padding-bottom: 0.5rem;
+  padding-top: 2rem;
 }
 .form__field.filled .form__input--area {
   -webkit-transform: none;
@@ -1476,17 +1484,13 @@ input::-webkit-inner-spin-button {
   outline-color: #000;
   background-color: #fff;
 }
-.form__field.focus .form__label {
-  background-color: #fff;
-}
 .form__label {
   position: absolute;
   z-index: 4;
-  background-color: #f7fafa;
-  width: 100%;
   top: 0;
-  padding-top: 1.4rem;
+  padding-top: 2.2rem;
   left: 2rem;
+  right: 2rem;
   font-weight: 300;
   font-size: 2.2rem;
   line-height: 150%;
@@ -1511,28 +1515,25 @@ input::-webkit-inner-spin-button {
   width: 100%;
   border: none;
   background: none;
-  -webkit-transition: background-color 0.3s ease-in, -webkit-transform 0.3s ease-in;
-  transition: background-color 0.3s ease-in, -webkit-transform 0.3s ease-in;
-  transition: transform 0.3s ease-in, background-color 0.3s ease-in;
-  transition: transform 0.3s ease-in, background-color 0.3s ease-in, -webkit-transform 0.3s ease-in;
+  -webkit-transition: padding-top 0.3s ease-in, padding-bottom 0.3s ease-in, background-color 0.3s ease-in;
+  transition: padding-top 0.3s ease-in, padding-bottom 0.3s ease-in, background-color 0.3s ease-in;
 }
 .form__input:focus {
   outline: none;
-  -webkit-transform: translateY(-32%);
-  -ms-transform: translateY(-32%);
-  transform: translateY(-32%);
+  padding-bottom: 0.5rem;
+  padding-top: 2.5rem;
 }
 .form__input:focus ~ .form__label {
   font-size: 1.6rem;
-  -webkit-transform: translateY(var(--gap));
-  -ms-transform: translateY(var(--gap));
-  transform: translateY(var(--gap));
+  -webkit-transform: translateY(var(--gap, -1rem));
+  -ms-transform: translateY(var(--gap, -1rem));
+  transform: translateY(var(--gap, -1rem));
 }
 .form__input:disabled {
   cursor: not-allowed;
   -ms-touch-action: none;
   touch-action: none;
-  background-color: #e3e6e6;
+  background-color: #fafafa;
 }
 .form__input--area {
   height: 100%;
@@ -1557,6 +1558,7 @@ input::-webkit-inner-spin-button {
   -ms-grid-column-span: 2;
   grid-column: 2 span;
   padding: 1.5rem 2rem 1.6rem;
+  height: 8rem;
 }
 
 .dropdown {
@@ -1757,6 +1759,20 @@ input::-webkit-inner-spin-button {
   -webkit-transition: fill 0.3s ease-in;
   transition: fill 0.3s ease-in;
 }
+@media (any-hover: hover) {
+  .settings__btn:hover svg {
+    fill: var(--it-pink-hover);
+  }
+}
+.settings__btn:focus-visible {
+  outline: none;
+}
+.settings__btn:focus-visible svg {
+  fill: var(--it-pink-hover);
+}
+.settings__btn:active svg {
+  fill: var(--it-pink);
+}
 .settings__add {
   width: 100%;
 }
@@ -1767,4 +1783,176 @@ input::-webkit-inner-spin-button {
 .settings__form .form__btn {
   -ms-grid-column: 1;
   grid-column: 1;
+}
+.settings__form.is-editing .form__field-wrapper {
+  outline-color: var(--it-black);
+  background-color: var(--it-white);
+}
+.settings__save {
+  opacity: 0;
+  pointer-events: none;
+  -webkit-transform: translateY(1rem);
+  -ms-transform: translateY(1rem);
+  transform: translateY(1rem);
+  -webkit-transition-property: color, opacity, -webkit-transform;
+  transition-property: color, opacity, -webkit-transform;
+  transition-property: color, opacity, transform;
+  transition-property: color, opacity, transform, -webkit-transform;
+  -webkit-transition-duration: 0.3s;
+  transition-duration: 0.3s;
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+  justify-self: flex-start;
+  width: 100%;
+  height: 8rem;
+}
+.settings__save.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0);
+  -ms-transform: translateY(0);
+  transform: translateY(0);
+}
+.settings__wallets {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 1.6rem;
+  width: 100%;
+}
+.settings__wallet-item {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.settings__wallet-item.has-error .form__field-wrapper {
+  outline-color: var(--it-red);
+}
+.settings__wallet-item.has-error .settings__wallet-error {
+  color: var(--it-red);
+}
+.settings__wallet-item.is-editing .form__field-wrapper {
+  outline-color: var(--it-white);
+  background-color: var(--it-white);
+}
+.settings__wallet-row {
+  width: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 2rem;
+}
+.settings__wallet-row .form__field-wrapper {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  padding-right: 7.2rem;
+}
+.settings__wallet-row .settings__wallet-edit {
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+}
+.settings__wallet-copy {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  right: 1.2rem;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 0.6rem;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 1.2rem;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-transition: background-color 0.3s ease-in-out;
+  transition: background-color 0.3s ease-in-out;
+  color: #bfbfbf;
+}
+.settings__wallet-copy svg {
+  width: 100%;
+  height: 100%;
+}
+.settings__wallet-edit {
+  width: 7.2rem;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  background-color: var(--it-white);
+  border-radius: 2rem;
+}
+.settings__wallet-edit svg {
+  width: 3.2rem;
+  height: 3.2rem;
+  fill: #bfbfbf;
+  -webkit-transition: fill 0.3s ease-in;
+  transition: fill 0.3s ease-in;
+}
+@media (any-hover: hover) {
+  .settings__wallet-edit:hover svg {
+    fill: var(--it-pink-hover);
+  }
+}
+.settings__wallet-edit:focus-visible {
+  outline: none;
+}
+.settings__wallet-edit:focus-visible svg {
+  fill: var(--it-pink-hover);
+}
+.settings__wallet-edit:active svg {
+  fill: var(--it-pink);
+}
+.settings__wallet-error {
+  width: 100%;
+  margin: 0;
+  min-height: 1.6rem;
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.settings-toast {
+  position: fixed;
+  top: 2.4rem;
+  right: 2.4rem;
+  padding: 1.2rem 2rem;
+  border-radius: 1.2rem;
+  background: rgba(34, 197, 94, 0.9);
+  color: var(--it-black);
+  font-weight: 600;
+  font-size: 1.6rem;
+  -webkit-box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  -webkit-transform: translateY(-1rem);
+  -ms-transform: translateY(-1rem);
+  transform: translateY(-1rem);
+  -webkit-transition: opacity 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
+  z-index: 2000;
+}
+.settings-toast.is-visible {
+  opacity: 1;
+  -webkit-transform: translateY(0);
+  -ms-transform: translateY(0);
+  transform: translateY(0);
 }/*# sourceMappingURL=profile.css.map */

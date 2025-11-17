@@ -562,6 +562,15 @@ input::-webkit-inner-spin-button {
   font-size: 1.6rem;
 }
 
+.just-validate-error-label {
+  display: none;
+}
+
+.swiper .swiper-slide {
+  width: auto;
+  height: auto;
+}
+
 .star {
   position: absolute;
   bottom: 0;
@@ -1494,10 +1503,9 @@ input::-webkit-inner-spin-button {
   -ms-flex-wrap: nowrap;
   flex-wrap: nowrap;
   gap: 3rem;
-  width: -webkit-fit-content;
-  width: -moz-fit-content;
-  width: fit-content;
   padding: 0 calc((100% - var(--content-width)) / 2);
+  min-width: 0;
+  max-width: 100%;
 }
 @media (max-width: 576px) {
   .clients__container {
@@ -1505,6 +1513,7 @@ input::-webkit-inner-spin-button {
   }
 }
 .clients__item {
+  height: 100%;
   -ms-flex-negative: 0;
   flex-shrink: 0;
   width: 43rem;
@@ -1516,7 +1525,6 @@ input::-webkit-inner-spin-button {
   -ms-flex-direction: column;
   flex-direction: column;
   gap: 1rem;
-  height: auto;
 }
 .clients__item-top {
   background-color: var(--it-white);
@@ -1578,6 +1586,7 @@ input::-webkit-inner-spin-button {
   transform: translateY(-50%);
   width: 240rem;
   aspect-ratio: 1/1;
+  pointer-events: none;
 }
 .work__wrapper {
   position: relative;
@@ -1592,9 +1601,8 @@ input::-webkit-inner-spin-button {
   -ms-flex-wrap: nowrap;
   flex-wrap: nowrap;
   gap: 3rem;
-  width: -webkit-fit-content;
-  width: -moz-fit-content;
-  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
   padding: 0 calc((100% - var(--content-width)) / 2);
 }
 @media (max-width: 576px) {
@@ -1603,6 +1611,7 @@ input::-webkit-inner-spin-button {
   }
 }
 .work__item {
+  height: 100%;
   -ms-flex-negative: 0;
   flex-shrink: 0;
   width: 47rem;
@@ -1614,7 +1623,6 @@ input::-webkit-inner-spin-button {
   -ms-flex-direction: column;
   flex-direction: column;
   gap: 1rem;
-  height: auto;
 }
 .work__item-top {
   padding: 5rem 4rem;
@@ -1681,6 +1689,7 @@ input::-webkit-inner-spin-button {
   top: 90%;
   width: 240rem;
   aspect-ratio: 1/1;
+  pointer-events: none;
   -webkit-animation: shake 4s linear infinite;
   animation: shake 4s linear infinite;
 }

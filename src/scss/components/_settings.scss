@@ -42,6 +42,23 @@
 
       transition: fill 0.3s ease-in;
     }
+
+    @include hover {
+      svg {
+        fill: var(--it-pink-hover);
+      }
+    }
+    &:focus-visible {
+      outline: none;
+      svg {
+        fill: var(--it-pink-hover);
+      }
+    }
+    &:active {
+      svg {
+        fill: var(--it-pink);
+      }
+    }
   }
   &__add {
     width: 100%;
@@ -52,5 +69,157 @@
     .form__btn {
       grid-column: 1;
     }
+
+    &.is-editing {
+      .form__field-wrapper {
+        outline-color: var(--it-black);
+        background-color: var(--it-white);
+      }
+    }
+  }
+
+  &__save {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(1rem);
+    transition-property: color, opacity, transform;
+    transition-duration: 0.3s;
+    width: max-content;
+    justify-self: flex-start;
+    width: 100%;
+    height: 8rem;
+    &.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+  }
+
+  &__wallets {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    width: 100%;
+  }
+
+  &__wallet-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    &.has-error {
+      .form__field-wrapper {
+        outline-color: var(--it-red);
+      }
+
+      .settings__wallet-error {
+        color: var(--it-red);
+      }
+    }
+
+    &.is-editing {
+      .form__field-wrapper {
+        outline-color: var(--it-white);
+        background-color: var(--it-white);
+      }
+    }
+  }
+
+  &__wallet-row {
+    width: 100%;
+    display: flex;
+    gap: 2rem;
+
+    .form__field-wrapper {
+      flex: 1;
+      padding-right: 7.2rem;
+    }
+
+    .settings__wallet-edit {
+      flex-shrink: 0;
+    }
+  }
+
+  &__wallet-copy {
+    position: absolute;
+    z-index: 5;
+    top: 50%;
+    right: 1.2rem;
+    display: flex;
+    gap: 0.6rem;
+    transform: translateY(-50%);
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 1.2rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease-in-out;
+    color: #bfbfbf;
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  &__wallet-edit {
+    width: 7.2rem;
+    flex-shrink: 0;
+    background-color: var(--it-white);
+    border-radius: 2rem;
+
+    svg {
+      width: 3.2rem;
+      height: 3.2rem;
+      fill: #bfbfbf;
+      transition: fill 0.3s ease-in;
+    }
+
+    @include hover {
+      svg {
+        fill: var(--it-pink-hover);
+      }
+    }
+    &:focus-visible {
+      outline: none;
+      svg {
+        fill: var(--it-pink-hover);
+      }
+    }
+    &:active {
+      svg {
+        fill: var(--it-pink);
+      }
+    }
+  }
+
+  &__wallet-error {
+    width: 100%;
+    margin: 0;
+    min-height: 1.6rem;
+    font-size: 1.4rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+.settings-toast {
+  position: fixed;
+  top: 2.4rem;
+  right: 2.4rem;
+  padding: 1.2rem 2rem;
+  border-radius: 1.2rem;
+  background: rgba(34, 197, 94, 0.9);
+  color: var(--it-black);
+  font-weight: 600;
+  font-size: 1.6rem;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(-1rem);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  z-index: 2000;
+
+  &.is-visible {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
