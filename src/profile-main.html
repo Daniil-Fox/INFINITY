@@ -10,6 +10,53 @@
       <section class="profile">
         <div class="container">
           @include('partials/p-main.html')
+
+          <div class="history-modal" data-history-modal aria-hidden="true">
+            <div class="history-modal__overlay" data-history-close></div>
+            <div class="history-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+              <div class="history-modal__header">
+                <p class="history-modal__title" id="history-modal-title">
+                  История
+                </p>
+                <button class="btn-reset history-modal__close" type="button" aria-label="Закрыть окно истории"
+                  data-history-close></button>
+              </div>
+              <p class="history-modal__caption">
+                Начисления и списания мощности
+              </p>
+              <div class="history-modal__body">
+                <p class="history-modal__empty" data-history-empty>
+                  В истории пока нет операций
+                </p>
+                <ul class="history-modal__list" data-history-list>
+                  <li class="history-modal__item">
+                    <p class="history-modal__item-title">
+                      Пополнение 10 TH
+                    </p>
+                    <p class="history-modal__item-meta">22.10.2025</p>
+                  </li>
+                  <li class="history-modal__item">
+                    <p class="history-modal__item-title">
+                      Начисление 0.00000X BTC
+                    </p>
+                    <p class="history-modal__item-meta">22.10.2025</p>
+                  </li>
+                  <li class="history-modal__item">
+                    <p class="history-modal__item-title">
+                      Списание 5 TH
+                    </p>
+                    <p class="history-modal__item-meta">22.10.2025</p>
+                  </li>
+                  <li class="history-modal__item">
+                    <p class="history-modal__item-title">
+                      Вывод 0.0000Y BTC
+                    </p>
+                    <p class="history-modal__item-meta">22.10.2025</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>

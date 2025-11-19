@@ -3,6 +3,13 @@
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 3rem;
+
+    @include mobile {
+      display: flex;
+      flex-direction: column;
+      grid-template-columns: unset;
+      gap: 2rem;
+    }
   }
 
   &__content {
@@ -22,7 +29,10 @@
     font-size: 3.2rem;
     line-height: 120%;
     color: var(--it-black);
-
+    @include mobile {
+      font-weight: 500;
+      font-size: 2.8rem;
+    }
     &:not(:last-child) {
       margin-bottom: 1.5rem;
     }
@@ -34,6 +44,11 @@
     font-size: 6rem;
     line-height: 100%;
     color: #000;
+
+    @include mobile {
+      font-size: 4rem;
+      font-weight: 600;
+    }
   }
 
   &__row {
@@ -59,6 +74,10 @@
   &__maie,
   &__has {
     min-height: 36.4rem;
+
+    @include mobile {
+      min-height: unset;
+    }
   }
 
   &__has {
@@ -68,25 +87,73 @@
     justify-content: space-between;
   }
 
+  &__has &__row {
+    @include mobile {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0rem;
+    }
+  }
+
+  &__has &__row:not(:last-child) {
+    margin-bottom: 0;
+  }
+
+  &__has &__btn {
+    @include mobile {
+      display: none;
+    }
+  }
+  &__has &__btn_mob {
+    display: none;
+
+    @include mobile {
+      display: flex;
+    }
+  }
+
   &__inwallet {
     font-weight: 400;
     font-size: 8.8rem;
     line-height: 120%;
     color: #000;
+
+    @include mobile {
+      font-size: 4.8rem;
+    }
   }
 
   &__bottom {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 3rem;
+    }
+  }
+
+  &__items {
+    @include mobile {
+      display: flex;
+      gap: 2rem;
+      justify-content: space-between;
+    }
   }
   &__item {
     font-weight: 400;
     font-size: 2.2rem;
     line-height: 120%;
-
+    @include mobile {
+      font-size: 2rem;
+    }
     &:not(:last-child) {
       margin-bottom: 3rem;
+      @include mobile {
+        margin-bottom: 0;
+      }
     }
   }
   &__item-capture {
@@ -113,6 +180,14 @@
   &__buttons {
     display: flex;
     gap: 2rem;
+
+    @include mobile {
+      width: 100%;
+
+      & > * {
+        flex: 1;
+      }
+    }
   }
 
   &__charts {

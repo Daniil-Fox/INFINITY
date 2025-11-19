@@ -35,29 +35,69 @@
       <section class="login">
         <div class="container">
           <div class="login__card">
-            <h1 class="login__title">Вход в личный кабинет</h1>
-            <p class="login__subtitle">
-              Используйте email и пароль, чтобы продолжить
-            </p>
-            <form action="#" class="form login__form" autocomplete="off">
-              <div class="form__field form__field--long">
-                <div class="form__field-wrapper">
-                  <input type="email" class="form__input input-email" name="email" id="login-email" required />
-                  <label class="form__label" for="login-email">Email</label>
-                </div>
-              </div>
-              <div class="form__field form__field--long">
-                <div class="form__field-wrapper">
-                  <input type="password" class="form__input input-password" name="password" id="login-password"
-                    required />
-                  <label class="form__label" for="login-password">Пароль</label>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-reset btn_light form__btn login__submit" disabled>
+            <div class="login__tabs">
+              <button type="button" class="login__tab login__tab--active" data-tab="login">
                 Войти
               </button>
-              <div class="login__notice" data-login-notice aria-live="polite"></div>
-            </form>
+              <button type="button" class="login__tab" data-tab="register">
+                Регистрация
+              </button>
+            </div>
+
+            <div class="login__content">
+              <form action="#" class="form login__form login__form--active" data-form="login" autocomplete="off">
+                <div class="form__field form__field--long">
+                  <div class="form__field-wrapper">
+                    <input type="email" class="form__input input-email" name="email" id="login-email" required />
+                    <label class="form__label" for="login-email">Email</label>
+                  </div>
+                </div>
+                <div class="form__field form__field--long">
+                  <div class="form__field-wrapper">
+                    <input type="password" class="form__input input-password" name="password" id="login-password"
+                      required />
+                    <label class="form__label" for="login-password">Пароль</label>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-reset btn_light form__btn login__submit" disabled>
+                  Войти
+                </button>
+                <div class="login__notice" data-login-notice aria-live="polite"></div>
+              </form>
+
+              <form action="#" class="form login__form" data-form="register" autocomplete="off">
+                <div class="form__field form__field--long">
+                  <div class="form__field-wrapper">
+                    <input type="text" class="form__input input-name" name="name" id="register-name" required />
+                    <label class="form__label" for="register-name">Имя</label>
+                  </div>
+                </div>
+                <div class="form__field form__field--long">
+                  <div class="form__field-wrapper">
+                    <input type="email" class="form__input input-email" name="email" id="register-email" required />
+                    <label class="form__label" for="register-email">Email</label>
+                  </div>
+                </div>
+                <div class="form__field form__field--long">
+                  <div class="form__field-wrapper">
+                    <input type="password" class="form__input input-password" name="password" id="register-password"
+                      required />
+                    <label class="form__label" for="register-password">Пароль</label>
+                  </div>
+                </div>
+                <div class="form__field form__field--long">
+                  <div class="form__field-wrapper">
+                    <input type="password" class="form__input input-password" name="password-confirm"
+                      id="register-password-confirm" required />
+                    <label class="form__label" for="register-password-confirm">Подтвердите пароль</label>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-reset btn_light form__btn register__submit" disabled>
+                  Зарегистрироваться
+                </button>
+                <div class="login__notice" data-register-notice aria-live="polite"></div>
+              </form>
+            </div>
           </div>
         </div>
       </section>

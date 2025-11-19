@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru" class="page">
+
+@include('partials/head-profile.html')
+
+<body class="page__body">
+  <div class="site-container">
+    @include('partials/header-profile.html')
+    <main class="main">
+      <section class="dashboard">
+        <div class="container dashboard__container">
+          <div class="dashboard__content">
+            <h1 class="dashboard__title">
+              Доход<br>
+              под контролем
+            </h1>
+            <p class="desc dashboard__desc">
+              Следите за мощностями<br>
+              и динамикой добычи
+            </p>
+            <a href="./profile-calculator.html" class="btn btn-reset dashboard__btn">
+              Купить мощности
+            </a>
+          </div>
+
+          <div class="dashboard__img">
+            <picture>
+              <source srcset="./img/dashboard-main-mob.webp" media="(max-width: 576px)" type="image/webp">
+              <source srcset="./img/dashboard-main-png.webp" media="(max-width: 576px)" type="image/png">
+              <source srcset="./img/dashboard-main.webp" type="image/webp">
+              <img loading="lazy" src="./img/dashboard-main.png" class="image" width="" height="" alt="">
+            </picture>
+
+
+            <div class="dashboard__decor rellax" data-rellax-speed="5">
+              <div class="dashboard__element dashboard__element_square">
+                <img src="./img/decor/square.webp" alt="">
+              </div>
+              <div class="dashboard__element dashboard__element_square-second">
+                <img src="./img/decor/square.webp" alt="">
+              </div>
+              <div class="dashboard__element dashboard__element_square-third">
+                <img src="./img/decor/square.webp" alt="">
+              </div>
+              <div class="dashboard__element dashboard__element_diamond">
+                <img src="./img/decor/diamond.webp" alt="">
+              </div>
+              <div class="dashboard__element dashboard__element_tubus">
+                <img src="./img/decor/tubus.webp" alt="">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>

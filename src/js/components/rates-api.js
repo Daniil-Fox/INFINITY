@@ -12,7 +12,48 @@ const DEFAULTS = {
   cacheTtlMs: 30_000,
 };
 
+const MARKET_PROXY_DEFAULT =
+  "/wp-content/themes/infinity/assets/market-proxy.php";
+const FALLBACK_RATES = { EUR: 0.92, RUB: 92, USD: 1 };
+
 const cache = new Map();
+
+function isLocalhostHost(hostname) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname.endsWith(".local")
+  );
+}
+
+function shouldUseProxy(overrides = {}) {
+  if (typeof overrides.useProxy === "boolean") return overrides.useProxy;
+  if (typeof window === "undefined") return false;
+  return !isLocalhostHost(window.location.hostname);
+}
+
+function resolveMarketProxyUrl(overrides = {}) {
+  if (overrides.marketProxyUrl) return overrides.marketProxyUrl;
+  if (typeof window !== "undefined") {
+    const envUrl = window.INFINITY_ENV?.MARKET_PROXY_URL;
+    if (envUrl) return envUrl;
+    const meta =
+      typeof document !== "undefined"
+        ? document
+            .querySelector('meta[name="market-proxy-url"]')
+            ?.getAttribute("content")
+        : null;
+    if (meta) return meta;
+  }
+  return MARKET_PROXY_DEFAULT;
+}
+
+function buildProxyUrl(params = {}, overrides = {}) {
+  const base = resolveMarketProxyUrl(overrides);
+  const usp = new URLSearchParams(params);
+  return `${base}?${usp.toString()}`;
+}
 
 function getCache(key) {
   const item = cache.get(key);
@@ -25,11 +66,59 @@ function setCache(key, value, ttl) {
   cache.set(key, { v: value, t: Date.now(), ttl });
 }
 
+function normalizeRatesPayload(data) {
+  // exchangerate-api.com: { rates: { ... } }
+  if (data?.rates && typeof data.rates === "object") {
+    return data.rates;
+  }
+  // exchangerate.host: { result: { rates: { ... } } }
+  if (data?.result?.rates && typeof data.result.rates === "object") {
+    return data.result.rates;
+  }
+  // frankfurter.app: { rates: { ... } }
+  if (
+    data?.rates &&
+    typeof data.rates === "object" &&
+    (data.rates.EUR || data.rates.RUB)
+  ) {
+    return data.rates;
+  }
+  // иногда приходит в корне
+  if ((data?.EUR || data?.RUB) && !data?.rates) {
+    return data;
+  }
+  return null;
+}
+
+function extractRates(data) {
+  const ratesObj = normalizeRatesPayload(data);
+  if (!ratesObj) {
+    throw new Error("Unknown API format");
+  }
+  const eur = Number(ratesObj.EUR);
+  const rub = Number(ratesObj.RUB);
+  if (!Number.isFinite(eur) || !Number.isFinite(rub)) {
+    throw new Error("Invalid exchange rates: non-finite values");
+  }
+  if (eur < 0.5 || eur > 1.5) {
+    throw new Error(`EUR rate out of range: ${eur}`);
+  }
+  if (rub < 30 || rub > 200) {
+    throw new Error(`RUB rate out of range: ${rub}`);
+  }
+  return { EUR: eur, RUB: rub, USD: 1 };
+}
+
 export async function fetchBtcUsdPrice(overrides = {}) {
-  const url = overrides.coinpaprikaTickerUrl || DEFAULTS.coinpaprikaTickerUrl;
+  const useProxy = shouldUseProxy(overrides);
+  const url = useProxy
+    ? buildProxyUrl({ type: "btc" }, overrides)
+    : overrides.coinpaprikaTickerUrl || DEFAULTS.coinpaprikaTickerUrl;
   const cached = getCache(url);
   if (cached) return cached;
-  const res = await fetch(url, { credentials: "omit" });
+  const res = await fetch(url, {
+    credentials: useProxy ? "same-origin" : "omit",
+  });
   if (!res.ok) throw new Error("BTC price fetch failed");
   const data = await res.json();
   const price = Number(data?.quotes?.USD?.price);
@@ -40,67 +129,22 @@ export async function fetchBtcUsdPrice(overrides = {}) {
 
 // Попытка получить курсы из одного источника
 async function tryFetchRates(url) {
-  // Создаем AbortController для таймаута (совместимость со старыми браузерами)
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
-  
+
   try {
-    const res = await fetch(url, { 
+    const res = await fetch(url, {
       credentials: "omit",
-      signal: controller.signal
+      signal: controller.signal,
     });
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    
-    // Поддержка разных форматов API
-    let ratesObj = null;
-    
-    // exchangerate-api.com: { rates: { EUR: 0.92, RUB: 92 } }
-    if (data?.rates && typeof data.rates === 'object') {
-      ratesObj = data.rates;
-    } 
-    // exchangerate.host: { rates: { EUR: 0.92, RUB: 92 } }
-    else if (data?.result?.rates && typeof data.result.rates === 'object') {
-      ratesObj = data.result.rates;
-    }
-    // frankfurter.app: { rates: { EUR: 0.92, RUB: 92 } }
-    else if (data?.rates && typeof data.rates === 'object' && (data.rates.EUR || data.rates.RUB)) {
-      ratesObj = data.rates;
-    }
-    // Некоторые API могут возвращать напрямую в корне
-    else if ((data?.EUR || data?.RUB) && !data.rates) {
-      ratesObj = data;
-    }
-    
-    if (!ratesObj) {
-      console.warn("Unknown API format:", url, data);
-      throw new Error("Unknown API format");
-    }
-    
-    const eur = Number(ratesObj.EUR);
-    const rub = Number(ratesObj.RUB);
-    
-    // Проверяем, что курсы валидны
-    if (!Number.isFinite(eur) || !Number.isFinite(rub)) {
-      throw new Error("Invalid exchange rates: non-finite values");
-    }
-    
-    // Проверка разумности курсов (EUR обычно 0.8-1.2, RUB обычно 50-150)
-    // Эти проверки помогают отсеять неактуальные данные
-    if (eur < 0.5 || eur > 1.5) {
-      throw new Error(`EUR rate out of range: ${eur}`);
-    }
-    if (rub < 30 || rub > 200) {
-      throw new Error(`RUB rate out of range: ${rub}`);
-    }
-    
-    return { EUR: eur, RUB: rub, USD: 1 };
+    return extractRates(data);
   } catch (error) {
     clearTimeout(timeoutId);
-    // Прокидываем ошибку дальше, но добавляем информацию об URL
-    if (error.name === 'AbortError') {
-      const timeoutError = new Error('Request timeout');
+    if (error.name === "AbortError") {
+      const timeoutError = new Error("Request timeout");
       timeoutError.url = url;
       throw timeoutError;
     }
@@ -110,40 +154,44 @@ async function tryFetchRates(url) {
 }
 
 export async function fetchUsdRates(overrides = {}) {
-  const urls = overrides.fiatRatesUrls || overrides.fiatRatesUrl 
-    ? [overrides.fiatRatesUrl || overrides.fiatRatesUrls].flat()
-    : DEFAULTS.fiatRatesUrls;
-  
-  // Проверяем кеш по первому URL
+  const useProxy = shouldUseProxy(overrides);
+  if (useProxy) {
+    const url = buildProxyUrl({ type: "fiat" }, overrides);
+    const cached = getCache(url);
+    if (cached) return cached;
+    const res = await fetch(url, { credentials: "same-origin" });
+    if (!res.ok) throw new Error("Fiat rates fetch via proxy failed");
+    const data = await res.json();
+    const rates = extractRates(data);
+    setCache(url, rates);
+    return rates;
+  }
+
+  const urls =
+    overrides.fiatRatesUrls || overrides.fiatRatesUrl
+      ? [overrides.fiatRatesUrl || overrides.fiatRatesUrls].flat()
+      : DEFAULTS.fiatRatesUrls;
+
   const cacheKey = urls[0];
   const cached = getCache(cacheKey);
   if (cached) return cached;
-  
-  // Пробуем получить курсы из разных источников по очереди
+
   let lastError = null;
   for (const url of urls) {
     try {
       const rates = await tryFetchRates(url);
-      // Кешируем успешный результат
       setCache(cacheKey, rates);
       return rates;
     } catch (error) {
       lastError = error;
       console.warn(`Failed to fetch from ${url}:`, error.message);
-      // Продолжаем пробовать следующие источники
       continue;
     }
   }
-  
-  // Если все источники не сработали
+
   console.error("All exchange rate APIs failed, using fallback rates");
   console.error("Last error:", lastError);
-  
-  // Возвращаем fallback с более актуальными значениями (обновить при необходимости)
-  // По состоянию на ноябрь 2024: EUR ~0.92, RUB ~92
-  const fallbackRates = { EUR: 0.92, RUB: 92, USD: 1 };
-  // Не кешируем fallback, чтобы при следующей попытке снова попробовать API
-  return fallbackRates;
+  return FALLBACK_RATES;
 }
 
 export default { fetchBtcUsdPrice, fetchUsdRates };

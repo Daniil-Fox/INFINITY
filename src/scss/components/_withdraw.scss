@@ -1,0 +1,279 @@
+/* Модальное окно вывода BTC */
+.withdraw-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: transparent;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  -webkit-transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 200;
+}
+.withdraw-modal[aria-hidden="false"] {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.withdraw-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+.withdraw-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(48rem, 100%);
+  max-height: min(80vh, 62rem);
+  padding: 3rem;
+  border-radius: 2.4rem;
+  background: var(--it-white);
+  color: var(--it-black);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-shadow: 0 2rem 5rem rgba(10, 10, 10, 0.25);
+  box-shadow: 0 2rem 5rem rgba(10, 10, 10, 0.25);
+}
+@media (max-width: 576px) {
+  .withdraw-modal__dialog {
+    padding: 2rem;
+  }
+}
+.withdraw-modal__header {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.withdraw-modal__title {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 700;
+}
+.withdraw-modal__close {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  -webkit-transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.withdraw-modal__close::before,
+.withdraw-modal__close::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.8rem;
+  height: 1px;
+  background-color: var(--it-black);
+  -webkit-transform-origin: center;
+  -ms-transform-origin: center;
+  transform-origin: center;
+}
+.withdraw-modal__close::before {
+  -webkit-transform: translate(-50%, -50%) rotate(45deg);
+  -ms-transform: translate(-50%, -50%) rotate(45deg);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.withdraw-modal__close::after {
+  -webkit-transform: translate(-50%, -50%) rotate(-45deg);
+  -ms-transform: translate(-50%, -50%) rotate(-45deg);
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+@media (any-hover: hover) {
+  .withdraw-modal__close:hover {
+    border-color: var(--it-pink);
+    background-color: rgba(255, 0, 138, 0.07);
+  }
+}
+.withdraw-modal__close:focus-visible {
+  outline: none;
+  border-color: var(--it-pink);
+}
+.withdraw-modal__body {
+  overflow: hidden;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+/* Форма вывода */
+.withdraw-form {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 2rem;
+}
+.withdraw-form__field {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.withdraw-form__label {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--it-black);
+}
+.withdraw-form__input,
+.withdraw-form__select {
+  width: 100%;
+  padding: 1.2rem 1.6rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 1.2rem;
+  font-size: 1.6rem;
+  color: var(--it-black);
+  background-color: var(--it-white);
+  -webkit-transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease;
+}
+.withdraw-form__input:focus,
+.withdraw-form__select:focus {
+  outline: none;
+  border-color: var(--it-pink);
+}
+.withdraw-form__input:invalid {
+  border-color: #d63638;
+}
+.withdraw-form__hint {
+  margin: 0;
+  font-size: 1.4rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+.withdraw-form__max-btn {
+  -ms-flex-item-align: start;
+  align-self: flex-start;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--it-pink);
+  background-color: rgba(255, 0, 138, 0.1);
+  border: 1px solid rgba(255, 0, 138, 0.2);
+  -webkit-transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
+  cursor: pointer;
+}
+@media (any-hover: hover) {
+  .withdraw-form__max-btn:hover {
+    background-color: rgba(255, 0, 138, 0.15);
+    border-color: rgba(255, 0, 138, 0.3);
+    color: var(--it-pink-hover);
+  }
+}
+.withdraw-form__max-btn:active {
+  background-color: rgba(255, 0, 138, 0.2);
+}
+.withdraw-form__max-btn:focus-visible {
+  outline: 2px solid var(--it-pink);
+  outline-offset: 2px;
+}
+.withdraw-form__error {
+  padding: 1.2rem 1.6rem;
+  border-radius: 1.2rem;
+  background-color: rgba(214, 54, 56, 0.1);
+  color: #d63638;
+  font-size: 1.4rem;
+}
+.withdraw-form__error a {
+  color: #d63638;
+  text-decoration: underline;
+}
+.withdraw-form__error a:hover {
+  text-decoration: none;
+}
+.withdraw-form__actions {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 1.2rem;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+.withdraw-form__cancel,
+.withdraw-form__submit {
+  padding: 1.2rem 2.4rem;
+  border-radius: 1.2rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  -webkit-transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+}
+.withdraw-form__cancel {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--it-black);
+}
+@media (any-hover: hover) {
+  .withdraw-form__cancel:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+}
+.withdraw-form__submit {
+  background-color: var(--it-pink);
+  color: var(--it-white);
+}
+.withdraw-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (any-hover: hover) {
+  .withdraw-form__submit:not(:disabled):hover {
+    background-color: var(--it-pink-hover);
+  }
+}
+@media (max-width: 576px) {
+  .withdraw-form__actions {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+  }
+  .withdraw-form__cancel,
+  .withdraw-form__submit {
+    width: 100%;
+  }
+}

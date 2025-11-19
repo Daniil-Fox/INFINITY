@@ -22,7 +22,56 @@
 
 <body class="page__body">
   <div class="site-container">
-    
+    <style>
+  :root {
+    --pre-white-opacity: 1;
+  }
+
+  .preloader {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background: var(--it-black);
+  }
+
+  .preloader::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: var(--pre-white-opacity, 1);
+  }
+
+
+  .preloader__logo-visual {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.3);
+    transform-origin: center;
+    width: 20rem;
+    height: auto;
+    z-index: 2;
+  }
+
+  .preloader__logo-visual svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>
+<div class="preloader" aria-hidden="true">
+  <div class="preloader__logo-visual">
+    <svg viewBox="0 0 117 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M32.8828 0C35.8028 3.51543e-05 38.5866 1.23747 40.5439 3.4043L63.6074 28.9385L85.1341 52.7716C85.4603 53.1327 85.9242 53.3389 86.4109 53.3389H101.515C102.465 53.3389 103.235 52.5685 103.235 51.6183V15.4862C103.235 14.536 102.465 13.7656 101.515 13.7656H86.1512C85.6948 13.7656 85.2572 13.9469 84.9345 14.2696L76.6276 22.5765C75.9558 23.2483 74.8664 23.2484 74.1945 22.5766L70.5439 18.9268L66.8944 15.2772C66.2224 14.6053 66.2224 13.5158 66.8944 12.8439L76.7139 3.02441C78.6498 1.08856 81.2759 3.4345e-05 84.0137 0H106.677C112.378 0.000166213 117 4.623 117 10.3242V56.7793C117 62.4807 112.378 67.1033 106.677 67.1035H84.1172C81.1971 67.1035 78.4134 65.8663 76.4561 63.6992L53.3926 38.165L31.8669 14.3329C31.5407 13.9717 31.0767 13.7656 30.59 13.7656H15.4862C14.536 13.7656 13.7656 14.536 13.7656 15.4862V51.6183C13.7656 52.5685 14.536 53.3389 15.4862 53.3389H30.8488C31.3052 53.3389 31.7428 53.1576 32.0655 52.8349L40.3732 44.5272C41.0451 43.8553 42.1345 43.8553 42.8065 44.5272L50.1056 51.8263C50.7776 52.4983 50.7776 53.5877 50.1056 54.2596L40.2861 64.0791C38.3501 66.0151 35.7243 67.1035 32.9863 67.1035H10.3242C4.62271 67.1035 0 62.4808 0 56.7793V10.3242C0.000209284 4.6229 4.62283 0 10.3242 0H32.8828Z"
+        fill="white" />
+    </svg>
+  </div>
+</div>
     <main class="main">
       <section class="hero">
   <canvas id="scene" class="rellax" data-rellax-speed="3"></canvas>
@@ -106,7 +155,7 @@
         <span>Мы добываем биткоин постоянно</span>
       </p>
 
-      <button class="btn btn-reset hero__btn">
+      <button class="btn btn-reset hero__btn" data-target="#modal">
         Оформить заявку
       </button>
     </div>
@@ -827,6 +876,111 @@
     </div>
   </div>
 </footer>
+
+<div class="modal" id="modal">
+  <div class="modal__overlay"></div>
+
+  <div class="container">
+    <div class="modal__body">
+      <div class="modal__container">
+        <div class="modal__content">
+          <div class="modal__header">
+            <p class="modal__title">Оставить заявку</p>
+
+            <button class="modal__close btn-reset">
+              <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1.5 1.5L19.5 19.5M19.5 1.5L1.5 19.5" stroke-width="3" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          <form action="#" class="modal__form form">
+            <div class="form__field form__field--long">
+              <div class="form__field-wrapper">
+                <input type="text" class="form__input input-name" name="Имя" id="first-name" />
+                <label class="form__label" for="first-name">
+                  Имя
+                </label>
+              </div>
+            </div>
+            <div class="form__field form__field--long">
+              <select name="Способ связи" class="visually-hidden select-contact">
+                <option value="">где с вами связаться?</option>
+                <option value="Telegram">Telegram</option>
+                <option value="Whatsapp">Whatsapp</option>
+                <option value="Email">Email</option>
+              </select>
+
+              <div class="dropdown form__dropdown">
+                <div class="dropdown__header">
+                  <div class="dropdown__label">Где с вами связаться?*</div>
+                  <div class="dropdown__capture">Где с вами связаться?*</div>
+                  <div class="dropdown__btn">
+                    <svg width="21" height="12" viewBox="0 0 21 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1.5 1.5L10.5 10.5L19.5 1.5" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                      <path d="M1.5 1.5L10.5 10.5L19.5 1.5" stroke-opacity="0.25" stroke-width="3"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="dropdown__body">
+                  <div class="dropdown__content">
+                    <div class="dropdown__item"></div>
+                    <div class="dropdown__item">Telegram</div>
+                    <div class="dropdown__item">Whatsapp</div>
+                    <div class="dropdown__item">Email</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form__field form__field--long">
+              <div class="form__field-wrapper">
+                <input type="text" class="form__input input-tel" name="Телефон" style="display: block" id="phone" />
+                <input type="email" class="form__input input-email" name="Почта" style="display: none" />
+                <label class="form__label" for="phone">Телефон/Почта*</label>
+              </div>
+            </div>
+
+            <button class="btn-reset btn form__btn" disabled>Оставить заявку</button>
+          </form>
+        </div>
+
+        <div class="modal__img">
+          <picture>
+            <source srcset="./img/cta.webp" type="image/webp">
+            <img loading="lazy" src="./img/cta.jpg" class="image" width="896" height="670" alt="">
+          </picture>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal modal--success" id="modal-success">
+  <div class="modal__overlay"></div>
+
+  <div class="container">
+    <div class="modal__body">
+      <div class="modal__container">
+        <div class="modal__content modal__content--success">
+          <div class="modal__success-icon">
+            <svg width="97" height="70" viewBox="0 0 97 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M32.9793 54.7216L85.83 1.87083C87.0773 0.623609 88.5324 0 90.1953 0C91.8583 0 93.3133 0.623609 94.5606 1.87083C95.8078 3.11804 96.4314 4.60015 96.4314 6.31715C96.4314 8.03415 95.8078 9.51418 94.5606 10.7572L37.3445 68.1292C36.0973 69.3764 34.6422 70 32.9793 70C31.3163 70 29.8612 69.3764 28.614 68.1292L1.79887 41.314C0.551654 40.0668 -0.0470105 38.5868 0.00287819 36.8739C0.0527668 35.1611 0.703396 33.679 1.95477 32.4276C3.20614 31.1762 4.68825 30.5526 6.4011 30.5568C8.11394 30.5609 9.59397 31.1846 10.8412 32.4276L32.9793 54.7216Z"
+                fill="#75EA75" />
+            </svg>
+          </div>
+
+          <h2 class="modal__success-title">Запрос принят</h2>
+          <p class="modal__success-text">Скоро менеджер свяжется с вами</p>
+
+          <button class="btn-reset btn modal__success-btn" data-target="#modal-success">Отлично</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
   </div>
 </body>
 

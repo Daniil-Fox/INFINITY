@@ -1,7 +1,4 @@
-import {
-  computeProfitability,
-  resolveTierPrice,
-} from "./calculator-engine.js";
+import { computeProfitability, resolveTierPrice } from "./calculator-engine.js";
 import { convertFromUsd, formatCurrency } from "./currency-utils.js";
 
 const CURRENCY_SYMBOLS = {
@@ -17,7 +14,7 @@ function formatPower(powerTh) {
 
 function formatProfitBtc(value) {
   if (!Number.isFinite(value)) return "-";
-  return `${value} BTC`;
+  return `${Number(value).toFixed(9)} BTC`;
 }
 
 function formatFiat(amountUsd, currencyState) {
@@ -49,7 +46,11 @@ function formatPricePerTh(pricePerThUsd, currencyState) {
 }
 
 function formatAnnualPercent(packageCostUsd, metrics) {
-  if (!metrics?.year || !Number.isFinite(packageCostUsd) || packageCostUsd <= 0) {
+  if (
+    !metrics?.year ||
+    !Number.isFinite(packageCostUsd) ||
+    packageCostUsd <= 0
+  ) {
     return "-";
   }
   const net = metrics.year.accrualUsd;
@@ -65,8 +66,7 @@ function updatePatternCard(patternEl, calculatorContext) {
     return;
   }
 
-  const { config, currencyState, powerTh: currentPowerTh } =
-    calculatorContext;
+  const { config, currencyState, powerTh: currentPowerTh } = calculatorContext;
 
   const isActive =
     Number.isFinite(currentPowerTh) &&
@@ -168,4 +168,3 @@ export function initCalculatorPatterns(rootEl, calculatorApi) {
 export default {
   initCalculatorPatterns,
 };
-

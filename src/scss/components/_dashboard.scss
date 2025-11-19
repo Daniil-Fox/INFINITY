@@ -1,0 +1,305 @@
+.dashboard {
+  height: 100vh;
+  padding: 10rem 0;
+
+  display: flex;
+  align-items: center;
+
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+
+  @include mobile {
+    padding: 15rem 0;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 240rem;
+
+    background-image: url("./../img/blur-sphere.svg"), url("./../img/grid.svg");
+    background-size: contain, auto 100%;
+    background-repeat: no-repeat;
+    background-position: right;
+    pointer-events: none;
+
+    @include mobile {
+      background-image: url("./../img/blur-sphere-mob.svg"),
+        url("./../img/grid-mob.svg");
+      background-position: bottom left;
+      height: 100%;
+      top: 100%;
+      transform: translateY(-60%);
+      bottom: 0;
+      background-size: contain, 100% auto;
+    }
+  }
+  &__container {
+    position: relative;
+    padding: 0 14rem;
+    width: 100%;
+
+    @include mobile {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0 var(--container-offset);
+    }
+  }
+
+  &__title {
+    margin: 0;
+    margin-bottom: 6rem;
+    font-weight: 700;
+    font-size: 7rem;
+    line-height: 110%;
+
+    @include mobile {
+      font-size: 5.2rem;
+      margin-bottom: 3.2rem;
+    }
+  }
+  &__desc {
+    margin: 0;
+    margin-bottom: 6rem;
+    font-size: 2.8rem;
+    font-weight: 600;
+  }
+  &__content {
+    position: relative;
+    z-index: 5;
+    @include mobile {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  &__btn {
+    width: 100%;
+    max-width: 51.6rem;
+    padding: 3.1rem 4rem;
+
+    @include mobile {
+      margin-top: auto;
+    }
+  }
+
+  &__img {
+    width: 130rem;
+    aspect-ratio: 1 / 1;
+    position: absolute;
+    left: 58rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transform-origin: center;
+    @include mobile {
+      width: 100%;
+      aspect-ratio: unset;
+      height: 62rem;
+      left: 0;
+      top: unset;
+      bottom: 12rem;
+      transform: translateY(0);
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+
+      @include mobile {
+        object-fit: cover;
+        object-position: left center;
+      }
+    }
+  }
+
+  &__decor {
+    position: absolute;
+    z-index: 2;
+    right: 7rem;
+    top: 0;
+    height: 100%;
+    width: 88.7rem;
+
+    @include mobile {
+      width: 100%;
+      height: auto;
+      top: 25vh;
+      bottom: 0;
+    }
+  }
+  &__element {
+    position: absolute;
+
+    aspect-ratio: 1 / 1;
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    &_square {
+      z-index: 3;
+      right: -3.5rem;
+      bottom: -4.7rem;
+      transform: rotate(-30deg);
+      width: 50rem;
+
+      animation-name: woble;
+      animation-timing-function: ease-in-out;
+      animation-duration: 4s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+
+      @include mobile {
+        width: 34rem;
+        right: -15rem;
+        bottom: -14rem;
+      }
+    }
+    &_square-second {
+      z-index: 2;
+      width: 24rem;
+      transform: rotate(30deg);
+
+      animation-name: sway-slow;
+      animation-timing-function: ease-in-out;
+      animation-duration: 4s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+
+      @include mobile {
+        width: 20rem;
+        top: -34rem;
+        left: 7rem;
+      }
+    }
+    &_square-third {
+      top: 4rem;
+      right: 4rem;
+      z-index: 2;
+      width: 16rem;
+      filter: blur(3px);
+      transform: rotate(30deg);
+
+      animation-name: sway-fast;
+      animation-timing-function: ease-in-out;
+      animation-duration: 2.5s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+
+      @include mobile {
+        width: 12rem;
+        right: 0rem;
+        top: -41rem;
+      }
+    }
+
+    &_diamond {
+      z-index: 2;
+      width: 20rem;
+      left: -3rem;
+      bottom: 5rem;
+
+      animation-name: sway-medium;
+      animation-timing-function: ease-in-out;
+      animation-duration: 3.5s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+
+      @include mobile {
+        width: 18rem;
+        left: 4rem;
+        bottom: -6rem;
+      }
+    }
+    &_tubus {
+      transform: rotate(-45deg);
+      width: 15rem;
+      top: -6rem;
+      left: 28rem;
+
+      animation-name: sway-tubus;
+      animation-timing-function: ease-in-out;
+      animation-duration: 3s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+
+      @include mobile {
+        display: none;
+      }
+    }
+  }
+}
+
+@keyframes dashboard-img-sway {
+  0% {
+    transform: translateY(-50%) rotateZ(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-50%) rotateZ(2deg) scale(1.015);
+  }
+  100% {
+    transform: translateY(-50%) rotateZ(0deg) scale(1);
+  }
+}
+@keyframes woble {
+  0% {
+    transform: rotate(-30deg) translateX(0px) translateY(0px) rotateZ(0deg);
+  }
+  25% {
+    transform: rotate(-30deg) translateX(10px) translateY(-8px) rotateZ(2deg);
+  }
+  50% {
+    transform: rotate(-30deg) translateX(15px) translateY(5px) rotateZ(-1deg);
+  }
+  75% {
+    transform: rotate(-30deg) translateX(-8px) translateY(12px) rotateZ(1deg);
+  }
+  100% {
+    transform: rotate(-30deg) translateX(-12px) translateY(-5px) rotateZ(-2deg);
+  }
+}
+
+@keyframes sway-slow {
+  0% {
+    transform: rotate(30deg) translateX(-5px) translateY(-3px);
+  }
+  100% {
+    transform: rotate(30deg) translateX(5px) translateY(3px);
+  }
+}
+
+@keyframes sway-fast {
+  0% {
+    transform: rotate(30deg) translateX(-8px) translateY(-5px);
+  }
+  100% {
+    transform: rotate(30deg) translateX(8px) translateY(5px);
+  }
+}
+
+@keyframes sway-medium {
+  0% {
+    transform: translateX(-6px) translateY(-4px) rotate(-2deg);
+  }
+  100% {
+    transform: translateX(6px) translateY(4px) rotate(2deg);
+  }
+}
+
+@keyframes sway-tubus {
+  0% {
+    transform: rotate(-45deg) translateX(-4px) translateY(-6px);
+  }
+  100% {
+    transform: rotate(-45deg) translateX(4px) translateY(6px);
+  }
+}

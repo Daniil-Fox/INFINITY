@@ -164,8 +164,16 @@ scene.add(directionLightTopRight);
 
 // LOADER
 const loader = new GLTFLoader();
+// Получаем путь к теме из локализации WordPress или используем относительный путь
+const themeUrl =
+  typeof infinityData !== "undefined" && infinityData.themeUrl
+    ? infinityData.themeUrl
+    : "";
+const modelPath = themeUrl
+  ? themeUrl + "/assets/models/gltf/bitcoin6/bitcoin.gltf"
+  : "../models/gltf/bitcoin6/bitcoin.gltf";
 loader.load(
-  "./models/gltf/bitcoin6/bitcoin.gltf",
+  modelPath,
   function (gltf) {
     coinModel = gltf.scene;
 

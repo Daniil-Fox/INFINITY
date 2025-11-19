@@ -4,7 +4,7 @@
   display: inline-block;
   position: relative;
   overflow: hidden;
-
+  z-index: 100;
   img,
   svg {
     display: block;
@@ -85,6 +85,11 @@
   &_light {
     background-color: var(--it-white);
     color: var(--it-black);
+  }
+  &:disabled {
+    background-color: #e6e6e6;
+    cursor: not-allowed;
+    color: rgba(0, 0, 0, 0.25);
   }
 }
 
@@ -252,7 +257,7 @@ ul {
   display: flex;
   align-items: center;
   justify-content: center;
-
+  flex-shrink: 0;
   width: 2.1rem;
   aspect-ratio: 1 / 1;
 
@@ -261,7 +266,9 @@ ul {
   padding: 0.5rem;
 
   position: relative;
-
+  @include mobile {
+    width: 3.2rem;
+  }
   &::after {
     content: "i";
 
@@ -279,6 +286,11 @@ ul {
     transition-property: color;
     transition-duration: 0.3s;
     transition-timing-function: ease;
+
+    @include mobile {
+      font-size: 2.2rem;
+      font-weight: 600;
+    }
   }
 
   transition-property: background-color;
@@ -346,3 +358,11 @@ input::-webkit-inner-spin-button {
   width: auto;
   height: auto;
 }
+
+.burger {
+  @include burger;
+  position: relative;
+  z-index: 100;
+}
+
+@import "modal";

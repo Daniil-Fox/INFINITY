@@ -7,6 +7,9 @@ import {
   formatCurrency,
 } from "./currency-utils.js";
 
+const FALLBACK_USD_RATES = { EUR: 0.92, RUB: 92, USD: 1 };
+const FALLBACK_BTC_USD = 109500;
+
 export function initCurrencyController(formEl, options = {}) {
   if (!formEl) return null;
 
@@ -39,16 +42,50 @@ export function initCurrencyController(formEl, options = {}) {
 
   const load = async () => {
     try {
-      const [btcUsd, usdRates] = await Promise.all([
+      const [btcResult, usdResult] = await Promise.allSettled([
         fetchBtcUsdPrice(options),
         fetchUsdRates(options),
       ]);
-      state.btcUsd = btcUsd;
-      state.usdRates = usdRates;
-      updateCourseView();
-      notify();
+
+      let didUpdate = false;
+
+      if (btcResult.status === "fulfilled") {
+        const price = Number(btcResult.value);
+        if (Number.isFinite(price) && price > 0) {
+          state.btcUsd = price;
+          didUpdate = true;
+        }
+      } else if (!state.btcUsd) {
+        state.btcUsd = FALLBACK_BTC_USD;
+        didUpdate = true;
+      }
+
+      if (usdResult.status === "fulfilled" && usdResult.value) {
+        state.usdRates = usdResult.value;
+        didUpdate = true;
+      } else if (!state.usdRates) {
+        state.usdRates = FALLBACK_USD_RATES;
+        didUpdate = true;
+      }
+
+      if (didUpdate) {
+        updateCourseView();
+        notify();
+      }
     } catch (_e) {
-      // тихо игнорируем, UI останется как есть
+      let didUpdate = false;
+      if (!state.btcUsd) {
+        state.btcUsd = FALLBACK_BTC_USD;
+        didUpdate = true;
+      }
+      if (!state.usdRates) {
+        state.usdRates = FALLBACK_USD_RATES;
+        didUpdate = true;
+      }
+      if (didUpdate) {
+        updateCourseView();
+        notify();
+      }
     }
   };
 

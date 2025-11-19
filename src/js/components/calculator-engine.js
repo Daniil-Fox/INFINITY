@@ -9,20 +9,24 @@ import {
 import { initCurrencyController } from "./currency-controller.js";
 import { convertFromUsd, formatCurrency } from "./currency-utils.js";
 
-window.INFINITY_ENV = {
-  OURPOOL_ACCOUNT: "olegkarpun",
-  OURPOOL_TOKEN: "a09be072-d684-4f73-afa1-39f745d98f0c",
-};
+// ВАЖНО: Токены больше не хранятся в клиентском коде!
+// В продакшене токены получаются на сервере через PHP прокси.
+// Для dev режима можно установить через window.INFINITY_ENV или meta-теги.
+window.INFINITY_ENV =
+  window.INFINITY_ENV ||
+  {
+    // OURPOOL_ACCOUNT: "", // Установите для dev режима
+    // OURPOOL_TOKEN: "", // Установите для dev режима
+  };
+
 // Конфиг по умолчанию: можно переопределить через data-атрибуты
 export const defaultConfig = {
   ourPool: {
     baseUrl: "https://ourpool.io",
-    account: "olegkarpun", // data-account на .calculator__form или передать через init
-    token: "a09be072-d684-4f73-afa1-39f745d98f0c", // data-token на .calculator__form или передать через init
+    account: "", // data-account на .calculator__form или передать через init (только для dev)
+    token: "", // data-token на .calculator__form или передать через init (только для dev)
   },
   pricing: {
-    // Стоимость за 1 TH по диапазонам мощности (из ТЗ/CSV)
-    // Пожалуйста, передайте актуальные значения в init(options)
     tiers: [
       { min: 8, max: 188, pricePerTh: 27 },
       { min: 189, max: 563, pricePerTh: 26 },
@@ -46,11 +50,14 @@ export const defaultConfig = {
   },
 };
 
+const DEFAULT_CALCULATOR_CONFIG_URL = "/wp-json/infinity/v1/calculator-config";
+const calculatorConfigCache = new Map();
+
 export function initCalculator(formEl, options = {}) {
   if (!formEl) return;
 
   const config = mergeConfigFromDom(defaultConfig, formEl, options);
-  const remoteConfigUrl = formEl.getAttribute("data-config-url");
+  const remoteConfigUrl = resolveCalculatorConfigUrl(formEl);
   const ourPoolCfg = config.ourPool || {};
 
   // Биндим контролы (ползунок + input) по существующей разметке
@@ -532,13 +539,11 @@ export function initCalculator(formEl, options = {}) {
   // При старте: подгружаем удалённую конфигурацию, если указана
   // Параллельно тянем статистику из OurPool (если заданы account и token)
   const remoteCfgPromise = remoteConfigUrl
-    ? loadRemoteConfig(remoteConfigUrl)
-        .then((remote) => {
-          if (remote && typeof remote === "object") {
-            deepMerge(config, remote);
-          }
-        })
-        .catch(() => {})
+    ? loadCalculatorConfig(remoteConfigUrl).then((remote) => {
+        if (remote && typeof remote === "object") {
+          deepMerge(config, remote);
+        }
+      })
     : Promise.resolve();
 
   const ourPoolStatsPromise =
@@ -572,15 +577,28 @@ export function initCalculator(formEl, options = {}) {
 // --- API OurPool (заготовки) ---
 
 export async function fetchRewardsStats({ baseUrl, account, token }) {
-  if (!account || !token) return null;
-  // В режиме разработки используем прокси, в продакшене - прямой запрос
+  // account и token больше не используются напрямую, но оставлены для обратной совместимости
+  // В продакшене токен получается на сервере через PHP прокси
   const isDev =
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1";
-  const apiPath = `/api/v1/accounts/${encodeURIComponent(
-    account
-  )}/btc/rewards-stats?token=${encodeURIComponent(token)}`;
-  const url = isDev ? apiPath : `${baseUrl}${apiPath}`;
+
+  // Формируем путь API (account будет заменен на сервере, если нужно)
+  const accountPlaceholder = account
+    ? encodeURIComponent(account)
+    : "{account}";
+  const apiPath = `/api/v1/accounts/${accountPlaceholder}/btc/rewards-stats`;
+
+  let url;
+  if (isDev) {
+    // Dev: используем прокси gulp, токен передаем в query (для dev режима)
+    const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+    url = `${apiPath}${tokenParam}`;
+  } else {
+    // Prod: используем PHP прокси WordPress (токен получается на сервере)
+    const proxyPath = "/wp-content/themes/infinity/assets/ourpool-proxy.php";
+    url = `${proxyPath}?path=${encodeURIComponent(apiPath)}`;
+  }
 
   const res = await fetch(url, {
     mode: "cors",
@@ -901,8 +919,9 @@ function updateSummary(root, metrics, viewCtx) {
   const periodData = metrics?.[period];
 
   // Показываем клиенту чистую прибыль в BTC
-  if (profitEl && periodData?.accrualBtc != null) {
-    profitEl.textContent = `${periodData.accrualBtc} BTC`;
+  if (profitEl) {
+    const profitFormatted = formatBtcAmount(periodData?.accrualBtc);
+    profitEl.textContent = profitFormatted ? `${profitFormatted} BTC` : "- BTC";
   }
 
   if (costEl && viewCtx) {
@@ -959,6 +978,11 @@ function convertToUsd(amount, currency, rates) {
   return value;
 }
 
+function formatBtcAmount(value, decimals = 9) {
+  if (!Number.isFinite(value)) return null;
+  return Number(value).toFixed(decimals);
+}
+
 // --- Utils ---
 
 function mergeConfigFromDom(base, formEl, overrides) {
@@ -1011,6 +1035,78 @@ function toNumber(v) {
 function round(n, digits = 2) {
   const p = Math.pow(10, digits);
   return Math.round(n * p) / p;
+}
+
+function resolveCalculatorConfigUrl(formEl) {
+  const attrUrl = formEl?.getAttribute("data-config-url");
+  if (attrUrl) return attrUrl;
+
+  const env =
+    (typeof window !== "undefined" && window.INFINITY_ENV) || undefined;
+  if (env?.CALCULATOR_CONFIG_URL) {
+    return env.CALCULATOR_CONFIG_URL;
+  }
+
+  if (typeof document !== "undefined") {
+    const metaUrl = document
+      .querySelector('meta[name="calculator-config-url"]')
+      ?.getAttribute("content");
+    if (metaUrl) return metaUrl;
+  }
+
+  if (isLocalhostEnv()) {
+    return null;
+  }
+
+  return DEFAULT_CALCULATOR_CONFIG_URL;
+}
+
+function isLocalhostEnv() {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host.endsWith(".local")
+  );
+}
+
+function loadCalculatorConfig(url) {
+  if (!url) return Promise.resolve(null);
+
+  const cached = calculatorConfigCache.get(url);
+  if (cached?.data) {
+    return Promise.resolve(cached.data);
+  }
+  if (cached?.promise) {
+    return cached.promise;
+  }
+
+  const promise = fetch(url, {
+    credentials: "same-origin",
+    headers: {
+      Accept: "application/json",
+    },
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return null;
+      }
+      return res.json();
+    })
+    .then((data) => {
+      calculatorConfigCache.set(url, { data });
+      return data;
+    })
+    .catch((error) => {
+      console.warn("Failed to load calculator config", error);
+      calculatorConfigCache.delete(url);
+      return null;
+    });
+
+  calculatorConfigCache.set(url, { promise });
+  return promise;
 }
 
 async function loadRemoteConfig(url) {

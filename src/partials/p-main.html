@@ -43,7 +43,7 @@
             <a href="#" class="p-main__widthdraw p-main__btn btn btn-reset">
               Вывести
             </a>
-            <a href="#" class="p-main__history p-main__btn btn btn_dark btn-reset">
+            <a href="#" class="p-main__history p-main__btn btn btn_dark btn-reset" data-history-open>
               История
             </a>
           </div>
@@ -60,13 +60,16 @@
         </div>
 
         <div class="p-main__inwallet">
-          100 TH
+          0 TH
         </div>
+        <a href="#" class="p-main__btn p-main__btn_mob btn btn-reset">
+          Докупить
+        </a>
       </div>
     </div>
 
     <div class="p-main__charts profile-block">
-
+      <div class="p-main__capture">Динамика дохода</div>
       <div class="p-main__graphs">
         <div class="p-main__graph p-main__graph_1">
           <canvas id="chart_day"></canvas>

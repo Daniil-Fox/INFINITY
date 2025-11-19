@@ -6,11 +6,15 @@ import "./components/dropdown.js";
 import "./components/profile-settings.js";
 import { initCalculator } from "./components/calculator-engine.js";
 import { initCalculatorPatterns } from "./components/calculator-patterns.js";
-
+import { initHistoryModal } from "./components/history-modal.js";
+import { burger } from "./functions/burger.js";
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector(".calculator__form");
+  const calculator = document.querySelector(".calculator");
+  const form = calculator?.querySelector(".calculator__form");
   if (form) {
     const calculatorApi = initCalculator(form);
     initCalculatorPatterns(form, calculatorApi);
   }
+
+  initHistoryModal();
 });

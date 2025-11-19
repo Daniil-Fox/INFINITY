@@ -8,11 +8,29 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
   }
   &__patterns {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+  &__desc {
+    display: none;
+
+    @include mobile {
+      display: block;
+      margin-bottom: 3rem;
+    }
   }
   &__row {
     display: flex;
@@ -38,6 +56,11 @@
       &:nth-child(2) {
         min-width: 30rem;
         flex-shrink: 0;
+      }
+    }
+    &:nth-child(3) {
+      @include mobile {
+        flex-direction: column;
       }
     }
   }
@@ -218,6 +241,10 @@
   border-radius: 2rem;
   color: var(--it-black);
 
+  @include mobile {
+    padding: 4rem;
+    margin-bottom: 1rem;
+  }
   p {
     margin-top: 0;
   }
@@ -227,18 +254,41 @@
     font-size: 3.2rem;
     line-height: 100%;
     color: var(--it-black);
+
+    @include mobile {
+      font-size: 2.8rem;
+      font-weight: 500;
+      margin-bottom: 3rem;
+    }
   }
   &-profit {
     margin-bottom: 3.2rem;
     font-size: 6rem;
     line-height: 100%;
     color: var(--it-black);
+    white-space: nowrap;
+    @include mobile {
+      font-size: 4.4rem;
+      font-weight: 600;
+    }
   }
 
   &-row {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4rem;
+    }
+
+    & > div:first-child {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
   }
 
   &-cost {
@@ -248,11 +298,23 @@
     font-size: 3.2rem;
     line-height: 120%;
     color: var(--it-black);
+
+    @include mobile {
+      font-size: 2.2rem;
+      margin-bottom: 0;
+    }
   }
   &-annually {
     font-weight: 400;
     font-size: 2.2rem;
     line-height: 120%;
     color: rgba(0, 0, 0, 0.45);
+  }
+
+  &-tabs {
+    @include mobile {
+      width: 100%;
+      justify-content: flex-end;
+    }
   }
 }

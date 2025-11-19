@@ -1,8 +1,12 @@
 import "./components/coin.js";
 import "./components/gsap.js";
-import "./components/different.js";
 import "./components/preloader.js";
+import "./components/different.js";
 import "./components/master-card.js";
+import "./components/inputs.js";
 import "./components/why.js";
 import "./components/header-scroll.js";
+import "./components/dropdown.js";
 import "./components/sliders.js";
+import "./components/modal.js";
+import "./functions/validate-forms.js";

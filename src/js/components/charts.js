@@ -38,10 +38,61 @@ function getUserPower() {
   return match ? parseFloat(match[1]) : 100;
 }
 
-// Получение данных о пополнениях из глобальной переменной или заглушки
-// В WordPress эти данные будут передаваться через window.INFINITY_USER_DATA
-function getPurchaseInfo() {
-  // Пытаемся получить данные из глобальной переменной (WordPress)
+// Кеш для данных о покупках (чтобы не запрашивать каждый раз)
+let purchaseInfoCache = null;
+
+// Получение данных о пополнениях из WordPress REST API или глобальной переменной
+async function getPurchaseInfo() {
+  // Если есть кеш, возвращаем его
+  if (purchaseInfoCache !== null) {
+    return purchaseInfoCache;
+  }
+
+  // Приоритет 1: REST API WordPress
+  try {
+    const nonce = window.INFINITY_REST_NONCE || "";
+    const response = await fetch("/wp-json/infinity/v1/purchases", {
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "X-WP-Nonce": nonce,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (
+        data.purchases &&
+        Array.isArray(data.purchases) &&
+        data.purchases.length > 0
+      ) {
+        const sortedPurchases = data.purchases
+          .map((p) => {
+            const date = p.date ? new Date(p.date) : null;
+            if (!date || isNaN(date.getTime())) return null;
+            return {
+              date,
+              amount: parseFloat(p.amount || 0),
+              powerTh: parseFloat(p.power_th || 0),
+            };
+          })
+          .filter((p) => p !== null)
+          .sort((a, b) => a.date - b.date);
+
+        if (sortedPurchases.length > 0) {
+          purchaseInfoCache = sortedPurchases;
+          return sortedPurchases;
+        }
+      }
+    } else if (response.status === 401) {
+      // 401 - не авторизован, используем fallback
+      console.warn("Unauthorized access to purchases API, using fallback");
+    }
+  } catch (error) {
+    console.warn("Failed to fetch purchases from WordPress API", error);
+  }
+
+  // Приоритет 2: Глобальная переменная (для обратной совместимости)
   const userData = window.INFINITY_USER_DATA || {};
 
   if (
@@ -49,7 +100,6 @@ function getPurchaseInfo() {
     Array.isArray(userData.purchases) &&
     userData.purchases.length > 0
   ) {
-    // Сортируем по дате (от старых к новым)
     const sortedPurchases = userData.purchases
       .map((p) => {
         const date = p.date ? new Date(p.date) : null;
@@ -64,22 +114,14 @@ function getPurchaseInfo() {
       .sort((a, b) => a.date - b.date);
 
     if (sortedPurchases.length > 0) {
+      purchaseInfoCache = sortedPurchases;
       return sortedPurchases;
     }
   }
 
-  // Заглушка: первое пополнение 06.11, 100 TH
-  const currentYear = new Date().getFullYear();
-  const purchaseDate = new Date(currentYear, 10, 6); // 6 ноября (месяц 10, т.к. 0-11)
-  purchaseDate.setHours(0, 0, 0, 0);
-
-  return [
-    {
-      date: purchaseDate,
-      amount: 0, // Сумма в долларах (пока неизвестна)
-      powerTh: 100, // Мощности в TH
-    },
-  ];
+  // Fallback: пустой массив (если нет данных)
+  purchaseInfoCache = [];
+  return [];
 }
 
 // Получение конфигурации OurPool из окружения (аналогично calculator-engine.js)
@@ -106,16 +148,29 @@ function getOurPoolConfig() {
 
 // Получение транзакций из API OurPool
 async function fetchTransactions({ baseUrl, account, token }) {
-  if (!account || !token) return null;
+  // account и token больше не используются напрямую, но оставлены для обратной совместимости
+  // В продакшене токен получается на сервере через PHP прокси
   try {
-    // В режиме разработки используем прокси, в продакшене - прямой запрос
     const isDev =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1";
-    const apiPath = `/api/v1/accounts/${encodeURIComponent(
-      account
-    )}/btc/transactions?token=${encodeURIComponent(token)}`;
-    const url = isDev ? apiPath : `${baseUrl}${apiPath}`;
+
+    // Формируем путь API (account будет заменен на сервере, если нужно)
+    const accountPlaceholder = account
+      ? encodeURIComponent(account)
+      : "{account}";
+    const apiPath = `/api/v1/accounts/${accountPlaceholder}/btc/transactions`;
+
+    let url;
+    if (isDev) {
+      // Dev: используем прокси gulp, токен передаем в query (для dev режима)
+      const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+      url = `${apiPath}${tokenParam}`;
+    } else {
+      // Prod: используем PHP прокси WordPress (токен получается на сервере)
+      const proxyPath = "/wp-content/themes/infinity/assets/ourpool-proxy.php";
+      url = `${proxyPath}?path=${encodeURIComponent(apiPath)}`;
+    }
 
     const res = await fetch(url, {
       mode: "cors",
@@ -133,16 +188,29 @@ async function fetchTransactions({ baseUrl, account, token }) {
 
 // Получение статистики наград из API OurPool
 async function fetchRewardsStats({ baseUrl, account, token }) {
-  if (!account || !token) return null;
+  // account и token больше не используются напрямую, но оставлены для обратной совместимости
+  // В продакшене токен получается на сервере через PHP прокси
   try {
-    // В режиме разработки используем прокси, в продакшене - прямой запрос
     const isDev =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1";
-    const apiPath = `/api/v1/accounts/${encodeURIComponent(
-      account
-    )}/btc/rewards-stats?token=${encodeURIComponent(token)}`;
-    const url = isDev ? apiPath : `${baseUrl}${apiPath}`;
+
+    // Формируем путь API (account будет заменен на сервере, если нужно)
+    const accountPlaceholder = account
+      ? encodeURIComponent(account)
+      : "{account}";
+    const apiPath = `/api/v1/accounts/${accountPlaceholder}/btc/rewards-stats`;
+
+    let url;
+    if (isDev) {
+      // Dev: используем прокси gulp, токен передаем в query (для dev режима)
+      const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+      url = `${apiPath}${tokenParam}`;
+    } else {
+      // Prod: используем PHP прокси WordPress (токен получается на сервере)
+      const proxyPath = "/wp-content/themes/infinity/assets/ourpool-proxy.php";
+      url = `${proxyPath}?path=${encodeURIComponent(apiPath)}`;
+    }
 
     const res = await fetch(url, {
       mode: "cors",
@@ -184,7 +252,9 @@ function transformTransactionsToChartData(
   }
 
   // Получаем информацию о покупках
-  const purchases = purchaseInfo || getPurchaseInfo();
+  const purchases = purchaseInfo || [];
+  const purchase =
+    Array.isArray(purchases) && purchases.length > 0 ? purchases[0] : null;
 
   // Фильтруем только транзакции типа "reward" или "mining"
   const rewardTransactions = txArray.filter(
@@ -415,8 +485,254 @@ function transformTransactionsToChartData(
   return { labels, data, zoomLevel: interval, purchaseInfo: purchase };
 }
 
+// Получение данных начислений из WordPress REST API
+async function fetchAccrualsFromWordPress(period) {
+  try {
+    const nonce = window.INFINITY_REST_NONCE || "";
+    const url = `/wp-json/infinity/v1/accruals?period=${period}`;
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "X-WP-Nonce": nonce,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // 401 - не авторизован, возвращаем null для использования fallback
+        console.warn("Unauthorized access to accruals API, using fallback");
+      }
+      return null;
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.warn("Failed to fetch accruals from WordPress API", error);
+    return null;
+  }
+}
+
+// Преобразование данных из WordPress API в формат для графика
+function transformWordPressAccrualsToChartData(apiData, period) {
+  if (!apiData || !Array.isArray(apiData.data)) {
+    return null;
+  }
+
+  const parseDateString = (value) => {
+    if (!value) return null;
+    const direct = new Date(value);
+    if (!Number.isNaN(direct.getTime())) {
+      return direct;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split("-").map(Number);
+      const localDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+      return Number.isNaN(localDate.getTime()) ? null : localDate;
+    }
+    return null;
+  };
+
+  const rootScope = typeof window !== "undefined" ? window : globalThis;
+
+  const resolveRegistrationDate = () => {
+    const sources = [
+      apiData.registrationDate,
+      rootScope?.INFINITY_USER_DATA?.registrationDate,
+      rootScope?.INFINITY_USER_DATA?.user_registered,
+      rootScope?.INFINITY_USER?.registrationDate,
+      rootScope?.INFINITY_USER?.user_registered,
+      rootScope?.INFINITY_PROFILE?.registrationDate,
+      rootScope?.INFINITY_PROFILE?.user_registered,
+    ];
+    for (const candidate of sources) {
+      const parsed = parseDateString(candidate);
+      if (parsed) {
+        parsed.setHours(0, 0, 0, 0);
+        return parsed;
+      }
+    }
+    return null;
+  };
+
+  const registrationDate = resolveRegistrationDate();
+
+  const bucketMap = new Map();
+
+  apiData.data.forEach((item) => {
+    const rawTimestamp =
+      item.timestamp || item.hour_start || item.label || item.time;
+    if (!rawTimestamp) {
+      return;
+    }
+
+    const normalizedTimestamp = rawTimestamp
+      .toString()
+      .replace(" ", "T")
+      .replace(/\.\d+Z$/, "Z");
+
+    const date = new Date(normalizedTimestamp);
+    if (Number.isNaN(date.getTime())) {
+      return;
+    }
+
+    const bucketKey =
+      period === "day"
+        ? date.toISOString().slice(0, 13) // YYYY-MM-DDTHH
+        : date.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const label =
+      period === "day"
+        ? `${String(date.getHours()).padStart(2, "0")}:00`
+        : `${String(date.getDate()).padStart(2, "0")}.${String(
+            date.getMonth() + 1
+          ).padStart(2, "0")}`;
+
+    const bucket = bucketMap.get(bucketKey) || {
+      label,
+      timestamp: date,
+      btc: 0,
+      usd: 0,
+      powerSamples: [],
+    };
+
+    const btcValue = Number(item.btc_hourly ?? item.btc ?? 0) || 0;
+    const usdValue = Number(item.usd ?? item.usd_accrual ?? 0) || 0;
+
+    bucket.btc += btcValue;
+    bucket.usd += usdValue;
+
+    if (typeof item.power_th === "number" && !Number.isNaN(item.power_th)) {
+      bucket.powerSamples.push(item.power_th);
+    }
+
+    bucketMap.set(bucketKey, bucket);
+  });
+
+  const buckets = Array.from(bucketMap.values()).sort(
+    (a, b) => a.timestamp - b.timestamp
+  );
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const prependZeroBucket = (date) => {
+    const label =
+      period === "day"
+        ? `${String(date.getHours()).padStart(2, "0")}:00`
+        : `${String(date.getDate()).padStart(2, "0")}.${String(
+            date.getMonth() + 1
+          ).padStart(2, "0")}`;
+
+    return {
+      label,
+      timestamp: new Date(date),
+      btc: 0,
+      usd: 0,
+      bucketValue: 0,
+      rate: 0,
+      powerSamples: [],
+      powerTh: 0,
+    };
+  };
+
+  if (registrationDate && (period === "week" || period === "month")) {
+    const baseStart = new Date(today);
+    if (period === "week") {
+      baseStart.setDate(baseStart.getDate() - 6);
+    } else if (period === "month") {
+      baseStart.setDate(baseStart.getDate() - 29);
+    }
+    baseStart.setHours(0, 0, 0, 0);
+
+    const desiredStart =
+      registrationDate > baseStart ? registrationDate : baseStart;
+
+    if (buckets.length === 0) {
+      let cursor = new Date(desiredStart);
+      const end = new Date(today);
+      while (cursor <= end) {
+        buckets.push(prependZeroBucket(cursor));
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    } else {
+      const firstBucketDate = new Date(buckets[0].timestamp);
+      firstBucketDate.setHours(0, 0, 0, 0);
+
+      if (firstBucketDate > desiredStart) {
+        const fillers = [];
+        const cursor = new Date(desiredStart);
+        while (cursor < firstBucketDate) {
+          fillers.push(prependZeroBucket(cursor));
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        buckets.unshift(...fillers);
+      }
+    }
+  }
+
+  if (buckets.length === 0) {
+    return null;
+  }
+
+  const labels = [];
+  const data = [];
+
+  buckets.forEach((bucket) => {
+    labels.push(bucket.label);
+
+    const averagePower =
+      bucket.powerSamples.length > 0
+        ? bucket.powerSamples.reduce((sum, value) => sum + value, 0) /
+          bucket.powerSamples.length
+        : 0;
+
+    data.push({
+      time: bucket.label,
+      btc: bucket.btc,
+      bucketValue: bucket.btc,
+      rate: bucket.btc,
+      usd: bucket.usd,
+      isPurchase: false,
+      timestamp: bucket.timestamp.toISOString(),
+      powerTh: averagePower,
+    });
+  });
+
+  return {
+    labels,
+    data,
+    zoomLevel: null,
+    purchaseInfo: null,
+    currentHour: apiData.current_hour,
+    endDate: apiData.end_date,
+    isGenerated: false,
+    supportsZoom: false,
+  };
+}
+
 // Получение данных из API (если доступно)
 async function fetchMiningData(period, userPowerTh) {
+  // Приоритет: WordPress REST API с фактическими начислениями
+  const wpData = await fetchAccrualsFromWordPress(period);
+
+  // Сохраняем registrationDate в глобальных данных для использования в generateChartData
+  if (wpData && wpData.registrationDate) {
+    if (!window.INFINITY_USER_DATA) {
+      window.INFINITY_USER_DATA = {};
+    }
+    window.INFINITY_USER_DATA.registrationDate = wpData.registrationDate;
+  }
+
+  if (wpData && wpData.data && wpData.data.length > 0) {
+    const chartData = transformWordPressAccrualsToChartData(wpData, period);
+    if (chartData) {
+      return { data: chartData, stats: null, purchaseInfo: null };
+    }
+  }
+
+  // Fallback: старый метод через OurPool API (для совместимости)
   const config = getOurPoolConfig();
   if (!config.account || !config.token) {
     return { data: null, stats: null };
@@ -431,7 +747,7 @@ async function fetchMiningData(period, userPowerTh) {
 
     // Если есть транзакции, используем их
     if (transactions) {
-      const purchaseInfo = getPurchaseInfo(); // Берем из WordPress, не из транзакций
+      const purchaseInfo = await getPurchaseInfo(); // Берем из WordPress, не из транзакций
       const chartData = transformTransactionsToChartData(
         transactions,
         period,
@@ -445,11 +761,11 @@ async function fetchMiningData(period, userPowerTh) {
     }
 
     // Если транзакций нет, возвращаем статистику для использования в генерации
-    const purchaseInfo = getPurchaseInfo(); // Берем из WordPress
+    const purchaseInfo = await getPurchaseInfo(); // Берем из WordPress
     return { data: null, stats, purchaseInfo };
   } catch (error) {
     console.warn("API недоступно, используем сгенерированные данные", error);
-    const purchaseInfo = getPurchaseInfo(); // Берем из WordPress
+    const purchaseInfo = await getPurchaseInfo(); // Берем из WordPress
     return { data: null, stats: null, purchaseInfo };
   }
 }
@@ -480,6 +796,114 @@ const ZOOM_CONFIG = {
   },
 };
 
+// Генерация пустого графика (когда мощность = 0 или нет покупок)
+function generateEmptyChartData(period, userPowerTh) {
+  const data = [];
+  const labels = [];
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Получаем дату регистрации
+  const registrationDate =
+    window.INFINITY_USER_DATA?.registrationDate ||
+    window.INFINITY_USER_DATA?.user_registered ||
+    null;
+
+  let startDate = today;
+  if (registrationDate) {
+    startDate = new Date(registrationDate);
+    startDate.setHours(0, 0, 0, 0);
+  }
+
+  switch (period) {
+    case "day":
+      // За день - от 00:00 до текущего часа
+      const currentHour = Math.floor(now.getHours());
+      for (let hour = 0; hour <= currentHour; hour++) {
+        labels.push(`${String(hour).padStart(2, "0")}:00`);
+        data.push({
+          time: `${String(hour).padStart(2, "0")}:00`,
+          btc: 0,
+          rate: 0,
+          dailyBtc: 0,
+          bucketValue: 0,
+          isPurchase: false,
+        });
+      }
+      break;
+
+    case "week":
+      // За неделю - от даты регистрации или последние 7 дней
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 6);
+      const weekStart =
+        registrationDate && new Date(registrationDate) > weekAgo
+          ? new Date(registrationDate)
+          : weekAgo;
+      weekStart.setHours(0, 0, 0, 0);
+
+      for (
+        let d = new Date(weekStart);
+        d <= today;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const dayLabel = `${String(d.getDate()).padStart(2, "0")}.${String(
+          d.getMonth() + 1
+        ).padStart(2, "0")}`;
+        labels.push(dayLabel);
+        data.push({
+          time: dayLabel,
+          btc: 0,
+          rate: 0,
+          dailyBtc: 0,
+          bucketValue: 0,
+          isPurchase: false,
+        });
+      }
+      break;
+
+    case "month":
+      // За месяц - от даты регистрации или последние 30 дней
+      const monthAgo = new Date(today);
+      monthAgo.setDate(monthAgo.getDate() - 29);
+      const monthStart =
+        registrationDate && new Date(registrationDate) > monthAgo
+          ? new Date(registrationDate)
+          : monthAgo;
+      monthStart.setHours(0, 0, 0, 0);
+
+      for (
+        let d = new Date(monthStart);
+        d <= today;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const dayLabel = `${String(d.getDate()).padStart(2, "0")}.${String(
+          d.getMonth() + 1
+        ).padStart(2, "0")}`;
+        labels.push(dayLabel);
+        data.push({
+          time: dayLabel,
+          btc: 0,
+          rate: 0,
+          dailyBtc: 0,
+          bucketValue: 0,
+          isPurchase: false,
+        });
+      }
+      break;
+  }
+
+  return {
+    labels,
+    data,
+    zoomLevel: null,
+    purchaseInfo: null,
+    isGenerated: true,
+    supportsZoom: false,
+  };
+}
+
 // Генерация данных для графика на основе периода с учетом масштаба
 // Использует формулу из calculator-engine.js для расчета добычи
 async function generateChartData(
@@ -493,10 +917,12 @@ async function generateChartData(
   let labels = [];
 
   // Получаем список пополнений
-  const purchases = purchaseInfo || getPurchaseInfo();
-  if (!purchases || purchases.length === 0) {
-    // Если нет пополнений, возвращаем пустые данные
-    return { labels: [], data: [], zoomLevel: null, purchaseInfo: null };
+  const purchases = purchaseInfo || (await getPurchaseInfo());
+
+  // Если нет пополнений или мощность = 0, показываем график с нулями
+  if (!purchases || purchases.length === 0 || userPowerTh <= 0) {
+    // Генерируем график с нулями для текущего периода
+    return generateEmptyChartData(period, userPowerTh);
   }
 
   // Используем данные из API, если доступны
@@ -542,13 +968,36 @@ async function generateChartData(
   const zoomConfig = ZOOM_CONFIG[period];
   const interval = zoomLevel || zoomConfig.default;
 
-  // Определяем дату начала (первое пополнение)
-  const firstPurchase = purchases[0];
-  const startDate = new Date(firstPurchase.date);
-  startDate.setHours(0, 0, 0, 0);
+  // Определяем дату начала (дата регистрации или первое пополнение)
+  // Сначала пытаемся получить дату регистрации из глобальных данных
+  const registrationDate =
+    window.INFINITY_USER_DATA?.registrationDate ||
+    window.INFINITY_USER_DATA?.user_registered ||
+    null;
+
+  let startDate = null;
+  if (registrationDate) {
+    // Используем дату регистрации
+    startDate = new Date(registrationDate);
+    startDate.setHours(0, 0, 0, 0);
+  } else {
+    // Fallback: используем дату первой покупки
+    const firstPurchase =
+      purchases && purchases.length > 0 ? purchases[0] : null;
+    if (!firstPurchase || !firstPurchase.date) {
+      // Если нет валидной даты, возвращаем пустой график
+      return generateEmptyChartData(period, userPowerTh);
+    }
+    startDate = new Date(firstPurchase.date);
+    startDate.setHours(0, 0, 0, 0);
+  }
 
   const now = new Date();
   now.setHours(23, 59, 59, 999);
+
+  // Текущий день (для ограничения правой границы графика)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   let cumulativeBtc = 0; // Накопленная добыча
   let currentPowerTh = 0; // Текущая мощность (накапливается при пополнениях)
@@ -577,28 +1026,81 @@ async function generateChartData(
   };
 
   // Вспомогательная функция для получения текущей мощности на дату
+  // Учитывает выводы (когда мощность становится 0)
   const getPowerOnDate = (date) => {
     let power = 0;
+    let lastWithdrawalDate = null;
+
+    // Проходим по всем покупкам и выводам в хронологическом порядке
     for (const purchase of purchases) {
       const pDate = new Date(purchase.date);
       pDate.setHours(0, 0, 0, 0);
+
       if (pDate <= date) {
-        power += purchase.powerTh || 0;
+        // Если это вывод (мощность становится 0 или отрицательной)
+        if (
+          purchase.powerTh < 0 ||
+          purchase.type === "withdrawal" ||
+          purchase.type === "debit"
+        ) {
+          power = 0;
+          lastWithdrawalDate = pDate;
+        } else {
+          // Пополнение - добавляем мощность
+          power += purchase.powerTh || 0;
+        }
       }
     }
-    return power;
+
+    // Если был вывод после последнего пополнения и до текущей даты, мощность = 0
+    if (lastWithdrawalDate) {
+      const hasPurchaseAfterWithdrawal = purchases.some((p) => {
+        const pDate = new Date(p.date);
+        pDate.setHours(0, 0, 0, 0);
+        return (
+          pDate > lastWithdrawalDate &&
+          pDate <= date &&
+          p.powerTh > 0 &&
+          p.type !== "withdrawal" &&
+          p.type !== "debit"
+        );
+      });
+
+      if (!hasPurchaseAfterWithdrawal && lastWithdrawalDate <= date) {
+        // Проверяем, есть ли пополнения после вывода
+        const purchasesAfterWithdrawal = purchases.filter((p) => {
+          const pDate = new Date(p.date);
+          pDate.setHours(0, 0, 0, 0);
+          return (
+            pDate > lastWithdrawalDate &&
+            pDate <= date &&
+            p.powerTh > 0 &&
+            p.type !== "withdrawal" &&
+            p.type !== "debit"
+          );
+        });
+
+        if (purchasesAfterWithdrawal.length === 0) {
+          power = 0;
+        }
+      }
+    }
+
+    return Math.max(0, power);
   };
 
   switch (period) {
     case "day":
-      // За день - всегда от 00:00 до 24:00 текущего дня
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // За день - от 00:00 до текущего часа (не забегаем вперёд)
+      // Текущий час, округлённый вниз (правая граница графика)
+      const currentHour = Math.floor(now.getHours());
+      const maxHour = currentHour; // Не показываем будущие часы
 
       // Проверяем, есть ли пополнение сегодня
       const todayPurchase = getPurchaseOnDate(today);
 
-      const hoursInDay = 24;
+      // Количество часов от 0 до текущего часа включительно
+      const hoursInDay = maxHour + 1;
       const pointsCount = Math.ceil(hoursInDay / interval);
 
       // Если есть пополнение сегодня, добавляем точку в 00:00
@@ -619,16 +1121,34 @@ async function generateChartData(
         currentPowerTh = getPowerOnDate(today);
       }
 
-      // Генерируем точки равномерно распределенные от 0 до 24 часов
+      // Генерируем точки только до текущего часа
       const startIndex = todayPurchase ? 1 : 0;
       for (let i = startIndex; i < pointsCount; i++) {
         let hour;
         if (i === 0) {
           hour = 0;
         } else if (i === pointsCount - 1) {
-          hour = 24;
+          hour = maxHour; // Последняя точка - текущий час
         } else {
-          hour = (i * hoursInDay) / (pointsCount - 1);
+          hour = Math.floor((i * hoursInDay) / (pointsCount - 1));
+        }
+
+        // Не генерируем точки за будущие часы
+        if (hour > maxHour) {
+          break;
+        }
+
+        // Если мощность = 0, добыча = 0
+        if (currentPowerTh <= 0) {
+          labels.push(`${String(Math.floor(hour)).padStart(2, "0")}:00`);
+          data.push({
+            time: `${String(Math.floor(hour)).padStart(2, "0")}:00`,
+            btc: cumulativeBtc, // Сохраняем накопленную сумму
+            rate: 0,
+            dailyBtc: 0,
+            isPurchase: false,
+          });
+          continue;
         }
 
         // Рассчитываем добычу за интервал по формуле из calculator-engine.js
@@ -649,8 +1169,10 @@ async function generateChartData(
 
     case "week":
       // За неделю - от даты первого пополнения до сегодня (максимум 7 дней)
+      // Правая граница - текущий день (не забегаем вперёд)
       let weekStartDate = new Date(startDate);
       const weekEndDate = new Date(now);
+      weekEndDate.setHours(23, 59, 59, 999);
 
       let daysInWeek =
         Math.ceil((weekEndDate - weekStartDate) / (1000 * 60 * 60 * 24)) + 1;
@@ -661,13 +1183,24 @@ async function generateChartData(
         daysInWeek = 7;
       }
 
-      // Генерируем точки для каждого дня
+      // Ограничиваем правую границу текущим днём
+      if (weekEndDate > today) {
+        weekEndDate.setTime(today.getTime());
+        weekEndDate.setHours(23, 59, 59, 999);
+      }
+
+      // Генерируем точки для каждого дня (только до сегодня)
       const processedDates = new Set();
 
       for (let dayOffset = 0; dayOffset < daysInWeek; dayOffset++) {
         const date = new Date(weekStartDate);
         date.setDate(date.getDate() + dayOffset);
         date.setHours(0, 0, 0, 0);
+
+        // Не генерируем точки за будущие дни
+        if (date > today) {
+          break;
+        }
 
         const dateKey = date.toISOString().split("T")[0];
         if (processedDates.has(dateKey)) continue;
@@ -696,6 +1229,26 @@ async function generateChartData(
         } else {
           // Обычный день - рассчитываем добычу
           const dayPower = getPowerOnDate(date);
+
+          // Если мощность = 0, добыча = 0, но сохраняем накопленную сумму до этого момента
+          if (dayPower <= 0) {
+            // После вывода добыча становится 0, но предыдущие данные сохраняются
+            const dayLabel = `${String(date.getDate()).padStart(
+              2,
+              "0"
+            )}.${String(date.getMonth() + 1).padStart(2, "0")}`;
+            labels.push(dayLabel);
+            data.push({
+              time: dayLabel,
+              btc: cumulativeBtc, // Сохраняем накопленную сумму
+              rate: 0,
+              dailyBtc: 0,
+              isPurchase: false,
+            });
+            // Не увеличиваем cumulativeBtc, так как добыча = 0
+            continue;
+          }
+
           const dailyBtc = getDailyBtc(dayPower);
           cumulativeBtc += dailyBtc;
 
@@ -716,8 +1269,10 @@ async function generateChartData(
 
     case "month":
       // За месяц - от даты первого пополнения до сегодня (максимум 30 дней)
+      // Правая граница - текущий день (не забегаем вперёд)
       let monthStartDate = new Date(startDate);
-      const monthEndDate = new Date(now);
+      let monthEndDate = new Date(now);
+      monthEndDate.setHours(23, 59, 59, 999);
 
       let daysInMonth =
         Math.ceil((monthEndDate - monthStartDate) / (1000 * 60 * 60 * 24)) + 1;
@@ -728,7 +1283,13 @@ async function generateChartData(
         daysInMonth = 30;
       }
 
-      // Генерируем точки для каждого дня (с учетом интервала)
+      // Ограничиваем правую границу текущим днём
+      if (monthEndDate > today) {
+        monthEndDate.setTime(today.getTime());
+        monthEndDate.setHours(23, 59, 59, 999);
+      }
+
+      // Генерируем точки для каждого дня (с учетом интервала, только до сегодня)
       const monthProcessedDates = new Set();
       const monthPointsCount = Math.ceil(daysInMonth / interval);
 
@@ -739,6 +1300,11 @@ async function generateChartData(
         const date = new Date(monthStartDate);
         date.setDate(date.getDate() + dayOffset);
         date.setHours(0, 0, 0, 0);
+
+        // Не генерируем точки за будущие дни
+        if (date > today) {
+          break;
+        }
 
         const dateKey = date.toISOString().split("T")[0];
         if (monthProcessedDates.has(dateKey)) continue;
@@ -767,6 +1333,26 @@ async function generateChartData(
         } else {
           // Обычный день - рассчитываем добычу
           const dayPower = getPowerOnDate(date);
+
+          // Если мощность = 0, добыча = 0, но сохраняем накопленную сумму до этого момента
+          if (dayPower <= 0) {
+            // После вывода добыча становится 0, но предыдущие данные сохраняются
+            const dayLabel = `${String(date.getDate()).padStart(
+              2,
+              "0"
+            )}.${String(date.getMonth() + 1).padStart(2, "0")}`;
+            labels.push(dayLabel);
+            data.push({
+              time: dayLabel,
+              btc: cumulativeBtc, // Сохраняем накопленную сумму
+              rate: 0,
+              dailyBtc: 0,
+              isPurchase: false,
+            });
+            // Не увеличиваем cumulativeBtc, так как добыча = 0
+            continue;
+          }
+
           const dailyBtc = getDailyBtc(dayPower);
           cumulativeBtc += dailyBtc;
 
@@ -796,22 +1382,25 @@ async function createChart(canvasId, period, userPowerTh, zoomLevel = null) {
 
   // Пытаемся получить данные из API, если нет - генерируем
   const apiResult = await fetchMiningData(period, userPowerTh);
-  let chartDataResult = apiResult.data
-    ? {
-        labels: apiResult.data.labels,
-        data: apiResult.data.data,
-        zoomLevel: null,
-        purchaseInfo: apiResult.purchaseInfo,
-      }
-    : await generateChartData(
-        period,
-        userPowerTh,
-        apiResult.stats,
-        zoomLevel,
-        apiResult.purchaseInfo
-      );
+  let chartDataResult = apiResult.data || null;
+
+  if (!chartDataResult) {
+    chartDataResult = generateEmptyChartData(period, userPowerTh);
+  }
 
   const { labels, data, zoomLevel: currentZoom } = chartDataResult;
+  const datasetValues = data.map((row) => {
+    if (typeof row.bucketValue === "number") {
+      return row.bucketValue;
+    }
+    if (typeof row.dailyBtc === "number") {
+      return row.dailyBtc;
+    }
+    if (typeof row.rate === "number") {
+      return row.rate;
+    }
+    return row.btc || 0;
+  });
 
   // Определяем единицу скорости для tooltip
   const rateUnit = period === "day" ? "BTC/час" : "BTC/день";
@@ -823,7 +1412,7 @@ async function createChart(canvasId, period, userPowerTh, zoomLevel = null) {
       datasets: [
         {
           label: "Добыча BTC",
-          data: data.map((row) => row.btc),
+          data: datasetValues,
           borderColor: "#000000",
           pointBackgroundColor: "#000000",
           pointBorderColor: "#000000",
@@ -896,7 +1485,10 @@ async function createChart(canvasId, period, userPowerTh, zoomLevel = null) {
               } else {
                 // Для остальных точек показываем накопленную добычу и скорость
                 const rate = dataPoint ? dataPoint.rate : 0;
-                const dailyBtc = dataPoint ? dataPoint.dailyBtc : 0;
+                const dailyBtc =
+                  typeof dataPoint.bucketValue === "number"
+                    ? dataPoint.bucketValue
+                    : dataPoint?.dailyBtc || 0;
                 return [
                   `Добыто: ${btcValue.toFixed(8)} BTC`,
                   dailyBtc > 0
@@ -923,6 +1515,7 @@ async function createChart(canvasId, period, userPowerTh, zoomLevel = null) {
           // что первая точка 00:00, а последняя 24:00 в generateChartData
         },
         y: {
+          min: 0,
           grid: {
             color: "rgba(0, 0, 0, 0.1)",
             lineWidth: 1,
@@ -933,7 +1526,7 @@ async function createChart(canvasId, period, userPowerTh, zoomLevel = null) {
             },
             color: "rgba(0, 0, 0, 0.6)",
             callback: function (value) {
-              return value.toFixed(6) + " BTC";
+              return value.toFixed(9) + " BTC";
             },
           },
         },
@@ -942,7 +1535,9 @@ async function createChart(canvasId, period, userPowerTh, zoomLevel = null) {
   });
 
   // Добавляем обработчик масштабирования при скролле
-  setupZoomHandler(chart, canvas, period, userPowerTh, apiResult.stats);
+  if (chartDataResult.supportsZoom) {
+    setupZoomHandler(chart, canvas, period, userPowerTh, apiResult.stats);
+  }
 
   return chart;
 }
@@ -985,7 +1580,7 @@ function setupZoomHandler(chart, canvas, period, userPowerTh, apiStats) {
         try {
           const transactions = await fetchTransactions(config);
           if (transactions) {
-            const purchaseInfo = getPurchaseInfo(); // Берем из WordPress
+            const purchaseInfo = await getPurchaseInfo(); // Берем из WordPress
             const chartData = transformTransactionsToChartData(
               transactions,
               period,
@@ -1005,7 +1600,7 @@ function setupZoomHandler(chart, canvas, period, userPowerTh, apiStats) {
       // Если данных из API нет, генерируем
       if (!newData) {
         // Получаем информацию о покупках из WordPress
-        const purchaseInfo = getPurchaseInfo();
+        const purchaseInfo = await getPurchaseInfo();
 
         newData = await generateChartData(
           period,
@@ -1069,8 +1664,8 @@ export function initCharts() {
 
   // Функция переключения графиков
   function switchChart(period) {
+    const graphPeriods = ["day", "week", "month"];
     graphs.forEach((graph, index) => {
-      const graphPeriods = ["day", "week", "month"];
       if (graphPeriods[index] === period) {
         graph.classList.remove("is_hidden");
       } else {
@@ -1121,6 +1716,11 @@ export function initCharts() {
         const index = Array.from(tabInputs).indexOf(activeInput);
         const periods = ["day", "week", "month"];
         switchChart(periods[index]);
+      } else {
+        if (tabInputs[0]) {
+          tabInputs[0].checked = true;
+          switchChart("day");
+        }
       }
     },
     getCharts: () => charts,

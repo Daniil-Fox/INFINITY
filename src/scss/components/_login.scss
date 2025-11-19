@@ -56,6 +56,49 @@
     }
   }
 
+  &__tabs {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 3.6rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  &__tab {
+    flex: 1;
+    padding: 1.2rem 2.4rem;
+    font-size: 1.8rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.6);
+    background: transparent;
+    border: none;
+    border-radius: 1.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    @include hover {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    &--active {
+      color: var(--it-white);
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  &__content {
+    position: relative;
+  }
+
+  &__form {
+    display: none;
+
+    &--active {
+      display: grid;
+    }
+  }
+
   &__title {
     margin: 0 0 1.2rem;
     font-size: 4.2rem;

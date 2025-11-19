@@ -115,11 +115,16 @@ export const validateFormsWP = (
       ev.target.reset();
     }
   });
+
+  return validation;
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Получаем API модального окна из window
+  const modalApi = window.modalApi;
+
   // Массив селекторов форм
-  const formSelectors = [".cta__form", ".modal__form"];
+  const formSelectors = [".modal__form"];
 
   formSelectors.forEach((formSelector) => {
     const form = document.querySelector(formSelector);
@@ -153,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
       emailInput.style.display = "none";
     }
     if (contactLabel) {
-      contactLabel.textContent = "телефон/email";
+      contactLabel.textContent = "Телефон/Email";
     }
 
     function initMask() {
@@ -237,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
         telInput.disabled = true;
         emailInput.style.display = "none";
         emailInput.disabled = true;
-        if (contactLabel) contactLabel.textContent = "телефон/email";
+        if (contactLabel) contactLabel.textContent = "Телефон/Email";
         return;
       }
 
@@ -247,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       // Убираем класс long у блока с селектом
       if (selectField) {
-        selectField.classList.remove("form__field--long");
+        // selectField.classList.remove("form__field--long");
       }
 
       telInput.disabled = true;
@@ -261,14 +266,14 @@ document.addEventListener("DOMContentLoaded", () => {
           emailInput.disabled = false;
           emailInput.value = "";
           emailInput.setAttribute("type", "email");
-          if (contactLabel) contactLabel.textContent = "email";
+          if (contactLabel) contactLabel.textContent = "Email";
         } else {
           telInput.style.display = "block";
           emailInput.style.display = "none";
           telInput.disabled = false;
           telInput.value = "";
           telInput.setAttribute("type", "text");
-          if (contactLabel) contactLabel.textContent = "телефон";
+          if (contactLabel) contactLabel.textContent = "Телефон";
           initMask();
         }
       }
@@ -391,7 +396,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const isEmail = selected === "Email" || /mail/i.test(selected);
       setContactField(isEmail ? "email" : "tel");
       const rules = [...baseRules, ...getRules(), ...getOnlyTelRules()];
-      validator = validateForms(formSelector, rules);
+
+      // Callback для показа модального окна успеха после отправки
+      const afterSendCallback = () => {
+        if (modalApi && modalApi.openSuccess) {
+          modalApi.openSuccess();
+        }
+      };
+
+      validator = validateForms(formSelector, rules, [], afterSendCallback);
       form.removeEventListener("input", checkValidity);
       form.addEventListener("input", checkValidity);
       setTimeout(checkValidity, 100);
