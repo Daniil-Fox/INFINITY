@@ -1,5 +1,31 @@
 .master {
   padding: 10rem 0;
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 0;
+    width: 100%;
+    height: 240rem;
+    transform: translateX(-50%) translateY(-10%);
+    background-image: url("./../img/blur-sphere-all.svg");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: right;
+    pointer-events: none;
+
+    @include mobile {
+      background-image: url("./../img/blur-sphere-mob.svg");
+      background-position: bottom left;
+      height: 100%;
+      top: unset;
+      bottom: 0;
+      background-size: contain;
+    }
+  }
+
   @include mobile {
     padding: 7.5rem 0;
   }
@@ -77,31 +103,23 @@
     transform-style: preserve-3d;
     will-change: transform;
     border-radius: 1.5rem;
-    overflow: hidden;
+    // overflow: hidden;
     transform-origin: center center;
     transition-property: transform;
     transition-duration: 0.05s;
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: block;
-      pointer-events: none;
-    }
 
-    @include hover {
-      box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.4),
-        0 0 8rem rgba(255, 80, 212, 0.3);
+    canvas {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 110%;
+      height: 110%;
 
-      img {
-        // transform: scale(1.01);
+      @include mobile {
+        width: 100%;
+        height: 100%;
       }
-    }
-
-    &.is-hovered {
-      box-shadow: 0 2.5rem 6rem rgba(0, 0, 0, 0.5),
-        0 0 12rem rgba(255, 80, 212, 0.4);
     }
 
     @include mobile {

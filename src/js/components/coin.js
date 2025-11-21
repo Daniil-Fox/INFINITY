@@ -4,11 +4,19 @@ import { GUI } from "lil-gui";
 const canvas = document.getElementById("scene");
 
 // GUI setup - показываем только если в URL есть #debug
-const isDebugMode = window.location.hash === "#debug";
-const gui = new GUI();
+const isDebugMode =
+  typeof window !== "undefined" && window.location.hash === "#debug";
+const gui =
+  (typeof window !== "undefined" && window.__infinityDebugGui) || new GUI();
 
-if (!isDebugMode) {
+if (typeof window !== "undefined" && !window.__infinityDebugGui) {
+  window.__infinityDebugGui = gui;
+}
+
+if (!isDebugMode && gui.hide) {
   gui.hide();
+} else if (isDebugMode && gui.show) {
+  gui.show();
 }
 
 let coinModel = null;

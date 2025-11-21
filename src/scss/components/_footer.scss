@@ -1,7 +1,7 @@
 .footer {
-  margin: 10rem 0 6rem;
+  padding: 10rem 0 6rem;
   @include mobile {
-    margin: 7.5rem 0 3rem;
+    padding: 7.5rem 0 3rem;
   }
   &__container {
     --row-gap: 3rem;
