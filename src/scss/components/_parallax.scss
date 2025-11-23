@@ -83,4 +83,21 @@
   transition-property: transform;
   transition-timing-function: ease-out;
   transition-duration: 1s;
+
+  img {
+    animation-name: sway-img;
+    animation-timing-function: ease-in-out;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+}
+
+@keyframes sway-img {
+  0% {
+    transform: translateX(-8px) translateY(-12px);
+  }
+  100% {
+    transform: translateX(8px) translateY(12px);
+  }
 }

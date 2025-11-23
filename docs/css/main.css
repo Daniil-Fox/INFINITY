@@ -1336,7 +1336,40 @@ input::-webkit-inner-spin-button {
   -webkit-transition-duration: 1s;
   transition-duration: 1s;
 }
+.rellax img {
+  -webkit-animation-name: sway-img;
+  animation-name: sway-img;
+  -webkit-animation-timing-function: ease-in-out;
+  animation-timing-function: ease-in-out;
+  -webkit-animation-duration: 3s;
+  animation-duration: 3s;
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+  -webkit-animation-direction: alternate;
+  animation-direction: alternate;
+}
 
+@-webkit-keyframes sway-img {
+  0% {
+    -webkit-transform: translateX(-8px) translateY(-12px);
+    transform: translateX(-8px) translateY(-12px);
+  }
+  100% {
+    -webkit-transform: translateX(8px) translateY(12px);
+    transform: translateX(8px) translateY(12px);
+  }
+}
+
+@keyframes sway-img {
+  0% {
+    -webkit-transform: translateX(-8px) translateY(-12px);
+    transform: translateX(-8px) translateY(-12px);
+  }
+  100% {
+    -webkit-transform: translateX(8px) translateY(12px);
+    transform: translateX(8px) translateY(12px);
+  }
+}
 #scene {
   position: absolute;
   z-index: 4;
