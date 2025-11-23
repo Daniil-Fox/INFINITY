@@ -54,7 +54,7 @@ import { GUI } from "lil-gui";
     0.1,
     100
   );
-  const mobileZ = window.innerWidth <= 576 ? 6.3 : 7;
+  const mobileZ = window.innerWidth <= 576 ? 6.3 : 8;
   camera.position.set(0, 0, mobileZ);
   scene.add(camera);
 

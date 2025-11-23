@@ -178,8 +178,8 @@ const themeUrl =
     ? infinityData.themeUrl
     : "";
 const modelPath = themeUrl
-  ? themeUrl + "/assets/models/gltf/bitcoin6/bitcoin.gltf"
-  : "../models/gltf/bitcoin6/bitcoin.gltf";
+  ? themeUrl + "/assets/models/gltf/bitcoin7/bitcoin.gltf"
+  : "../models/gltf/bitcoin7/bitcoin.gltf";
 loader.load(
   modelPath,
   function (gltf) {

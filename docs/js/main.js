@@ -109542,7 +109542,7 @@ scene.add(directionLightTopRight);
 const loader = new three_addons_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_2__.GLTFLoader();
 // Получаем путь к теме из локализации WordPress или используем относительный путь
 const themeUrl = typeof infinityData !== "undefined" && infinityData.themeUrl ? infinityData.themeUrl : "";
-const modelPath = themeUrl ? themeUrl + "/assets/models/gltf/bitcoin6/bitcoin.gltf" : "../models/gltf/bitcoin6/bitcoin.gltf";
+const modelPath = themeUrl ? themeUrl + "/assets/models/gltf/bitcoin7/bitcoin.gltf" : "../models/gltf/bitcoin7/bitcoin.gltf";
 loader.load(modelPath, function (gltf) {
   coinModel = gltf.scene;
 
@@ -110076,7 +110076,7 @@ __webpack_require__.r(__webpack_exports__);
   renderer.setSize(sizes.width, sizes.height);
   const scene = new three__WEBPACK_IMPORTED_MODULE_0__.Scene();
   const camera = new three__WEBPACK_IMPORTED_MODULE_0__.PerspectiveCamera(28, sizes.width / sizes.height, 0.1, 100);
-  const mobileZ = window.innerWidth <= 576 ? 6.3 : 7;
+  const mobileZ = window.innerWidth <= 576 ? 6.3 : 8;
   camera.position.set(0, 0, mobileZ);
   scene.add(camera);
   const cardGroup = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
