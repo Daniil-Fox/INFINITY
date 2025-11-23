@@ -1,0 +1,7 @@
+.cta {
+  padding: 10rem 0;
+
+  @include mobile {
+    padding: 7.5rem 0;
+  }
+}

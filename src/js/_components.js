@@ -10,3 +10,5 @@ import "./components/dropdown.js";
 import "./components/sliders.js";
 import "./components/modal.js";
 import "./functions/validate-forms.js";
+import "./components/loan.js";
+import "./components/tooltips.js";

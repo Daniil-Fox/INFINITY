@@ -77,6 +77,7 @@ export function initCalculator(formEl, options = {}) {
   const priceInput = query(formEl, "#loanAmountInput");
   const courseInput = query(formEl, "#loanCourseInput");
   const pricePerThEl = query(formEl, ".calculator__info span");
+  const pricePerThHint = query(formEl, ".calculator__info .hint");
   const resetBtn = query(formEl, ".course__btn");
   const buyButton = query(formEl, ".calculator__btn");
   const powerSliderEl = query(formEl, "#loanPowerSlider");
@@ -408,9 +409,41 @@ export function initCalculator(formEl, options = {}) {
         minimumFractionDigits: 0,
       }).format(Number(priceInCurrency));
       pricePerThEl.textContent = formatted;
+      // Возвращаем исходное содержимое тултипа
+      if (pricePerThHint) {
+        // Обновляем содержимое через API tippy, если он инициализирован
+        if (pricePerThHint._tippy) {
+          const insideTippy = `
+          <div>
+            <p class="desc">Перечень стоимости за 1 TH</p>
+            <p class="desc desc_accent">Меняется в зависимости
+              от количества покупаемой
+              мощности за 1 раз</p>
+          </div>
+          `;
+          pricePerThHint._tippy.setContent(insideTippy);
+        }
+      }
     } else if (pricePerThEl && finalPowerTh > 2820) {
       // Для диапазона 2821-3760 скрываем или показываем сообщение
-      pricePerThEl.textContent = "Индивидуальные условия";
+      // Обновляем содержимое тултипа
+      if (pricePerThHint) {
+        const tooltipContent = `<div class="desc">
+        <p class="desc_accent">
+        ИП - Индивидуальный план
+        </p>
+        <p>
+        После (мощность)
+        ваша стоимость за 1 TH
+        рассчитывается индивидуально
+        </p></div>`;
+        pricePerThHint.innerHTML = tooltipContent;
+        pricePerThEl.textContent = "ИП";
+        // Обновляем содержимое через API tippy, если он инициализирован
+        if (pricePerThHint._tippy) {
+          pricePerThHint._tippy.setContent(tooltipContent);
+        }
+      }
     }
 
     // Всегда вычисляем доходность, даже для диапазона 2821-3760

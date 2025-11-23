@@ -1,6 +1,7 @@
 .give {
   padding: 10rem 0;
   position: relative;
+  z-index: 1;
   @include mobile {
     padding: 7.5rem 0;
   }

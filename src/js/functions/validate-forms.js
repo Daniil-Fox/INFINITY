@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalApi = window.modalApi;
 
   // Массив селекторов форм
-  const formSelectors = [".modal__form"];
+  const formSelectors = [".modal__form", ".cta__form"];
 
   formSelectors.forEach((formSelector) => {
     const form = document.querySelector(formSelector);

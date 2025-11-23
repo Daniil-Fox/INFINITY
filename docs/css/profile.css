@@ -103,6 +103,7 @@
 .page__body {
   margin: 0;
   min-width: 320px;
+  height: auto;
   min-height: 100%;
   font-size: 16px;
   display: -webkit-box;
@@ -401,6 +402,9 @@ h2:not(:first-child) {
   font-size: 2.2rem;
   line-height: 140%;
 }
+.desc_accent {
+  color: var(--it-pink);
+}
 
 ul {
   list-style: none;
@@ -528,6 +532,18 @@ ul li:not(:last-child) {
   background-color: #e6e6e6;
   padding: 0.5rem;
   position: relative;
+  -webkit-transition-property: background-color;
+  transition-property: background-color;
+  -webkit-transition-duration: 0.3s;
+  transition-duration: 0.3s;
+  -webkit-transition-timing-function: ease;
+  transition-timing-function: ease;
+}
+.hint > * {
+  position: absolute;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 @media (max-width: 576px) {
   .hint {
@@ -560,14 +576,6 @@ ul li:not(:last-child) {
     font-weight: 600;
   }
 }
-.hint {
-  -webkit-transition-property: background-color;
-  transition-property: background-color;
-  -webkit-transition-duration: 0.3s;
-  transition-duration: 0.3s;
-  -webkit-transition-timing-function: ease;
-  transition-timing-function: ease;
-}
 @media (any-hover: hover) {
   .hint:hover::after {
     color: var(--it-white);
@@ -598,12 +606,13 @@ input::-webkit-inner-spin-button {
 }
 
 .tippy-box[data-theme~=tooltip] {
-  padding: 4rem;
+  padding: 3rem 4rem;
   border-radius: 2rem;
   background-color: var(--it-white);
   border: 1px solid #e6e6e6;
   color: var(--it-black);
   font-size: 1.6rem;
+  min-width: 42rem;
 }
 
 .just-validate-error-label {
@@ -998,6 +1007,18 @@ input::-webkit-inner-spin-button {
   margin-bottom: 3rem;
 }
 
+.calculator {
+  position: relative;
+  z-index: 4;
+}
+.calculator_main {
+  padding: 10rem 0;
+}
+@media (max-width: 576px) {
+  .calculator_main {
+    padding: 7.5rem 0;
+  }
+}
 .calculator__title:not(:last-child) {
   margin-bottom: 2rem;
 }
@@ -1321,15 +1342,15 @@ input::-webkit-inner-spin-button {
     align-items: stretch;
     gap: 4rem;
   }
-}
-.calculator__summary-row > div:first-child {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  gap: 1rem;
+  .calculator__summary-row > div:first-child {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 1rem;
+  }
 }
 .calculator__summary-cost {
   margin: 0;
@@ -1633,36 +1654,34 @@ input::-webkit-inner-spin-button {
   color: var(--it-black);
 }
 .course__btn {
-  padding: 1.4rem 2rem;
-  border-radius: 1rem;
-  background-color: #e6e6e6;
-  -ms-flex-negative: 0;
-  flex-shrink: 0;
-  font-weight: 700;
-  font-size: 1.6rem;
-  line-height: 140%;
   color: var(--it-black);
-  -webkit-transition-property: color, background-color;
-  transition-property: color, background-color;
+  -webkit-transition-property: color;
+  transition-property: color;
   -webkit-transition-duration: 0.3s;
   transition-duration: 0.3s;
   -webkit-transition-timing-function: ease;
   transition-timing-function: ease;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 2.3rem;
+  aspect-ratio: 1/1;
+}
+.course__btn svg {
+  fill: currentColor;
+  width: 100%;
+  height: 100%;
 }
 @media (any-hover: hover) {
   .course__btn:hover {
-    color: var(--it-white);
-    background-color: var(--it-pink-hover);
+    color: var(--it-pink);
   }
 }
 .course__btn:focus-visible {
-  color: var(--it-white);
   outline: none;
-  background-color: var(--it-pink-hover);
+  color: var(--it-pink);
 }
 .course__btn:active {
-  color: var(--it-white);
-  background-color: var(--it-pink);
+  color: var(--it-pink);
 }
 
 .tabs {

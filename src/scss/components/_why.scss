@@ -20,6 +20,13 @@
     pointer-events: none;
     animation: shake 4s linear infinite;
   }
+  &__title {
+    @include mobile {
+      &:not(:last-child) {
+        margin-bottom: 9rem;
+      }
+    }
+  }
   &__container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -27,7 +34,7 @@
 
     @include mobile {
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 6rem;
     }
   }
 
@@ -44,18 +51,19 @@
       mask: none;
       position: relative;
       z-index: 2;
-      padding: 5rem 4rem 4rem;
+      padding: 1.5rem 4rem 4rem;
+      border-radius: 0 2rem 2rem 2rem;
       &::before {
         content: "";
         position: absolute;
         z-index: -1;
         left: 0;
-        top: 0;
+        bottom: calc(100% - 2.1rem);
         width: 100%;
         height: 5.5rem;
         background-color: var(--it-white);
         mask-image: url("./../img/svg/why-mask-mob.svg");
-        mask-size: 100% auto;
+        mask-size: 100% 100%;
         mask-repeat: no-repeat;
         mask-position: top;
       }

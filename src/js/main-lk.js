@@ -3,7 +3,6 @@ import "./components/tooltips.js";
 import "./components/charts.js";
 import "./components/inputs.js";
 import "./components/dropdown.js";
-import "./components/profile-settings.js";
 import { initCalculator } from "./components/calculator-engine.js";
 import { initCalculatorPatterns } from "./components/calculator-patterns.js";
 import { initHistoryModal } from "./components/history-modal.js";

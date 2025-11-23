@@ -1,4 +1,14 @@
 .calculator {
+  position: relative;
+  z-index: 4;
+
+  &_main {
+    padding: 10rem 0;
+
+    @include mobile {
+      padding: 7.5rem 0;
+    }
+  }
   &__title {
     &:not(:last-child) {
       margin-bottom: 2rem;
@@ -282,12 +292,11 @@
       flex-direction: column;
       align-items: stretch;
       gap: 4rem;
-    }
-
-    & > div:first-child {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      & > div:first-child {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
     }
   }
 

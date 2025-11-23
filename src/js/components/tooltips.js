@@ -6,7 +6,8 @@ window.addEventListener("DOMContentLoaded", () => {
   if (hints) {
     hints.forEach((hint) => {
       tippy(hint, {
-        content: hint.dataset.text,
+        content: hint.innerHTML,
+        allowHTML: true,
         theme: "tooltip",
         arrow: false,
       });

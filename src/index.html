@@ -12,6 +12,295 @@
       @include('partials/benefits.html')
       @include('partials/about.html')
       @include('partials/clients.html')
+      <section class="calculator calculator_main">
+        <div class="container">
+          <div class="calculator__container">
+            <div class="calculator__content">
+              <h2 class="calculator__title">Посчитайте вашу выгоду</h2>
+              <p class="calculator__desc desc">
+                Выберите индивидуальные параметры
+                или готовый пакет
+              </p>
+              <div class="calculator__form">
+                <div class="calculator__row">
+                  <div class="calculator__item">
+                    <div class="calculator__field">
+                      <div class="calculator__inwrapper">
+                        <input type="number" id="loanAmountInput" class="calculator__input" />
+                        <label for="loanAmountInput" class="calculator__label">Сумма</label>
+                        <div class="range" id="loanAmountSlider"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="calculator__item">
+                    <div class="calculator__currency currency">
+                      <div class="currency__item">
+                        <input type="radio" id="ruble" name="currency" value="ruble" class="visually-hidden">
+                        <label for="ruble">₽</label>
+                      </div>
+                      <div class="currency__item">
+                        <input type="radio" id="dollar" name="currency" value="dollar" class="visually-hidden" checked>
+                        <label for="dollar">$</label>
+                      </div>
+                      <div class="currency__item">
+                        <input type="radio" id="euro" name="currency" value="euro" class="visually-hidden">
+                        <label for="euro">€</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="calculator__row">
+                  <div class="calculator__item">
+                    <div class="calculator__field">
+                      <div class="calculator__inwrapper" data-after="TH">
+                        <input type="number" id="loanPowerInput" min="8" max="3760" step="1"
+                          class="calculator__input" />
+                        <label for="loanPowerInput" class="calculator__label">Мощность</label>
+                        <div class="range" id="loanPowerSlider"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="calculator__item">
+                    <div class="calculator__info">
+                      <div>
+                        <span>25 $</span> за 1 TH
+                      </div>
+
+                      <div class="calculator__hint hint" data-text="Перечень стоимости за 1 TH">
+                        <div>
+                          <p class="desc">Перечень стоимости за 1 TH</p>
+                          <p class="desc desc_accent">Меняется в зависимости
+                            от количества покупаемой
+                            мощности за 1 раз</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="calculator__row">
+                  <div class="calculator__item">
+                    <div class="calculator__field">
+                      <div class="calculator__inwrapper" data-after="BTC">
+                        <input type="number" id="loanCourseInput" step="0.000000001" class="calculator__input" />
+                        <label for="loanCourseInput" class="calculator__label">Курс биткоина</label>
+                        <div class="range" id="loanCourseSlider"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="calculator__item">
+                    <div class="calculator__info course">
+
+                      <div class="course__content">
+                        <p class="course__caption">Текущий курс</p>
+                        <p class="course__value">0.2134123532</p>
+                      </div>
+
+                      <div class="btn-reset course__btn">
+                        <svg width="21" height="24" viewBox="0 0 21 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path
+                            d="M12.6092 1.14392C12.6406 1.17095 12.6441 1.21831 12.6171 1.2497L11.757 2.2482C11.7178 2.29371 11.7457 2.36472 11.8053 2.37262C16.9062 3.04978 20.8425 7.41382 20.8428 12.6997C20.8425 18.4551 16.1763 23.1216 10.4209 23.1216C4.6657 23.1213 0.000243905 18.4549 0 12.6997C0.000138253 9.58738 1.36573 6.79236 3.52734 4.88427C4.13147 4.35106 4.79873 3.88656 5.51579 3.50335C5.55231 3.48383 5.59765 3.49795 5.61692 3.5346L6.01855 4.29833L6.41927 5.06202C6.43851 5.09869 6.42437 5.14399 6.38788 5.16356C5.80459 5.47649 5.2613 5.85562 4.76855 6.29052C2.99308 7.85779 1.87514 10.1477 1.875 12.6997C1.87524 17.4194 5.70124 21.2463 10.4209 21.2466C15.1408 21.2466 18.9675 17.4195 18.9678 12.6997C18.9675 8.42526 15.8286 4.88551 11.7304 4.25526C11.667 4.24551 11.6224 4.31511 11.6574 4.36887L12.337 5.41414C12.3596 5.44888 12.3498 5.49535 12.315 5.51792L10.8686 6.45767C10.8338 6.48023 10.7874 6.47037 10.7648 6.43564L8.95996 3.65771L8.60778 3.11596C8.58962 3.08803 8.59206 3.05148 8.61377 3.02621L9.03516 2.53564L11.1962 0.0260652C11.2232 -0.00532336 11.2706 -0.00885668 11.302 0.0181734L12.6092 1.14392Z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="calculator__summary">
+                  <p class="calculator__summary-title">Приблизительная доходность</p>
+                  <p class="calculator__summary-profit">0.000234521 BTC</p>
+                  <div class="calculator__summary-row">
+                    <div>
+                      <div class="calculator__summary-cost">
+                        2500 $
+                      </div>
+                      <div class="calculator__summary-annually">
+                        30% годовых
+                      </div>
+                    </div>
+                    <div class="calculator__summary-tabs tabs">
+                      <label>
+                        <input type="radio" name="доходность" class="visually-hidden">
+                        <span>за день</span>
+                      </label>
+                      <label>
+                        <input type="radio" name="доходность" class="visually-hidden">
+                        <span>за неделю</span>
+                      </label>
+                      <label>
+                        <input type="radio" name="доходность" class="visually-hidden">
+                        <span>за месяц</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <a href="#" class="btn-reset calculator__btn btn">
+                  Купить
+                </a>
+              </div>
+            </div>
+
+            <div class="calculator__patterns">
+              <div class="pattern calculator__pattern" data-power="188">
+                <div class="pattern__header">
+                  <p class="pattern__title">Пакет 01</p>
+                  <div class="pattern__annual"><span data-field="annual">-</span> годовых</div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Приблизительная доходность в день</div>
+                    <div class="pattern__item-value" data-field="profit">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Мощность</div>
+                    <div class="pattern__item-value" data-field="power">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Стоимость</div>
+                    <div class="pattern__item-value" data-field="cost">-</div>
+                  </div>
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">за 1TH</div>
+                    <div class="pattern__item-value" data-field="price">-</div>
+                  </div>
+                </div>
+
+                <div class="pattern__img">
+                  <picture>
+                    <source srcset="./img/cards/01-mob.webp" media="(max-width: 576px)" type="image/webp">
+                    <source srcset="./img/cards/01-mob.webp" media="(max-width: 576px)" type="image/jpg">
+                    <source srcset="./img/cards/01.webp" type="image/webp">
+                    <img loading="lazy" src="./img/cards/01.png" class="image" width="513" height="513"
+                      aria-hidden="true" alt="">
+                  </picture>
+                </div>
+              </div>
+
+              <div class="pattern calculator__pattern" data-power="563">
+                <div class="pattern__header">
+                  <p class="pattern__title">Пакет 02</p>
+                  <div class="pattern__annual"><span data-field="annual">-</span> годовых</div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Приблизительная доходность в день</div>
+                    <div class="pattern__item-value" data-field="profit">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Мощность</div>
+                    <div class="pattern__item-value" data-field="power">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Стоимость</div>
+                    <div class="pattern__item-value" data-field="cost">-</div>
+                  </div>
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">за 1TH</div>
+                    <div class="pattern__item-value" data-field="price">-</div>
+                  </div>
+                </div>
+                <div class="pattern__img">
+                  <picture>
+                    <source srcset="./img/cards/02-mob.webp" media="(max-width: 576px)" type="image/webp">
+                    <source srcset="./img/cards/02-mob.webp" media="(max-width: 576px)" type="image/jpg">
+                    <source srcset="./img/cards/02.webp" type="image/webp">
+                    <img loading="lazy" src="./img/cards/02.png" class="image" width="513" height="513"
+                      aria-hidden="true" alt="">
+                  </picture>
+                </div>
+              </div>
+
+              <div class="pattern calculator__pattern" data-power="1127">
+                <div class="pattern__header">
+                  <p class="pattern__title">Пакет 03</p>
+                  <div class="pattern__annual"><span data-field="annual">-</span> годовых</div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Приблизительная доходность в день</div>
+                    <div class="pattern__item-value" data-field="profit">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Мощность</div>
+                    <div class="pattern__item-value" data-field="power">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Стоимость</div>
+                    <div class="pattern__item-value" data-field="cost">-</div>
+                  </div>
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">за 1TH</div>
+                    <div class="pattern__item-value" data-field="price">-</div>
+                  </div>
+                </div>
+
+                <div class="pattern__img">
+                  <picture>
+                    <source srcset="./img/cards/03-mob.webp" media="(max-width: 576px)" type="image/webp">
+                    <source srcset="./img/cards/03-mob.webp" media="(max-width: 576px)" type="image/jpg">
+                    <source srcset="./img/cards/03.webp" type="image/webp">
+                    <img loading="lazy" src="./img/cards/03.png" class="image" width="513" height="513"
+                      aria-hidden="true" alt="">
+                  </picture>
+                </div>
+              </div>
+              <div class="pattern calculator__pattern" data-power="1879">
+                <div class="pattern__header">
+                  <p class="pattern__title">Пакет 04</p>
+                  <div class="pattern__annual"><span data-field="annual">-</span> годовых</div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Приблизительная доходность в день</div>
+                    <div class="pattern__item-value" data-field="profit">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Мощность</div>
+                    <div class="pattern__item-value" data-field="power">-</div>
+                  </div>
+                </div>
+                <div class="pattern__row">
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">Стоимость</div>
+                    <div class="pattern__item-value" data-field="cost">-</div>
+                  </div>
+                  <div class="pattern__item">
+                    <div class="pattern__item-capture">за 1TH</div>
+                    <div class="pattern__item-value" data-field="price">-</div>
+                  </div>
+                </div>
+
+                <div class="pattern__img">
+                  <picture>
+                    <source srcset="./img/cards/04-mob.webp" media="(max-width: 576px)" type="image/webp">
+                    <source srcset="./img/cards/04-mob.webp" media="(max-width: 576px)" type="image/jpg">
+                    <source srcset="./img/cards/04.webp" type="image/webp">
+                    <img loading="lazy" src="./img/cards/04.png" class="image" width="513" height="513"
+                      aria-hidden="true" alt="">
+                  </picture>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       @include('partials/work.html')
       @include('partials/why.html')
       @include('partials/different.html')
@@ -20,6 +309,7 @@
       @include('partials/give.html')
       @include('partials/support.html')
       @include('partials/master.html')
+      @include('partials/cta.html')
     </main>
     @include('partials/footer.html')
   </div>
