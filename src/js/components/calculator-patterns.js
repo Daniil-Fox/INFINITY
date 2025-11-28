@@ -134,9 +134,51 @@ export function initCalculatorPatterns(rootEl, calculatorApi) {
   );
   if (!patternEls.length) return null;
 
+  const powerInput = calculatorRoot.querySelector("#loanPowerInput");
+  const sliderMinPower = Number(powerInput?.getAttribute("min"));
+  const inputInitialValue =
+    Number(powerInput?.value) || Number(powerInput?.getAttribute("value"));
+
+  const patternPowers = patternEls
+    .map((pattern) => Number(pattern.dataset.power))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  const isPatternPower = (value) => {
+    if (!Number.isFinite(value)) return false;
+    return patternPowers.some(
+      (patternPower) => Math.round(patternPower) === Math.round(value)
+    );
+  };
+
+  let lastManualPowerTh =
+    Number.isFinite(inputInitialValue) && inputInitialValue > 0
+      ? inputInitialValue
+      : Number.isFinite(sliderMinPower) && sliderMinPower > 0
+      ? sliderMinPower
+      : null;
+
+  const resolveFallbackPower = () => {
+    if (
+      Number.isFinite(lastManualPowerTh) &&
+      lastManualPowerTh > 0 &&
+      !isPatternPower(lastManualPowerTh)
+    ) {
+      return lastManualPowerTh;
+    }
+    if (Number.isFinite(sliderMinPower) && sliderMinPower > 0) {
+      return sliderMinPower;
+    }
+    return null;
+  };
+
   const refresh = () => {
     const context = calculatorApi.getContext?.();
     if (!context) return;
+
+    if (!isPatternPower(context.powerTh) && Number.isFinite(context.powerTh)) {
+      lastManualPowerTh = context.powerTh;
+    }
+
     patternEls.forEach((pattern) => updatePatternCard(pattern, context));
   };
 
@@ -145,7 +187,20 @@ export function initCalculatorPatterns(rootEl, calculatorApi) {
       event.preventDefault();
       const powerTh = Number(pattern.dataset.power);
       if (Number.isFinite(powerTh) && powerTh > 0) {
-        calculatorApi.setPowerTh?.(powerTh, { focus: true });
+        const context = calculatorApi.getContext?.();
+        const isActive =
+          Number.isFinite(context?.powerTh) &&
+          Math.round(context.powerTh) === Math.round(powerTh);
+
+        if (isActive) {
+          const fallbackPower = resolveFallbackPower();
+          if (Number.isFinite(fallbackPower)) {
+            calculatorApi.setPowerTh?.(fallbackPower, { focus: false });
+            return;
+          }
+        }
+
+        calculatorApi.setPowerTh?.(powerTh, { focus: false });
       }
     });
   });

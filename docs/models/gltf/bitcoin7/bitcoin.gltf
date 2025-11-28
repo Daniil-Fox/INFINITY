@@ -6,8 +6,7 @@
 	"extensionsUsed":[
 		"KHR_materials_clearcoat",
 		"KHR_materials_transmission",
-		"KHR_materials_specular",
-		"KHR_materials_anisotropy"
+		"KHR_materials_specular"
 	],
 	"scene":0,
 	"scenes":[
@@ -58,21 +57,21 @@
 					"clearcoatRoughnessFactor":0.029999999329447746
 				},
 				"KHR_materials_transmission":{
-					"transmissionFactor":0.15000000596046448
+					"transmissionFactor":0.10000000149011612
 				},
 				"KHR_materials_specular":{
 					"specularFactor":0.800000011920929
-				},
-				"KHR_materials_anisotropy":{
-					"anisotropyStrength":0.48770999908447266
 				}
 			},
 			"name":"Material",
 			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":0
-				},
-				"metallicFactor":0.4000000059604645,
+				"baseColorFactor":[
+					0.8796177506446838,
+					0.3712381422519684,
+					0.04518633335828781,
+					1
+				],
+				"metallicFactor":0.699999988079071,
 				"roughnessFactor":0.5
 			}
 		},
@@ -125,24 +124,11 @@
 			]
 		}
 	],
-	"textures":[
-		{
-			"sampler":0,
-			"source":0
-		}
-	],
-	"images":[
-		{
-			"mimeType":"image/png",
-			"name":"Combined",
-			"uri":"Combined.png"
-		}
-	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":48972,
+			"count":43352,
 			"max":[
 				1,
 				1,
@@ -158,19 +144,19 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":48972,
+			"count":43352,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":48972,
+			"count":43352,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":239214,
+			"count":237678,
 			"type":"SCALAR"
 		},
 		{
@@ -211,62 +197,56 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":587664,
+			"byteLength":520224,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":587664,
-			"byteOffset":587664,
+			"byteLength":520224,
+			"byteOffset":520224,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":391776,
-			"byteOffset":1175328,
+			"byteLength":346816,
+			"byteOffset":1040448,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":478428,
-			"byteOffset":1567104,
+			"byteLength":475356,
+			"byteOffset":1387264,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":37344,
-			"byteOffset":2045532,
+			"byteOffset":1862620,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":37344,
-			"byteOffset":2082876,
+			"byteOffset":1899964,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":24896,
-			"byteOffset":2120220,
+			"byteOffset":1937308,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":16080,
-			"byteOffset":2145116,
+			"byteOffset":1962204,
 			"target":34963
-		}
-	],
-	"samplers":[
-		{
-			"magFilter":9729,
-			"minFilter":9987
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":2161196,
+			"byteLength":1978284,
 			"uri":"bitcoin.bin"
 		}
 	]

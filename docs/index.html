@@ -22,7 +22,73 @@
 
 <body class="page__body">
   <div class="site-container">
-    
+    <style>
+  :root {
+    --pre-white-opacity: 1;
+  }
+
+  .preloader {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background-color: var(--it-black);
+  }
+
+  .preloader::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: #fff;
+    opacity: var(--pre-white-opacity, 1);
+  }
+
+
+  .preloader__logo-visual {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.3);
+    transform-origin: center;
+    width: 20rem;
+    height: auto;
+    z-index: 2;
+  }
+
+  .preloader__logo-visual svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .preloader__logo-outline {
+    fill: rgba(255, 255, 255, 0.25);
+  }
+
+  .preloader__logo-progress {
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+</style>
+<div class="preloader" aria-hidden="true">
+  <div class="preloader__logo-visual">
+    <svg viewBox="0 0 117 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <path id="preloader-logo-path"
+          d="M32.8828 0C35.8028 3.51543e-05 38.5866 1.23747 40.5439 3.4043L63.6074 28.9385L85.1341 52.7716C85.4603 53.1327 85.9242 53.3389 86.4109 53.3389H101.515C102.465 53.3389 103.235 52.5685 103.235 51.6183V15.4862C103.235 14.536 102.465 13.7656 101.515 13.7656H86.1512C85.6948 13.7656 85.2572 13.9469 84.9345 14.2696L76.6276 22.5765C75.9558 23.2483 74.8664 23.2484 74.1945 22.5766L70.5439 18.9268L66.8944 15.2772C66.2224 14.6053 66.2224 13.5158 66.8944 12.8439L76.7139 3.02441C78.6498 1.08856 81.2759 3.4345e-05 84.0137 0H106.677C112.378 0.000166213 117 4.623 117 10.3242V56.7793C117 62.4807 112.378 67.1033 106.677 67.1035H84.1172C81.1971 67.1035 78.4134 65.8663 76.4561 63.6992L53.3926 38.165L31.8669 14.3329C31.5407 13.9717 31.0767 13.7656 30.59 13.7656H15.4862C14.536 13.7656 13.7656 14.536 13.7656 15.4862V51.6183C13.7656 52.5685 14.536 53.3389 15.4862 53.3389H30.8488C31.3052 53.3389 31.7428 53.1576 32.0655 52.8349L40.3732 44.5272C41.0451 43.8553 42.1345 43.8553 42.8065 44.5272L50.1056 51.8263C50.7776 52.4983 50.7776 53.5877 50.1056 54.2596L40.2861 64.0791C38.3501 66.0151 35.7243 67.1035 32.9863 67.1035H10.3242C4.62271 67.1035 0 62.4808 0 56.7793V10.3242C0.000209284 4.6229 4.62283 0 10.3242 0H32.8828Z" />
+        <mask id="preloader-logo-mask">
+          <use href="#preloader-logo-path" fill="#fff" />
+        </mask>
+      </defs>
+      <use href="#preloader-logo-path" class="preloader__logo-outline" />
+      <rect class="preloader__logo-progress" width="117" height="68" fill="#fff" mask="url(#preloader-logo-mask)">
+      </rect>
+    </svg>
+  </div>
+</div>
+
     <main class="main">
       <section class="hero">
   <canvas id="scene" class="rellax" data-rellax-speed="3"></canvas>
@@ -45,8 +111,7 @@
     </div>
   </div>
   <div class="container">
-    <div class="hero__content">
-      <header class="header hero__header">
+    <header class="header hero__header">
   <div class="header__container">
     <a href="./" class="logo hero__logo">
       <svg width="182" height="31" viewBox="0 0 182 31" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -68,6 +133,12 @@
         <path
           d="M162.925 13.5107C162.925 13.9495 163.281 14.3054 163.72 14.3057H174.847C175.286 14.3056 175.642 13.9496 175.642 13.5107V0.79476C175.642 0.355826 175.997 0 176.436 0H181.204C181.643 0 181.999 0.355826 181.999 0.79476V13.5107C181.999 17.4611 178.797 20.664 174.847 20.6641H173.257C172.818 20.6641 172.462 21.0199 172.462 21.4588V30.2013C172.462 30.6403 172.106 30.9961 171.667 30.9961H166.899C166.46 30.9961 166.104 30.6403 166.104 30.2013V21.4588C166.104 21.0199 165.749 20.6641 165.31 20.6641H163.72C159.77 20.6638 156.567 17.461 156.567 13.5107V0.79476C156.567 0.355826 156.923 0 157.362 0H162.13C162.569 0 162.925 0.355826 162.925 0.79476V13.5107Z"
           fill="white" />
+      </svg>
+    </a>
+
+    <a href="/profile" class="header__profile">
+      <svg class="" width="35" height="41">
+        <use xlink:href="img/sprite.svg#profile"></use>
       </svg>
     </a>
 
@@ -96,6 +167,8 @@
 </nav>
 </header>
 
+    <div class="hero__content">
+
       <h1 class="hero__title">
         Получайте пассивный доход<br>
         от добычи биткоина
@@ -112,6 +185,7 @@
     </div>
   </div>
 </section>
+
 
       <section class="benefits">
   <div class="benefits__star star rellax" data-rellax-speed="2" data-rellax-percentage="0.5">

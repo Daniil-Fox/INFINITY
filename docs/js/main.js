@@ -117156,9 +117156,9 @@ tippy.setDefaultProps({
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _components_coin_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/coin.js */ "./src/js/components/coin.js");
-/* harmony import */ var _components_gsap_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/gsap.js */ "./src/js/components/gsap.js");
-/* harmony import */ var _components_preloader_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/preloader.js */ "./src/js/components/preloader.js");
+/* harmony import */ var _components_preloader_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/preloader.js */ "./src/js/components/preloader.js");
+/* harmony import */ var _components_coin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/coin.js */ "./src/js/components/coin.js");
+/* harmony import */ var _components_gsap_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/gsap.js */ "./src/js/components/gsap.js");
 /* harmony import */ var _components_different_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/different.js */ "./src/js/components/different.js");
 /* harmony import */ var _components_master_card_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./components/master-card.js */ "./src/js/components/master-card.js");
 /* harmony import */ var _components_inputs_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./components/inputs.js */ "./src/js/components/inputs.js");
@@ -117340,6 +117340,40 @@ function initCalculator(formEl, options = {}) {
     config,
     ...lastRenderContext
   });
+  const clampAmountInputValue = () => {
+    if (!priceInput) return null;
+    const raw = priceInput.value?.trim() || "";
+    if (!raw) {
+      priceInput.value = "";
+      priceInput.setAttribute("value", "");
+      (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+      return null;
+    }
+    let numeric = toNumber(raw);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      priceInput.value = "";
+      priceInput.setAttribute("value", "");
+      (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+      return null;
+    }
+    const minAttr = Number(priceInput.getAttribute("min"));
+    const maxAttr = Number(priceInput.getAttribute("max"));
+    if (Number.isFinite(minAttr)) {
+      numeric = Math.max(numeric, minAttr);
+    }
+    if (Number.isFinite(maxAttr)) {
+      numeric = Math.min(numeric, maxAttr);
+    }
+    const stepAttr = priceInput.getAttribute("step") || "";
+    const decimals = stepAttr.includes(".") ? stepAttr.split(".")[1].length : 0;
+    const formatted = decimals > 0 ? numeric.toFixed(decimals) : String(Math.round(numeric));
+    if (priceInput.value !== formatted) {
+      priceInput.value = formatted;
+      priceInput.setAttribute("value", formatted);
+    }
+    (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+    return numeric;
+  };
   const notifyAfterRender = () => {
     const context = getPublicContext();
     afterRenderListeners.forEach(cb => {
@@ -117704,12 +117738,20 @@ function initCalculator(formEl, options = {}) {
     });
   }
   if (priceInput) {
+    const commitManualAmount = () => {
+      if (priceInput.value?.trim()) {
+        clampAmountInputValue();
+      } else {
+        priceInput.value = "";
+        priceInput.setAttribute("value", "");
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+      }
+      if (!isUpdating) render("amount");
+    };
     priceInput.addEventListener("input", () => {
-      if (!isUpdating) render("amount");
+      (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
     });
-    priceInput.addEventListener("change", () => {
-      if (!isUpdating) render("amount");
-    });
+    priceInput.addEventListener("change", commitManualAmount);
     priceInput.addEventListener("slider-update", e => {
       // Предотвращаем циклические обновления при программном обновлении слайдера
       if (!isUpdating && e.detail?.source !== "programmatic") {
@@ -118404,9 +118446,30 @@ function initCalculatorPatterns(rootEl, calculatorApi) {
   if (!calculatorRoot) return null;
   const patternEls = Array.from(calculatorRoot.querySelectorAll(".calculator__pattern[data-power]"));
   if (!patternEls.length) return null;
+  const powerInput = calculatorRoot.querySelector("#loanPowerInput");
+  const sliderMinPower = Number(powerInput?.getAttribute("min"));
+  const inputInitialValue = Number(powerInput?.value) || Number(powerInput?.getAttribute("value"));
+  const patternPowers = patternEls.map(pattern => Number(pattern.dataset.power)).filter(value => Number.isFinite(value) && value > 0);
+  const isPatternPower = value => {
+    if (!Number.isFinite(value)) return false;
+    return patternPowers.some(patternPower => Math.round(patternPower) === Math.round(value));
+  };
+  let lastManualPowerTh = Number.isFinite(inputInitialValue) && inputInitialValue > 0 ? inputInitialValue : Number.isFinite(sliderMinPower) && sliderMinPower > 0 ? sliderMinPower : null;
+  const resolveFallbackPower = () => {
+    if (Number.isFinite(lastManualPowerTh) && lastManualPowerTh > 0 && !isPatternPower(lastManualPowerTh)) {
+      return lastManualPowerTh;
+    }
+    if (Number.isFinite(sliderMinPower) && sliderMinPower > 0) {
+      return sliderMinPower;
+    }
+    return null;
+  };
   const refresh = () => {
     const context = calculatorApi.getContext?.();
     if (!context) return;
+    if (!isPatternPower(context.powerTh) && Number.isFinite(context.powerTh)) {
+      lastManualPowerTh = context.powerTh;
+    }
     patternEls.forEach(pattern => updatePatternCard(pattern, context));
   };
   patternEls.forEach(pattern => {
@@ -118414,8 +118477,19 @@ function initCalculatorPatterns(rootEl, calculatorApi) {
       event.preventDefault();
       const powerTh = Number(pattern.dataset.power);
       if (Number.isFinite(powerTh) && powerTh > 0) {
+        const context = calculatorApi.getContext?.();
+        const isActive = Number.isFinite(context?.powerTh) && Math.round(context.powerTh) === Math.round(powerTh);
+        if (isActive) {
+          const fallbackPower = resolveFallbackPower();
+          if (Number.isFinite(fallbackPower)) {
+            calculatorApi.setPowerTh?.(fallbackPower, {
+              focus: false
+            });
+            return;
+          }
+        }
         calculatorApi.setPowerTh?.(powerTh, {
-          focus: true
+          focus: false
         });
       }
     });
@@ -119404,7 +119478,7 @@ function initRangeControl({
     syncSlider(numericValue);
   };
   input.addEventListener("change", handleInputChange);
-  input.addEventListener("input", handleInputChange);
+  // input.addEventListener("input", handleInputChange);
 }
 function readNumberAttribute(element, attributeName, fallback) {
   if (!element) {

@@ -163,7 +163,7 @@ export function initRangeControl({ input, slider }) {
   };
 
   input.addEventListener("change", handleInputChange);
-  input.addEventListener("input", handleInputChange);
+  // input.addEventListener("input", handleInputChange);
 }
 
 export function readNumberAttribute(element, attributeName, fallback) {

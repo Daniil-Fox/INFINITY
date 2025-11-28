@@ -104,6 +104,48 @@ export function initCalculator(formEl, options = {}) {
     ...lastRenderContext,
   });
 
+  const clampAmountInputValue = () => {
+    if (!priceInput) return null;
+    const raw = priceInput.value?.trim() || "";
+    if (!raw) {
+      priceInput.value = "";
+      priceInput.setAttribute("value", "");
+      updateFilledState(priceInput);
+      return null;
+    }
+
+    let numeric = toNumber(raw);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      priceInput.value = "";
+      priceInput.setAttribute("value", "");
+      updateFilledState(priceInput);
+      return null;
+    }
+
+    const minAttr = Number(priceInput.getAttribute("min"));
+    const maxAttr = Number(priceInput.getAttribute("max"));
+
+    if (Number.isFinite(minAttr)) {
+      numeric = Math.max(numeric, minAttr);
+    }
+    if (Number.isFinite(maxAttr)) {
+      numeric = Math.min(numeric, maxAttr);
+    }
+
+    const stepAttr = priceInput.getAttribute("step") || "";
+    const decimals = stepAttr.includes(".") ? stepAttr.split(".")[1].length : 0;
+    const formatted =
+      decimals > 0 ? numeric.toFixed(decimals) : String(Math.round(numeric));
+
+    if (priceInput.value !== formatted) {
+      priceInput.value = formatted;
+      priceInput.setAttribute("value", formatted);
+    }
+
+    updateFilledState(priceInput);
+    return numeric;
+  };
+
   const notifyAfterRender = () => {
     const context = getPublicContext();
     afterRenderListeners.forEach((cb) => {
@@ -496,12 +538,24 @@ export function initCalculator(formEl, options = {}) {
     });
   }
   if (priceInput) {
+    const commitManualAmount = () => {
+      if (priceInput.value?.trim()) {
+        clampAmountInputValue();
+      } else {
+        priceInput.value = "";
+        priceInput.setAttribute("value", "");
+        updateFilledState(priceInput);
+      }
+
+      if (!isUpdating) render("amount");
+    };
+
     priceInput.addEventListener("input", () => {
-      if (!isUpdating) render("amount");
+      updateFilledState(priceInput);
     });
-    priceInput.addEventListener("change", () => {
-      if (!isUpdating) render("amount");
-    });
+
+    priceInput.addEventListener("change", commitManualAmount);
+
     priceInput.addEventListener("slider-update", (e) => {
       // Предотвращаем циклические обновления при программном обновлении слайдера
       if (!isUpdating && e.detail?.source !== "programmatic") {

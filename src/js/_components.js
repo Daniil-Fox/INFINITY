@@ -1,6 +1,6 @@
+import "./components/preloader.js";
 import "./components/coin.js";
 import "./components/gsap.js";
-import "./components/preloader.js";
 import "./components/different.js";
 import "./components/master-card.js";
 import "./components/inputs.js";
