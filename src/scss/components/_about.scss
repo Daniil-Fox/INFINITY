@@ -29,7 +29,10 @@
 
   &__video {
     @include mobile {
-      display: none;
+      display: block;
+      mask-image: url("./../img/video-mask-mob.svg");
+      mask-size: cover;
+      mask-position: bottom;
     }
 
     &_mob {
@@ -37,7 +40,7 @@
       @include mobile {
         display: block;
         mask-image: url("./../img/video-mask-mob.svg");
-        mask-size: 100% 100%;
+        mask-size: cover;
         mask-position: bottom;
       }
     }

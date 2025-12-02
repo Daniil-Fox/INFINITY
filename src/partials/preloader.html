@@ -17,12 +17,13 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-color: #fff;
+    background-color: #000;
     opacity: var(--pre-white-opacity, 1);
   }
 
 
   .preloader__logo-visual {
+    opacity: 0;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -40,7 +41,21 @@
   }
 
   .preloader__logo-outline {
-    fill: rgba(255, 255, 255, 0.25);
+    fill: rgba(255, 255, 255, 1);
+  }
+
+  .preloader__video {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(2);
+    width: 40rem;
+    height: auto;
+  }
+
+  .preloader__video video {
+    width: 100%;
+    height: auto;
   }
 
   .preloader__logo-progress {
@@ -49,6 +64,9 @@
   }
 </style>
 <div class="preloader" aria-hidden="true">
+  <div class="preloader__video">
+    <video src="./loader.mp4" autoplay muted loop></video>
+  </div>
   <div class="preloader__logo-visual">
     <svg viewBox="0 0 117 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>

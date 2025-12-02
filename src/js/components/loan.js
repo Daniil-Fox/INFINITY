@@ -25,7 +25,16 @@ export function initRangeControl({ input, slider }) {
         : 0
       : getPrecision(step);
 
-  const clamp = (value) => Math.min(Math.max(value, min), max);
+  // ВАЖНО: min/max для поля могут динамически меняться (калькулятор обновляет атрибуты).
+  // Поэтому при каждом клампе читаем актуальные границы из атрибутов,
+  // используя исходные min/max как запасной вариант.
+  const clamp = (value) => {
+    const currentMin = readNumberAttribute(input, "min", min);
+    const currentMax = readNumberAttribute(input, "max", max);
+    const lo = Number.isFinite(currentMin) ? currentMin : min;
+    const hi = Number.isFinite(currentMax) ? currentMax : max;
+    return Math.min(Math.max(value, lo), hi);
+  };
 
   const initialCandidate = readInitialValue(input);
   const startValue = clamp(
@@ -35,19 +44,10 @@ export function initRangeControl({ input, slider }) {
   setInputValue(input, startValue, precision);
 
   // Для поля курса биткоина настраиваем форматирование значений
-  const isCourseInput =
-    input.id === "loanCourseInput" ||
-    (input.getAttribute("step") &&
-      parseFloat(input.getAttribute("step")) === 0.000000001);
+  const isCourseInput = input.id === "loanCourseInput";
 
-  // Для поля курса используем минимальный шаг на основе текущего значения
-  // Шаг должен быть достаточно маленьким, чтобы не терять точность
+  // Для поля курса используем шаг из атрибута (теперь это целые числа)
   let actualStep = step;
-  if (isCourseInput) {
-    // Для очень маленьких чисел используем минимальный шаг
-    // который позволит точно позиционировать до 9 знака
-    actualStep = 0.000000001; // 1 нанобиткоин - минимальный шаг
-  }
 
   const sliderOptions = {
     start: [startValue],
@@ -63,14 +63,11 @@ export function initRangeControl({ input, slider }) {
   if (isCourseInput) {
     sliderOptions.format = {
       to: function (value) {
-        // Возвращаем значение с точностью до 9 знаков, но не округляем раньше
-        // Используем Math.round для точного округления до 9 знака
-        const multiplier = 1000000000; // 10^9
-        const rounded = Math.round(value * multiplier) / multiplier;
-        return rounded;
+        // Округляем до целого числа (стоимость 1 BTC в выбранной валюте)
+        return Math.round(value);
       },
       from: function (value) {
-        // Парсим значение обратно, сохраняя точность
+        // Парсим значение обратно
         return parseFloat(value);
       },
     };
@@ -86,16 +83,8 @@ export function initRangeControl({ input, slider }) {
       let rawValue;
 
       if (isCourseInput) {
-        // Для поля курса пытаемся использовать unencoded, если доступно
-        if (unencoded && Array.isArray(unencoded) && unencoded.length > 0) {
-          rawValue = unencoded[0];
-        } else {
-          // Если unencoded недоступно, используем значение из слайдера
-          // и округляем его до 9 знаков с помощью Math.round для точности
-          const sliderValue = parseFloat(String(values[0]));
-          const multiplier = 1000000000; // 10^9
-          rawValue = Math.round(sliderValue * multiplier) / multiplier;
-        }
+        // Для поля курса округляем до целого числа
+        rawValue = Math.round(parseFloat(String(values[0])));
       } else {
         // Для других полей используем обычное значение
         rawValue = parseFloat(String(values[0]));
@@ -105,20 +94,21 @@ export function initRangeControl({ input, slider }) {
         return;
       }
 
-      // Для поля курса форматируем значение напрямую с точностью до 9 знаков
+      // Для поля курса форматируем значение как целое число
       if (isCourseInput) {
-        // Используем Math.round для точного округления до 9 знака
-        const multiplier = 1000000000; // 10^9
-        const rounded = Math.round(rawValue * multiplier) / multiplier;
-        const formatted = rounded.toFixed(9);
+        // Округляем до целого числа (стоимость 1 BTC в выбранной валюте)
+        const rounded = Math.round(rawValue);
+        const formatted = rounded.toString();
 
         input.value = formatted;
         input.setAttribute("value", formatted);
         updateFilledState(input);
 
-        // Триггерим кастомное событие с точным значением
+        // Триггерим кастомное событие БЕЗ перерасчета (перерасчет при slider-end)
         input.dispatchEvent(
-          new CustomEvent("slider-update", { detail: { value: rounded } })
+          new CustomEvent("slider-update", {
+            detail: { value: rounded, skipRender: true },
+          })
         );
       } else {
         const actualPrecision = precision;
@@ -126,17 +116,39 @@ export function initRangeControl({ input, slider }) {
 
         // Триггерим кастомное событие для синхронизации с калькулятором
         input.dispatchEvent(
-          new CustomEvent("slider-update", { detail: { value: rawValue } })
+          new CustomEvent("slider-update", {
+            detail: { value: rawValue, skipRender: true },
+          })
         );
       }
     }
   );
 
-  const syncSlider = (value) => {
-    // Для поля курса округляем значение до 9 знаков перед установкой
+  // Обработчик окончания перетаскивания слайдера для всех полей
+  slider.noUiSlider.on("end", () => {
+    const inputId = input.id;
+    let value = 0;
+
     if (isCourseInput) {
-      const multiplier = 1000000000; // 10^9
-      const rounded = Math.round(value * multiplier) / multiplier;
+      // Для курса используем целое число
+      value = Math.round(parseFloat(input.value) || 0);
+    } else {
+      // Для других полей
+      value = parseFloat(input.value) || 0;
+    }
+
+    // Триггерим событие окончания перетаскивания
+    input.dispatchEvent(
+      new CustomEvent("slider-end", {
+        detail: { value },
+      })
+    );
+  });
+
+  const syncSlider = (value) => {
+    // Для поля курса округляем значение до целого числа
+    if (isCourseInput) {
+      const rounded = Math.round(value);
       slider.noUiSlider.set(clamp(rounded));
     } else {
       slider.noUiSlider.set(clamp(value));

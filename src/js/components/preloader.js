@@ -7,10 +7,36 @@ import { gsap } from "gsap";
   const logoVisual = preloader.querySelector(".preloader__logo-visual");
   if (!logoVisual) return;
 
+  const videoContainer = preloader.querySelector(".preloader__video");
+  if (!videoContainer) return;
+
   // Блокируем взаимодействие под прелоадером до завершения
   document.documentElement.style.overflow = "hidden";
 
   const MIN_DELAY_MS = 800; // искусственная минимальная задержка показа прелоадера
+
+  // Функция перехода от видео к визуалу
+  const transitionFromVideo = () => {
+    const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
+
+    // Одновременно скрываем видео и проявляем визуал
+    tl.to(videoContainer, { duration: 0.8, scale: 0.45 });
+    tl.to(videoContainer, { duration: 0.8, opacity: 0 });
+    tl.to(
+      logoVisual,
+      {
+        duration: 0.8,
+        opacity: 1,
+        scale: 0.3, // Устанавливаем начальный scale из CSS
+      },
+      0.5
+    );
+
+    // После завершения перехода запускаем основную анимацию
+    tl.add(() => {
+      reveal();
+    });
+  };
 
   const reveal = () => {
     const tl = gsap.timeline({ defaults: { ease: "power3.inOut" } });
@@ -90,8 +116,8 @@ import { gsap } from "gsap";
   };
 
   const onAllLoaded = () => {
-    // Ждём искусственную задержку, затем запускаем анимацию
-    setTimeout(reveal, MIN_DELAY_MS);
+    // Ждём искусственную задержку, затем запускаем переход от видео к визуалу
+    setTimeout(transitionFromVideo, MIN_DELAY_MS);
   };
 
   if (document.readyState === "complete") {

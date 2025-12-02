@@ -41,12 +41,13 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-color: #fff;
+    background-color: #000;
     opacity: var(--pre-white-opacity, 1);
   }
 
 
   .preloader__logo-visual {
+    opacity: 0;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -64,7 +65,21 @@
   }
 
   .preloader__logo-outline {
-    fill: rgba(255, 255, 255, 0.25);
+    fill: rgba(255, 255, 255, 1);
+  }
+
+  .preloader__video {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(2);
+    width: 40rem;
+    height: auto;
+  }
+
+  .preloader__video video {
+    width: 100%;
+    height: auto;
   }
 
   .preloader__logo-progress {
@@ -73,6 +88,9 @@
   }
 </style>
 <div class="preloader" aria-hidden="true">
+  <div class="preloader__video">
+    <video src="./loader.mp4" autoplay muted loop></video>
+  </div>
   <div class="preloader__logo-visual">
     <svg viewBox="0 0 117 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
@@ -276,23 +294,32 @@
     <h2 class="about__title">О компании</h2>
 
     <div class="about__video" data-video>
-      <video src="./cover.mp4" poster="./img/cover-video.webp"></video>
-
+      <!-- <video src="./cover.mp4" poster="./img/cover-video.webp"></video> -->
+      <div style="position: relative; padding-top: 56.25%; width: 100%"><iframe
+          src="https://kinescope.io/embed/dRBJd5S4LsrCgyd8c8SJc7"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
+          frameborder="0" allowfullscreen
+          style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>
+      </div>
       <button class="btn-reset about__play" data-video-play>
         <svg class="" width="75" height="75">
           <use xlink:href="img/sprite.svg#play"></use>
         </svg>
       </button>
     </div>
-    <div class="about__video about__video_mob" data-video>
-      <video src="./cover.mp4" poster="./img/cover-video.webp"></video>
-
+    <!-- <div class="about__video about__video_mob" data-video>
+      <div style="position: relative; padding-top: 56.25%; width: 100%"><iframe
+          src="https://kinescope.io/embed/dRBJd5S4LsrCgyd8c8SJc7"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
+          frameborder="0" allowfullscreen
+          style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></iframe>
+      </div>
       <button class="btn-reset about__play" data-video-play>
         <svg class="" width="75" height="75">
           <use xlink:href="img/sprite.svg#play"></use>
         </svg>
       </button>
-    </div>
+    </div> -->
   </div>
 </section>
       <section class="clients horScroll">

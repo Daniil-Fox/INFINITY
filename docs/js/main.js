@@ -117349,6 +117349,9 @@ function initCalculator(formEl, options = {}) {
       (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
       return null;
     }
+
+    // Ранний sanitize: оставляем только число и синхронизируем атрибут,
+    // сами границы min/max применяются в updateAmountBounds внутри render().
     let numeric = toNumber(raw);
     if (!Number.isFinite(numeric) || numeric <= 0) {
       priceInput.value = "";
@@ -117356,16 +117359,7 @@ function initCalculator(formEl, options = {}) {
       (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
       return null;
     }
-    const minAttr = Number(priceInput.getAttribute("min"));
-    const maxAttr = Number(priceInput.getAttribute("max"));
-    if (Number.isFinite(minAttr)) {
-      numeric = Math.max(numeric, minAttr);
-    }
-    if (Number.isFinite(maxAttr)) {
-      numeric = Math.min(numeric, maxAttr);
-    }
-    const stepAttr = priceInput.getAttribute("step") || "";
-    const decimals = stepAttr.includes(".") ? stepAttr.split(".")[1].length : 0;
+    const decimals = 0;
     const formatted = decimals > 0 ? numeric.toFixed(decimals) : String(Math.round(numeric));
     if (priceInput.value !== formatted) {
       priceInput.value = formatted;
@@ -117391,24 +117385,48 @@ function initCalculator(formEl, options = {}) {
     currencyCtl.onChange(state => {
       // Обновляем курс при загрузке из API
       if (Number.isFinite(state.btcUsd) && courseInput && state.btcUsd > 0) {
-        // Конвертируем в обратное значение: 1 доллар = X биткоина
-        const btcPerUsd = 1 / state.btcUsd;
-        const btcPerUsdFormatted = btcPerUsd.toFixed(9);
+        // Конвертируем стоимость 1 BTC в выбранную валюту
+        const rates = state.usdRates || {
+          USD: 1,
+          EUR: 0.92,
+          RUB: 92
+        };
+        let btcPriceInCurrency;
+        if (state.currency === "dollar") {
+          btcPriceInCurrency = state.btcUsd;
+        } else if (state.currency === "euro") {
+          btcPriceInCurrency = state.btcUsd * (rates.EUR || 0.92);
+        } else if (state.currency === "ruble") {
+          btcPriceInCurrency = state.btcUsd * (rates.RUB || 92);
+        } else {
+          btcPriceInCurrency = state.btcUsd;
+        }
+        const btcPerUsdFormatted = Math.round(btcPriceInCurrency).toString();
         courseInput.value = btcPerUsdFormatted;
         courseInput.setAttribute("value", courseInput.value);
         (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
 
         // Настраиваем диапазон слайдера курса (80%-120% от текущего курса)
-        // Для обратного значения: если курс 109500, то обратное = 0.000009132
-        // Диапазон 80%-120%: 0.000007306 - 0.000010958
+        // Диапазон рассчитывается на основе выбранной валюты
         const courseSlider = query(formEl, "#loanCourseSlider");
         if (courseSlider && state.btcUsd > 0) {
-          const minBtcPerUsd = (1 / (state.btcUsd * 1.2)).toFixed(9); // 120% курса = меньше BTC за доллар
-          const maxBtcPerUsd = (1 / (state.btcUsd * 0.8)).toFixed(9); // 80% курса = больше BTC за доллар
+          // Рассчитываем курс BTC в выбранной валюте
+          let btcInCurrency;
+          if (state.currency === "dollar") {
+            btcInCurrency = state.btcUsd;
+          } else if (state.currency === "euro") {
+            btcInCurrency = state.btcUsd * (rates.EUR || 0.92);
+          } else if (state.currency === "ruble") {
+            btcInCurrency = state.btcUsd * (rates.RUB || 92);
+          } else {
+            btcInCurrency = state.btcUsd;
+          }
+          const minBtcPrice = Math.round(btcInCurrency * 0.8); // 80% курса
+          const maxBtcPrice = Math.round(btcInCurrency * 1.2); // 120% курса
 
-          courseInput.setAttribute("min", minBtcPerUsd);
-          courseInput.setAttribute("max", maxBtcPerUsd);
-          courseInput.setAttribute("step", "0.000000001"); // Шаг 0.000000001 (9 знаков)
+          courseInput.setAttribute("min", minBtcPrice);
+          courseInput.setAttribute("max", maxBtcPrice);
+          courseInput.setAttribute("step", "1"); // Шаг 1 (целые числа)
 
           if (!courseSliderInitialized) {
             // Убеждаемся, что значение установлено правильно перед инициализацией
@@ -117426,7 +117444,7 @@ function initCalculator(formEl, options = {}) {
             // (на случай если initRangeControl изменил его из-за округления)
             const currentValue = parseFloat(courseInput.value);
             const expectedValue = parseFloat(btcPerUsdFormatted);
-            if (Math.abs(currentValue - expectedValue) > 0.0000000001) {
+            if (Math.abs(currentValue - expectedValue) > 0.5) {
               courseInput.value = btcPerUsdFormatted;
               courseInput.setAttribute("value", btcPerUsdFormatted);
               (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
@@ -117435,20 +117453,18 @@ function initCalculator(formEl, options = {}) {
           } else {
             // Обновляем диапазон существующего слайдера
             if (courseSlider.noUiSlider) {
-              const minNum = parseFloat(minBtcPerUsd);
-              const maxNum = parseFloat(maxBtcPerUsd);
+              const minNum = minBtcPrice;
+              const maxNum = maxBtcPrice;
               const currentNum = parseFloat(btcPerUsdFormatted);
               courseSlider.noUiSlider.updateOptions({
                 range: {
                   min: minNum,
                   max: maxNum
                 },
-                step: 0.000000001,
+                step: 1,
                 format: {
                   to: function (value) {
-                    // Сохраняем точность до 9 знаков с помощью Math.round
-                    const multiplier = 1000000000; // 10^9
-                    return Math.round(value * multiplier) / multiplier;
+                    return Math.round(value);
                   },
                   from: function (value) {
                     return parseFloat(value);
@@ -117456,7 +117472,7 @@ function initCalculator(formEl, options = {}) {
                 }
               });
 
-              // Устанавливаем значение с точностью до 9 знаков
+              // Устанавливаем значение
               courseSlider.noUiSlider.set(currentNum);
             }
           }
@@ -117472,8 +117488,23 @@ function initCalculator(formEl, options = {}) {
     resetBtn.addEventListener("click", async () => {
       const state = currencyCtl.getState();
       if (Number.isFinite(state.btcUsd) && state.btcUsd > 0) {
-        // Конвертируем в обратное значение: 1 доллар = X биткоина
-        const btcPerUsd = (1 / state.btcUsd).toFixed(9);
+        // Конвертируем стоимость 1 BTC в выбранную валюту
+        const rates = state.usdRates || {
+          USD: 1,
+          EUR: 0.92,
+          RUB: 92
+        };
+        let btcPriceInCurrency;
+        if (state.currency === "dollar") {
+          btcPriceInCurrency = state.btcUsd;
+        } else if (state.currency === "euro") {
+          btcPriceInCurrency = state.btcUsd * (rates.EUR || 0.92);
+        } else if (state.currency === "ruble") {
+          btcPriceInCurrency = state.btcUsd * (rates.RUB || 92);
+        } else {
+          btcPriceInCurrency = state.btcUsd;
+        }
+        const btcPerUsd = Math.round(btcPriceInCurrency).toString();
         const btcPerUsdNum = parseFloat(btcPerUsd);
         if (courseInput) {
           // Устанавливаем значение с точностью до 9 знаков
@@ -117544,13 +117575,32 @@ function initCalculator(formEl, options = {}) {
 
     // Получаем курс BTC: приоритет у значения из поля курса (если пользователь изменил),
     // иначе используем курс из API
-    // Читаем значение напрямую из поля, чтобы сохранить точность для маленьких чисел
+    // В инпуте хранится стоимость 1 BTC в выбранной валюте
     const courseInputRaw = courseInput?.value?.trim() || "";
     const courseInputValue = courseInputRaw ? parseFloat(courseInputRaw) : 0;
 
     // Разделяем рыночный курс из API и "пользовательский" курс из инпута
     const apiBtcUsd = Number.isFinite(ctlState.btcUsd) && ctlState.btcUsd > 0 ? ctlState.btcUsd : 109500;
-    const userOverrideBtcUsd = Number.isFinite(courseInputValue) && courseInputValue > 0 ? 1 / courseInputValue : null;
+
+    // Если пользователь изменил курс, конвертируем из выбранной валюты в USD
+    let userOverrideBtcUsd = null;
+    if (Number.isFinite(courseInputValue) && courseInputValue > 0) {
+      const rates = ctlState.usdRates || {
+        USD: 1,
+        EUR: 0.92,
+        RUB: 92
+      };
+      if (currency === "dollar") {
+        userOverrideBtcUsd = courseInputValue;
+      } else if (currency === "euro") {
+        userOverrideBtcUsd = courseInputValue / (rates.EUR || 0.92);
+      } else if (currency === "ruble") {
+        userOverrideBtcUsd = courseInputValue / (rates.RUB || 92);
+      } else {
+        userOverrideBtcUsd = courseInputValue;
+      }
+    }
+
     // В расчетах калькулятора используем пользовательский курс, если он задан; иначе курс API
     const btcUsd = userOverrideBtcUsd ?? apiBtcUsd;
     const btcPrice = btcUsd > 0 ? btcUsd : 109500; // Fallback к примерному курсу если нет данных
@@ -117579,8 +117629,29 @@ function initCalculator(formEl, options = {}) {
     }
 
     // Если источник изменения - сумма, пересчитываем мощность
-    if (source === "amount" && amountUsd > 0) {
-      const calculatedPower = calculatePowerFromAmount(amountUsd, config.pricing.tiers);
+    if (source === "amount" && rawAmount > 0) {
+      // Пользователь вручную изменил сумму в выбранной валюте.
+      // 1) Клампим значение по min/max атрибутам (они уже в нужной валюте).
+      let localAmount = rawAmount;
+      if (priceInput) {
+        const minAttr = Number(priceInput.getAttribute("min"));
+        const maxAttr = Number(priceInput.getAttribute("max"));
+        if (Number.isFinite(minAttr)) {
+          localAmount = Math.max(localAmount, minAttr);
+        }
+        if (Number.isFinite(maxAttr)) {
+          localAmount = Math.min(localAmount, maxAttr);
+        }
+        const decimals = 0;
+        const formatted = decimals > 0 ? localAmount.toFixed(decimals) : String(Math.round(localAmount));
+        priceInput.value = formatted;
+        priceInput.setAttribute("value", formatted);
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+      }
+
+      // 2) Пересчитываем мощность из суммы в USD
+      const localAmountUsd = convertToUsd(localAmount, currency, rates);
+      const calculatedPower = calculatePowerFromAmount(localAmountUsd, config.pricing.tiers);
       if (calculatedPower > 0) {
         finalPowerTh = calculatedPower;
         if (powerInput) {
@@ -117593,12 +117664,12 @@ function initCalculator(formEl, options = {}) {
           }
         }
         // Обновляем границы суммы, так как мощность могла измениться (переход в другой тир)
-        // Передаем текущую сумму как целевое значение
-        updateAmountBounds(formEl, finalPowerTh, config.pricing.tiers, amountSliderInitialized, amountUsd, {
+        // Передаем пересчитанную сумму в USD, чтобы скорректировать её в границах тира
+        updateAmountBounds(formEl, finalPowerTh, config.pricing.tiers, amountSliderInitialized, localAmountUsd, {
           currency,
           rates
         });
-        finalAmountUsd = amountUsd; // Используем исходную сумму
+        finalAmountUsd = localAmountUsd; // Используем сумму после клампа в USD
       }
     } else if (source === "power" && powerTh > 0 && hasValidTier) {
       // Если источник изменения - мощность, пересчитываем сумму
@@ -117733,44 +117804,114 @@ function initCalculator(formEl, options = {}) {
     powerInput.addEventListener("change", () => {
       if (!isUpdating) render("power");
     });
-    powerInput.addEventListener("slider-update", () => {
+    powerInput.addEventListener("slider-update", e => {
+      // Если это обновление от слайдера (skipRender), только обновляем визуальное состояние
+      // Перерасчет запустится при событии slider-end
+      if (e.detail?.skipRender) {
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(powerInput);
+        return;
+      }
       if (!isUpdating) render("power");
+    });
+    // Обработчик окончания перетаскивания слайдера мощности
+    powerInput.addEventListener("slider-end", () => {
+      if (!isUpdating) {
+        render("power");
+      }
     });
   }
   if (priceInput) {
-    const commitManualAmount = () => {
-      if (priceInput.value?.trim()) {
-        clampAmountInputValue();
-      } else {
-        priceInput.value = "";
+    // Debounce таймер для перерасчета при вводе с клавиатуры
+    let amountDebounceTimer = null;
+    const AMOUNT_DEBOUNCE_DELAY = 300; // мс
+
+    const commitManualAmount = ({
+      clamp = false
+    } = {}) => {
+      const raw = priceInput.value ?? "";
+      const trimmed = raw.trim();
+      const hasValue = trimmed !== "";
+      if (!hasValue) {
+        // Поле очищено пользователем: просто обновляем визуальное состояние
+        // и не запускаем перерасчет, чтобы калькулятор не "подставлял" сумму сам.
         priceInput.setAttribute("value", "");
         (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+        if (amountDebounceTimer) {
+          clearTimeout(amountDebounceTimer);
+          amountDebounceTimer = null;
+        }
+        return;
       }
-      if (!isUpdating) render("amount");
+      if (clamp) {
+        // Только санитизируем ввод (убираем лишние символы, приводим к числу),
+        // сами min/max применяются внутри render() через updateAmountBounds.
+        clampAmountInputValue();
+      } else {
+        // При наборе с клавиатуры не трогаем текст, только синхронизируем атрибут
+        priceInput.setAttribute("value", priceInput.value);
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+      }
+
+      // Очищаем предыдущий таймер
+      if (amountDebounceTimer) {
+        clearTimeout(amountDebounceTimer);
+      }
+
+      // Запускаем перерасчет через debounce
+      amountDebounceTimer = setTimeout(() => {
+        if (!isUpdating) {
+          render("amount");
+        }
+        amountDebounceTimer = null;
+      }, AMOUNT_DEBOUNCE_DELAY);
     };
     priceInput.addEventListener("input", () => {
+      // При вводе с клавиатуры даем пользователю полностью ввести значение.
+      // Не запускаем перерасчет и не применяем min/max до события change/blur.
+      const raw = priceInput.value ?? "";
+      priceInput.setAttribute("value", raw);
       (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
     });
-    priceInput.addEventListener("change", commitManualAmount);
+    priceInput.addEventListener("change", () => commitManualAmount({
+      clamp: true
+    }));
     priceInput.addEventListener("slider-update", e => {
+      // Если это обновление от слайдера (skipRender), только обновляем визуальное состояние
+      // Перерасчет запустится при событии slider-end
+      if (e.detail?.skipRender) {
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(priceInput);
+        return;
+      }
+
       // Предотвращаем циклические обновления при программном обновлении слайдера
       if (!isUpdating && e.detail?.source !== "programmatic") {
+        commitManualAmount({
+          clamp: true
+        });
+      }
+    });
+
+    // Обработчик окончания перетаскивания слайдера
+    priceInput.addEventListener("slider-end", () => {
+      // Когда перестали тянуть слайдер - сразу пересчитываем,
+      // min/max применяются внутри render() через updateAmountBounds.
+      if (!isUpdating) {
         render("amount");
       }
     });
   }
   if (courseInput) {
     const updateCourseDisplay = () => {
-      // Читаем значение напрямую из поля, чтобы сохранить точность
+      // Читаем значение напрямую из поля
       const rawValue = courseInput.value.trim();
       if (!rawValue) return;
 
-      // Парсим значение, сохраняя точность
-      const courseValue = parseFloat(rawValue);
+      // Парсим значение и округляем до целого числа
+      const courseValue = Math.round(parseFloat(rawValue));
       if (!Number.isFinite(courseValue) || courseValue <= 0) return;
 
-      // Форматируем значение с 9 знаками после запятой
-      const formattedValue = courseValue.toFixed(9);
+      // Форматируем значение как целое число
+      const formattedValue = courseValue.toString();
       // Обновляем только если значение изменилось (чтобы избежать циклов)
       if (courseInput.value !== formattedValue && !isUpdating) {
         courseInput.value = formattedValue;
@@ -117781,7 +117922,21 @@ function initCalculator(formEl, options = {}) {
     };
     courseInput.addEventListener("input", updateCourseDisplay);
     courseInput.addEventListener("change", updateCourseDisplay);
-    courseInput.addEventListener("slider-update", updateCourseDisplay);
+    courseInput.addEventListener("slider-update", e => {
+      // Если это обновление от слайдера (skipRender), только обновляем визуальное состояние
+      // Перерасчет запустится при событии slider-end
+      if (e.detail?.skipRender) {
+        (0,_loan_js__WEBPACK_IMPORTED_MODULE_0__.updateFilledState)(courseInput);
+        return;
+      }
+      updateCourseDisplay();
+    });
+    // Обработчик окончания перетаскивания слайдера курса
+    courseInput.addEventListener("slider-end", () => {
+      if (!isUpdating) {
+        render("auto");
+      }
+    });
   }
   const setPowerTh = (value, options = {}) => {
     if (!powerInput) return;
@@ -118045,7 +118200,7 @@ function updateAmountBounds(formEl, powerTh, tiers, initializedRef, targetAmount
   const rates = currencyCtx?.rates || {
     USD: 1
   };
-  const decimals = currency === "ruble" ? 0 : 2;
+  const decimals = 0; // Без десятичных дробей для всех валют
   const normalize = value => Number.isFinite(value) ? Number(value.toFixed(decimals)) : value;
   const minAmount = normalize((0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(minAmountUsd, currency, rates));
   const maxAmount = normalize((0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(maxAmountUsd, currency, rates));
@@ -118137,6 +118292,67 @@ function updateAmountBounds(formEl, powerTh, tiers, initializedRef, targetAmount
   }
   return true;
 }
+
+// Функция анимации числа от старого значения к новому
+function animateNumber(element, newValue, formatFn, duration = 600) {
+  if (!element) return;
+  const currentText = element.textContent.trim();
+
+  // Парсим текущее значение (убираем все нечисловые символы кроме точки, запятой и минуса)
+  let currentValue = 0;
+  if (currentText && currentText !== "-" && currentText !== "- BTC" && currentText !== "-%") {
+    // Заменяем запятую на точку для парсинга
+    const numericStr = currentText.replace(/[^\d.,-]/g, "").replace(",", ".");
+    currentValue = parseFloat(numericStr) || 0;
+  }
+
+  // Парсим новое значение
+  let targetValue = 0;
+  if (newValue && newValue !== "-" && newValue !== "- BTC" && newValue !== "-%") {
+    const numericStr = String(newValue).replace(/[^\d.,-]/g, "").replace(",", ".");
+    targetValue = parseFloat(numericStr) || 0;
+  }
+
+  // Если значения одинаковые или новое значение некорректно, просто обновляем текст
+  if (!Number.isFinite(targetValue) || !Number.isFinite(currentValue) && currentText !== newValue || Number.isFinite(currentValue) && Number.isFinite(targetValue) && Math.abs(currentValue - targetValue) < 0.0000001) {
+    element.textContent = newValue;
+    return;
+  }
+
+  // Если текущее значение некорректно, начинаем с 0
+  if (!Number.isFinite(currentValue)) {
+    currentValue = 0;
+  }
+
+  // Анимация
+  const startTime = performance.now();
+  const startValue = currentValue;
+  const difference = targetValue - startValue;
+  let animationFrameId = null;
+  const animate = currentTime => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing функция (ease-out)
+    const easeOut = 1 - Math.pow(1 - progress, 3);
+    const current = startValue + difference * easeOut;
+    const formatted = formatFn(current);
+    element.textContent = formatted;
+    if (progress < 1) {
+      animationFrameId = requestAnimationFrame(animate);
+    } else {
+      // Финальное значение
+      element.textContent = newValue;
+      animationFrameId = null;
+    }
+  };
+
+  // Отменяем предыдущую анимацию, если она была
+  if (element._animationFrameId) {
+    cancelAnimationFrame(element._animationFrameId);
+  }
+  element._animationFrameId = requestAnimationFrame(animate);
+}
 function updateSummary(root, metrics, viewCtx) {
   const profitEl = root.querySelector(".calculator__summary-profit");
   const costEl = root.querySelector(".calculator__summary-cost");
@@ -118144,10 +118360,14 @@ function updateSummary(root, metrics, viewCtx) {
   const period = viewCtx?.selectedPeriod || "day";
   const periodData = metrics?.[period];
 
-  // Показываем клиенту чистую прибыль в BTC
+  // Показываем клиенту чистую прибыль в BTC с анимацией
   if (profitEl) {
     const profitFormatted = formatBtcAmount(periodData?.accrualBtc);
-    profitEl.textContent = profitFormatted ? `${profitFormatted} BTC` : "- BTC";
+    const newText = profitFormatted ? `${profitFormatted} BTC` : "- BTC";
+    animateNumber(profitEl, newText, value => {
+      const formatted = formatBtcAmount(value);
+      return formatted ? `${formatted} BTC` : "- BTC";
+    }, 600);
   }
   if (costEl && viewCtx) {
     const {
@@ -118158,7 +118378,8 @@ function updateSummary(root, metrics, viewCtx) {
     const netUsd = periodData && typeof periodData.accrualUsd === "number" ? periodData.accrualUsd : null;
     if (netUsd != null) {
       const amount = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.convertFromUsd)(netUsd, currency, rates);
-      costEl.textContent = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(amount, currency);
+      const newText = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(amount, currency);
+      animateNumber(costEl, newText, value => (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_2__.formatCurrency)(value, currency), 600);
     } else {
       costEl.textContent = "-";
     }
@@ -118175,7 +118396,8 @@ function updateSummary(root, metrics, viewCtx) {
       const periodReturn = periodData.accrualUsd / packageCostUsd * 100;
       // Годовых (annualized): умножаем на количество периодов в году
       const annualized = period === "day" ? periodReturn * 365 : period === "week" ? periodReturn * 52 : period === "month" ? periodReturn * 12 : periodReturn;
-      annuallyEl.textContent = `${Math.round(annualized)}% годовых`;
+      const newText = `${Math.round(annualized)}% годовых`;
+      animateNumber(annuallyEl, newText, value => `${Math.round(value)}% годовых`, 600);
     } else if (annuallyEl) {
       // Если нет стоимости пакета или данных, показываем прочерк
       annuallyEl.textContent = "-";
@@ -118885,13 +119107,31 @@ function initCurrencyController(formEl, options = {}) {
     const btcUsd = btcUsdValue !== null ? btcUsdValue : state.btcUsd;
     if (btcUsd == null || btcUsd <= 0) return;
 
-    // Показываем обратное значение: 1 доллар = X биткоина
+    // Показываем стоимость 1 BTC в выбранной валюте
     // btcUsd - это стоимость 1 BTC в USD
-    // 1 USD = 1/btcUsd BTC
-    const btcPerUsd = 1 / btcUsd;
+    // Конвертируем курс BTC в выбранную валюту
+    const rates = state.usdRates || {
+      USD: 1,
+      EUR: 0.92,
+      RUB: 92
+    };
+    let btcPriceInCurrency;
+    if (state.currency === "dollar") {
+      // 1 BTC = btcUsd USD
+      btcPriceInCurrency = btcUsd;
+    } else if (state.currency === "euro") {
+      // 1 BTC = btcUsd * eurRate EUR
+      btcPriceInCurrency = btcUsd * (rates.EUR || 0.92);
+    } else if (state.currency === "ruble") {
+      // 1 BTC = btcUsd * rubRate RUB
+      btcPriceInCurrency = btcUsd * (rates.RUB || 92);
+    } else {
+      // Fallback к USD
+      btcPriceInCurrency = btcUsd;
+    }
 
-    // Форматируем с точностью до 9 знаков после запятой
-    out.textContent = btcPerUsd.toFixed(9);
+    // Форматируем без десятичных дробей для всех валют
+    out.textContent = Math.round(btcPriceInCurrency).toLocaleString();
   };
   const load = async () => {
     try {
@@ -119358,22 +119598,26 @@ function initRangeControl({
   // Для шага читаем из атрибута напрямую, чтобы сохранить точность
   const stepAttr = input.getAttribute("step");
   const precision = stepAttr && stepAttr !== "any" ? stepAttr.includes(".") ? stepAttr.split(".")[1].length : 0 : getPrecision(step);
-  const clamp = value => Math.min(Math.max(value, min), max);
+
+  // ВАЖНО: min/max для поля могут динамически меняться (калькулятор обновляет атрибуты).
+  // Поэтому при каждом клампе читаем актуальные границы из атрибутов,
+  // используя исходные min/max как запасной вариант.
+  const clamp = value => {
+    const currentMin = readNumberAttribute(input, "min", min);
+    const currentMax = readNumberAttribute(input, "max", max);
+    const lo = Number.isFinite(currentMin) ? currentMin : min;
+    const hi = Number.isFinite(currentMax) ? currentMax : max;
+    return Math.min(Math.max(value, lo), hi);
+  };
   const initialCandidate = readInitialValue(input);
   const startValue = clamp(Number.isFinite(initialCandidate) ? initialCandidate : min);
   setInputValue(input, startValue, precision);
 
   // Для поля курса биткоина настраиваем форматирование значений
-  const isCourseInput = input.id === "loanCourseInput" || input.getAttribute("step") && parseFloat(input.getAttribute("step")) === 0.000000001;
+  const isCourseInput = input.id === "loanCourseInput";
 
-  // Для поля курса используем минимальный шаг на основе текущего значения
-  // Шаг должен быть достаточно маленьким, чтобы не терять точность
+  // Для поля курса используем шаг из атрибута (теперь это целые числа)
   let actualStep = step;
-  if (isCourseInput) {
-    // Для очень маленьких чисел используем минимальный шаг
-    // который позволит точно позиционировать до 9 знака
-    actualStep = 0.000000001; // 1 нанобиткоин - минимальный шаг
-  }
   const sliderOptions = {
     start: [startValue],
     range: {
@@ -119388,14 +119632,11 @@ function initRangeControl({
   if (isCourseInput) {
     sliderOptions.format = {
       to: function (value) {
-        // Возвращаем значение с точностью до 9 знаков, но не округляем раньше
-        // Используем Math.round для точного округления до 9 знака
-        const multiplier = 1000000000; // 10^9
-        const rounded = Math.round(value * multiplier) / multiplier;
-        return rounded;
+        // Округляем до целого числа (стоимость 1 BTC в выбранной валюте)
+        return Math.round(value);
       },
       from: function (value) {
-        // Парсим значение обратно, сохраняя точность
+        // Парсим значение обратно
         return parseFloat(value);
       }
     };
@@ -119406,16 +119647,8 @@ function initRangeControl({
     // unencoded - это значение до применения форматирования (если доступно)
     let rawValue;
     if (isCourseInput) {
-      // Для поля курса пытаемся использовать unencoded, если доступно
-      if (unencoded && Array.isArray(unencoded) && unencoded.length > 0) {
-        rawValue = unencoded[0];
-      } else {
-        // Если unencoded недоступно, используем значение из слайдера
-        // и округляем его до 9 знаков с помощью Math.round для точности
-        const sliderValue = parseFloat(String(values[0]));
-        const multiplier = 1000000000; // 10^9
-        rawValue = Math.round(sliderValue * multiplier) / multiplier;
-      }
+      // Для поля курса округляем до целого числа
+      rawValue = Math.round(parseFloat(String(values[0])));
     } else {
       // Для других полей используем обычное значение
       rawValue = parseFloat(String(values[0]));
@@ -119424,20 +119657,20 @@ function initRangeControl({
       return;
     }
 
-    // Для поля курса форматируем значение напрямую с точностью до 9 знаков
+    // Для поля курса форматируем значение как целое число
     if (isCourseInput) {
-      // Используем Math.round для точного округления до 9 знака
-      const multiplier = 1000000000; // 10^9
-      const rounded = Math.round(rawValue * multiplier) / multiplier;
-      const formatted = rounded.toFixed(9);
+      // Округляем до целого числа (стоимость 1 BTC в выбранной валюте)
+      const rounded = Math.round(rawValue);
+      const formatted = rounded.toString();
       input.value = formatted;
       input.setAttribute("value", formatted);
       updateFilledState(input);
 
-      // Триггерим кастомное событие с точным значением
+      // Триггерим кастомное событие БЕЗ перерасчета (перерасчет при slider-end)
       input.dispatchEvent(new CustomEvent("slider-update", {
         detail: {
-          value: rounded
+          value: rounded,
+          skipRender: true
         }
       }));
     } else {
@@ -119447,16 +119680,36 @@ function initRangeControl({
       // Триггерим кастомное событие для синхронизации с калькулятором
       input.dispatchEvent(new CustomEvent("slider-update", {
         detail: {
-          value: rawValue
+          value: rawValue,
+          skipRender: true
         }
       }));
     }
   });
-  const syncSlider = value => {
-    // Для поля курса округляем значение до 9 знаков перед установкой
+
+  // Обработчик окончания перетаскивания слайдера для всех полей
+  slider.noUiSlider.on("end", () => {
+    const inputId = input.id;
+    let value = 0;
     if (isCourseInput) {
-      const multiplier = 1000000000; // 10^9
-      const rounded = Math.round(value * multiplier) / multiplier;
+      // Для курса используем целое число
+      value = Math.round(parseFloat(input.value) || 0);
+    } else {
+      // Для других полей
+      value = parseFloat(input.value) || 0;
+    }
+
+    // Триггерим событие окончания перетаскивания
+    input.dispatchEvent(new CustomEvent("slider-end", {
+      detail: {
+        value
+      }
+    }));
+  });
+  const syncSlider = value => {
+    // Для поля курса округляем значение до целого числа
+    if (isCourseInput) {
+      const rounded = Math.round(value);
       slider.noUiSlider.set(clamp(rounded));
     } else {
       slider.noUiSlider.set(clamp(value));
@@ -120081,11 +120334,41 @@ __webpack_require__.r(__webpack_exports__);
   if (!preloader) return;
   const logoVisual = preloader.querySelector(".preloader__logo-visual");
   if (!logoVisual) return;
+  const videoContainer = preloader.querySelector(".preloader__video");
+  if (!videoContainer) return;
 
   // Блокируем взаимодействие под прелоадером до завершения
   document.documentElement.style.overflow = "hidden";
   const MIN_DELAY_MS = 800; // искусственная минимальная задержка показа прелоадера
 
+  // Функция перехода от видео к визуалу
+  const transitionFromVideo = () => {
+    const tl = gsap__WEBPACK_IMPORTED_MODULE_0__.gsap.timeline({
+      defaults: {
+        ease: "power2.inOut"
+      }
+    });
+
+    // Одновременно скрываем видео и проявляем визуал
+    tl.to(videoContainer, {
+      duration: 0.8,
+      scale: 0.45
+    });
+    tl.to(videoContainer, {
+      duration: 0.8,
+      opacity: 0
+    });
+    tl.to(logoVisual, {
+      duration: 0.8,
+      opacity: 1,
+      scale: 0.3 // Устанавливаем начальный scale из CSS
+    }, 0.5);
+
+    // После завершения перехода запускаем основную анимацию
+    tl.add(() => {
+      reveal();
+    });
+  };
   const reveal = () => {
     const tl = gsap__WEBPACK_IMPORTED_MODULE_0__.gsap.timeline({
       defaults: {
@@ -120173,8 +120456,8 @@ __webpack_require__.r(__webpack_exports__);
     });
   };
   const onAllLoaded = () => {
-    // Ждём искусственную задержку, затем запускаем анимацию
-    setTimeout(reveal, MIN_DELAY_MS);
+    // Ждём искусственную задержку, затем запускаем переход от видео к визуалу
+    setTimeout(transitionFromVideo, MIN_DELAY_MS);
   };
   if (document.readyState === "complete") {
     onAllLoaded();

@@ -2430,7 +2430,13 @@ input::-webkit-inner-spin-button {
 }
 @media (max-width: 576px) {
   .about__video {
-    display: none;
+    display: block;
+    -webkit-mask-image: url("./../img/video-mask-mob.svg");
+    mask-image: url("./../img/video-mask-mob.svg");
+    -webkit-mask-size: cover;
+    mask-size: cover;
+    -webkit-mask-position: bottom;
+    mask-position: bottom;
   }
 }
 .about__video_mob {
@@ -2441,8 +2447,8 @@ input::-webkit-inner-spin-button {
     display: block;
     -webkit-mask-image: url("./../img/video-mask-mob.svg");
     mask-image: url("./../img/video-mask-mob.svg");
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
+    -webkit-mask-size: cover;
+    mask-size: cover;
     -webkit-mask-position: bottom;
     mask-position: bottom;
   }

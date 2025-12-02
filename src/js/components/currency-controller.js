@@ -31,13 +31,28 @@ export function initCurrencyController(formEl, options = {}) {
 
     if (btcUsd == null || btcUsd <= 0) return;
 
-    // Показываем обратное значение: 1 доллар = X биткоина
+    // Показываем стоимость 1 BTC в выбранной валюте
     // btcUsd - это стоимость 1 BTC в USD
-    // 1 USD = 1/btcUsd BTC
-    const btcPerUsd = 1 / btcUsd;
+    // Конвертируем курс BTC в выбранную валюту
+    const rates = state.usdRates || { USD: 1, EUR: 0.92, RUB: 92 };
+    let btcPriceInCurrency;
 
-    // Форматируем с точностью до 9 знаков после запятой
-    out.textContent = btcPerUsd.toFixed(9);
+    if (state.currency === "dollar") {
+      // 1 BTC = btcUsd USD
+      btcPriceInCurrency = btcUsd;
+    } else if (state.currency === "euro") {
+      // 1 BTC = btcUsd * eurRate EUR
+      btcPriceInCurrency = btcUsd * (rates.EUR || 0.92);
+    } else if (state.currency === "ruble") {
+      // 1 BTC = btcUsd * rubRate RUB
+      btcPriceInCurrency = btcUsd * (rates.RUB || 92);
+    } else {
+      // Fallback к USD
+      btcPriceInCurrency = btcUsd;
+    }
+
+    // Форматируем без десятичных дробей для всех валют
+    out.textContent = Math.round(btcPriceInCurrency).toLocaleString();
   };
 
   const load = async () => {
