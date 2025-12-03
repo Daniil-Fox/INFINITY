@@ -117819,6 +117819,13 @@ function initCalculator(formEl, options = {}) {
         render("power");
       }
     });
+    // Обработчик Enter: убираем фокус с инпута
+    powerInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" && document.activeElement === powerInput) {
+        e.preventDefault();
+        powerInput.blur();
+      }
+    });
   }
   if (priceInput) {
     // Debounce таймер для перерасчета при вводе с клавиатуры
@@ -117899,6 +117906,13 @@ function initCalculator(formEl, options = {}) {
         render("amount");
       }
     });
+    // Обработчик Enter: убираем фокус с инпута
+    priceInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" && document.activeElement === priceInput) {
+        e.preventDefault();
+        priceInput.blur();
+      }
+    });
   }
   if (courseInput) {
     const updateCourseDisplay = () => {
@@ -117935,6 +117949,13 @@ function initCalculator(formEl, options = {}) {
     courseInput.addEventListener("slider-end", () => {
       if (!isUpdating) {
         render("auto");
+      }
+    });
+    // Обработчик Enter: убираем фокус с инпута
+    courseInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" && document.activeElement === courseInput) {
+        e.preventDefault();
+        courseInput.blur();
       }
     });
   }
@@ -120336,10 +120357,12 @@ __webpack_require__.r(__webpack_exports__);
   if (!logoVisual) return;
   const videoContainer = preloader.querySelector(".preloader__video");
   if (!videoContainer) return;
+  const videoEl = videoContainer.querySelector("video");
 
   // Блокируем взаимодействие под прелоадером до завершения
   document.documentElement.style.overflow = "hidden";
   const MIN_DELAY_MS = 800; // искусственная минимальная задержка показа прелоадера
+  const REQUIRED_VIDEO_LOOPS = 2; // минимум два полных проигрывания видео
 
   // Функция перехода от видео к визуалу
   const transitionFromVideo = () => {
@@ -120455,15 +120478,87 @@ __webpack_require__.r(__webpack_exports__);
       document.documentElement.style.overflow = "";
     });
   };
-  const onAllLoaded = () => {
-    // Ждём искусственную задержку, затем запускаем переход от видео к визуалу
-    setTimeout(transitionFromVideo, MIN_DELAY_MS);
-  };
-  if (document.readyState === "complete") {
-    onAllLoaded();
-  } else {
-    window.addEventListener("load", onAllLoaded, {
-      once: true
+  const siteReadyPromise = waitForSiteReady(MIN_DELAY_MS);
+  const videoReadyPromise = waitForVideoLoops(videoEl, REQUIRED_VIDEO_LOOPS);
+  Promise.all([siteReadyPromise, videoReadyPromise]).then(() => {
+    transitionFromVideo();
+  });
+  function waitForSiteReady(minDelay) {
+    return new Promise(resolve => {
+      const finish = () => {
+        setTimeout(resolve, minDelay);
+      };
+      if (document.readyState === "complete") {
+        finish();
+      } else {
+        window.addEventListener("load", finish, {
+          once: true
+        });
+      }
+    });
+  }
+  function waitForVideoLoops(video, loopsRequired) {
+    return new Promise(resolve => {
+      if (!video || loopsRequired <= 0) {
+        resolve();
+        return;
+      }
+
+      // Управляем воспроизведением вручную, чтобы соблюсти нужное количество циклов
+      video.loop = false;
+      video.removeAttribute("loop");
+      // Ускоряем проигрывание видео в два раза
+      video.playbackRate = 2.0;
+      try {
+        video.currentTime = 0;
+      } catch (_e) {
+        // Игнорируем невозможность сменить currentTime (например, до загрузки метаданных)
+      }
+      let completedLoops = 0;
+      let resolved = false;
+      const finalize = () => {
+        if (resolved) return;
+        resolved = true;
+        video.pause();
+        video.removeEventListener("ended", handleEnded);
+        video.removeEventListener("error", finalize);
+        resolve();
+      };
+      const handleEnded = () => {
+        completedLoops += 1;
+        if (completedLoops >= loopsRequired) {
+          finalize();
+          return;
+        }
+        try {
+          video.currentTime = 0;
+        } catch (_e) {
+          finalize();
+          return;
+        }
+        const replayPromise = video.play();
+        if (replayPromise?.catch) {
+          replayPromise.catch(() => finalize());
+        }
+      };
+      video.addEventListener("ended", handleEnded);
+      video.addEventListener("error", finalize);
+      const startPlayback = () => {
+        if (!video.paused) {
+          return;
+        }
+        const playPromise = video.play();
+        if (playPromise?.catch) {
+          playPromise.catch(() => finalize());
+        }
+      };
+      if (video.readyState >= 2) {
+        startPlayback();
+      } else {
+        video.addEventListener("loadeddata", startPlayback, {
+          once: true
+        });
+      }
     });
   }
 })();

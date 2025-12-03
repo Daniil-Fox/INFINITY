@@ -33,7 +33,7 @@
     top: 0;
     width: 100%;
     height: 100%;
-    z-index: 1000;
+    z-index: 1110;
     background-color: var(--it-black);
   }
 
@@ -80,6 +80,16 @@
   .preloader__video video {
     width: 100%;
     height: auto;
+    /* Отключаем любые взаимодействия с видео, чтобы не всплывали нативные контролы */
+    pointer-events: none;
+  }
+
+  /* Прячем нативные контролы и кнопку проигрывания в Safari / WebKit */
+  .preloader__video video::-webkit-media-controls,
+  .preloader__video video::-webkit-media-controls-panel,
+  .preloader__video video::-webkit-media-controls-start-playback-button {
+    display: none !important;
+    -webkit-appearance: none;
   }
 
   .preloader__logo-progress {
@@ -89,7 +99,7 @@
 </style>
 <div class="preloader" aria-hidden="true">
   <div class="preloader__video">
-    <video src="./loader.mp4" autoplay muted loop></video>
+    <video src="./loader.mp4" autoplay muted loop playsinline webkit-playsinline></video>
   </div>
   <div class="preloader__logo-visual">
     <svg viewBox="0 0 117 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -106,7 +116,6 @@
     </svg>
   </div>
 </div>
-
     <main class="main">
       <section class="hero">
   <canvas id="scene" class="rellax" data-rellax-speed="3"></canvas>

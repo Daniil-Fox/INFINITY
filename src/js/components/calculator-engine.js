@@ -609,6 +609,13 @@ export function initCalculator(formEl, options = {}) {
         render("power");
       }
     });
+    // Обработчик Enter: убираем фокус с инпута
+    powerInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && document.activeElement === powerInput) {
+        e.preventDefault();
+        powerInput.blur();
+      }
+    });
   }
   if (priceInput) {
     // Debounce таймер для перерасчета при вводе с клавиатуры
@@ -691,6 +698,13 @@ export function initCalculator(formEl, options = {}) {
         render("amount");
       }
     });
+    // Обработчик Enter: убираем фокус с инпута
+    priceInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && document.activeElement === priceInput) {
+        e.preventDefault();
+        priceInput.blur();
+      }
+    });
   }
   if (courseInput) {
     const updateCourseDisplay = () => {
@@ -728,6 +742,13 @@ export function initCalculator(formEl, options = {}) {
     courseInput.addEventListener("slider-end", () => {
       if (!isUpdating) {
         render("auto");
+      }
+    });
+    // Обработчик Enter: убираем фокус с инпута
+    courseInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && document.activeElement === courseInput) {
+        e.preventDefault();
+        courseInput.blur();
       }
     });
   }
