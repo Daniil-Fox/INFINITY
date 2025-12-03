@@ -302,27 +302,48 @@ export function initCalculator(formEl, options = {}) {
     if (r.checked) r.checked = false;
     r.dataset.selected = "0";
   });
+  // Устанавливаем "за год" как выбранный по умолчанию (последний таб)
+  const defaultYearTab = periodTabs[periodTabs.length - 1];
+  if (defaultYearTab) {
+    defaultYearTab.checked = true;
+    defaultYearTab.dataset.selected = "1";
+    // Делаем выбранный таб некликабельным
+    const yearLabel = defaultYearTab.closest("label");
+    if (yearLabel) {
+      yearLabel.style.pointerEvents = "none";
+      yearLabel.style.cursor = "default";
+    }
+  }
   periodTabs.forEach((tab, idx) => {
-    const period = idx === 0 ? "day" : idx === 1 ? "week" : "month";
+    const period =
+      idx === 0 ? "day" : idx === 1 ? "week" : idx === 2 ? "month" : "year";
     tab.addEventListener("click", (e) => {
       e.preventDefault();
       const isCurrentlySelected = tab.dataset.selected === "1";
+      // Если таб уже выбран, не обрабатываем клик (он некликабельный)
       if (isCurrentlySelected) {
-        // Повторный клик по выбранному периоду — вернуться к "год"
-        tab.checked = false;
-        tab.dataset.selected = "0";
-        selectedPeriod = "year";
-        render();
         return;
       }
       // Выбор нового периода
       periodTabs.forEach((r) => {
         r.checked = false;
         r.dataset.selected = "0";
+        // Возвращаем кликабельность всем табам
+        const label = r.closest("label");
+        if (label) {
+          label.style.pointerEvents = "";
+          label.style.cursor = "";
+        }
       });
       tab.checked = true;
       tab.dataset.selected = "1";
       selectedPeriod = period;
+      // Делаем выбранный таб некликабельным
+      const selectedLabel = tab.closest("label");
+      if (selectedLabel) {
+        selectedLabel.style.pointerEvents = "none";
+        selectedLabel.style.cursor = "default";
+      }
       render();
     });
   });
@@ -1255,7 +1276,7 @@ function updateSummary(root, metrics, viewCtx) {
   const costEl = root.querySelector(".calculator__summary-cost");
   const annuallyEl = root.querySelector(".calculator__summary-annually");
 
-  const period = viewCtx?.selectedPeriod || "day";
+  const period = viewCtx?.selectedPeriod || "year";
   const periodData = metrics?.[period];
 
   // Показываем клиенту чистую прибыль в BTC с анимацией
@@ -1311,6 +1332,8 @@ function updateSummary(root, metrics, viewCtx) {
           ? periodReturn * 52
           : period === "month"
           ? periodReturn * 12
+          : period === "year"
+          ? periodReturn
           : periodReturn;
       const newText = `${Math.round(annualized)}% годовых`;
 

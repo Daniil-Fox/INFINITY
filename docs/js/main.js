@@ -117533,27 +117533,47 @@ function initCalculator(formEl, options = {}) {
     if (r.checked) r.checked = false;
     r.dataset.selected = "0";
   });
+  // Устанавливаем "за год" как выбранный по умолчанию (последний таб)
+  const defaultYearTab = periodTabs[periodTabs.length - 1];
+  if (defaultYearTab) {
+    defaultYearTab.checked = true;
+    defaultYearTab.dataset.selected = "1";
+    // Делаем выбранный таб некликабельным
+    const yearLabel = defaultYearTab.closest("label");
+    if (yearLabel) {
+      yearLabel.style.pointerEvents = "none";
+      yearLabel.style.cursor = "default";
+    }
+  }
   periodTabs.forEach((tab, idx) => {
-    const period = idx === 0 ? "day" : idx === 1 ? "week" : "month";
+    const period = idx === 0 ? "day" : idx === 1 ? "week" : idx === 2 ? "month" : "year";
     tab.addEventListener("click", e => {
       e.preventDefault();
       const isCurrentlySelected = tab.dataset.selected === "1";
+      // Если таб уже выбран, не обрабатываем клик (он некликабельный)
       if (isCurrentlySelected) {
-        // Повторный клик по выбранному периоду — вернуться к "год"
-        tab.checked = false;
-        tab.dataset.selected = "0";
-        selectedPeriod = "year";
-        render();
         return;
       }
       // Выбор нового периода
       periodTabs.forEach(r => {
         r.checked = false;
         r.dataset.selected = "0";
+        // Возвращаем кликабельность всем табам
+        const label = r.closest("label");
+        if (label) {
+          label.style.pointerEvents = "";
+          label.style.cursor = "";
+        }
       });
       tab.checked = true;
       tab.dataset.selected = "1";
       selectedPeriod = period;
+      // Делаем выбранный таб некликабельным
+      const selectedLabel = tab.closest("label");
+      if (selectedLabel) {
+        selectedLabel.style.pointerEvents = "none";
+        selectedLabel.style.cursor = "default";
+      }
       render();
     });
   });
@@ -118383,7 +118403,7 @@ function updateSummary(root, metrics, viewCtx) {
   const profitEl = root.querySelector(".calculator__summary-profit");
   const costEl = root.querySelector(".calculator__summary-cost");
   const annuallyEl = root.querySelector(".calculator__summary-annually");
-  const period = viewCtx?.selectedPeriod || "day";
+  const period = viewCtx?.selectedPeriod || "year";
   const periodData = metrics?.[period];
 
   // Показываем клиенту чистую прибыль в BTC с анимацией
@@ -118421,7 +118441,7 @@ function updateSummary(root, metrics, viewCtx) {
       // Рассчитываем доходность на основе чистой прибыли за выбранный период
       const periodReturn = periodData.accrualUsd / packageCostUsd * 100;
       // Годовых (annualized): умножаем на количество периодов в году
-      const annualized = period === "day" ? periodReturn * 365 : period === "week" ? periodReturn * 52 : period === "month" ? periodReturn * 12 : periodReturn;
+      const annualized = period === "day" ? periodReturn * 365 : period === "week" ? periodReturn * 52 : period === "month" ? periodReturn * 12 : period === "year" ? periodReturn : periodReturn;
       const newText = `${Math.round(annualized)}% годовых`;
       animateNumber(annuallyEl, newText, value => `${Math.round(value)}% годовых`, 600);
     } else if (annuallyEl) {
@@ -119182,6 +119202,7 @@ function initCurrencyController(formEl, options = {}) {
       }
       if (didUpdate) {
         updateCourseView();
+        updateCourseInputSuffix();
         notify();
       }
     } catch (_e) {
@@ -119196,18 +119217,40 @@ function initCurrencyController(formEl, options = {}) {
       }
       if (didUpdate) {
         updateCourseView();
+        updateCourseInputSuffix();
         notify();
       }
     }
   };
+
+  // Обновление суффикса поля курса биткоина
+  const updateCourseInputSuffix = () => {
+    const courseInput = formEl.querySelector("#loanCourseInput");
+    if (!courseInput) return;
+    const wrapper = courseInput.closest(".calculator__inwrapper");
+    if (!wrapper) return;
+
+    // Символы валют
+    const currencySymbols = {
+      ruble: "₽",
+      dollar: "$",
+      euro: "€"
+    };
+    const symbol = currencySymbols[state.currency] || "$";
+    wrapper.setAttribute("data-after", `${symbol}/BTC`);
+  };
   const onCurrencyChange = () => {
     state.currency = (0,_currency_utils_js__WEBPACK_IMPORTED_MODULE_1__.getSelectedCurrency)(formEl);
     updateCourseView();
+    updateCourseInputSuffix();
     notify();
   };
   Array.from(formEl.querySelectorAll('input[name="currency"]')).forEach(r => {
     r.addEventListener("change", onCurrencyChange);
   });
+
+  // Инициализируем суффикс при загрузке
+  updateCourseInputSuffix();
   load();
   return {
     onChange(cb) {

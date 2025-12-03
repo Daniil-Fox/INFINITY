@@ -85,6 +85,7 @@ export function initCurrencyController(formEl, options = {}) {
 
       if (didUpdate) {
         updateCourseView();
+        updateCourseInputSuffix();
         notify();
       }
     } catch (_e) {
@@ -99,20 +100,43 @@ export function initCurrencyController(formEl, options = {}) {
       }
       if (didUpdate) {
         updateCourseView();
+        updateCourseInputSuffix();
         notify();
       }
     }
   };
 
+  // Обновление суффикса поля курса биткоина
+  const updateCourseInputSuffix = () => {
+    const courseInput = formEl.querySelector("#loanCourseInput");
+    if (!courseInput) return;
+    const wrapper = courseInput.closest(".calculator__inwrapper");
+    if (!wrapper) return;
+
+    // Символы валют
+    const currencySymbols = {
+      ruble: "₽",
+      dollar: "$",
+      euro: "€",
+    };
+
+    const symbol = currencySymbols[state.currency] || "$";
+    wrapper.setAttribute("data-after", `${symbol}/BTC`);
+  };
+
   const onCurrencyChange = () => {
     state.currency = getSelectedCurrency(formEl);
     updateCourseView();
+    updateCourseInputSuffix();
     notify();
   };
 
   Array.from(formEl.querySelectorAll('input[name="currency"]')).forEach((r) => {
     r.addEventListener("change", onCurrencyChange);
   });
+
+  // Инициализируем суффикс при загрузке
+  updateCourseInputSuffix();
 
   load();
 
