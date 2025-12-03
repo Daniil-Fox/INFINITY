@@ -118211,10 +118211,15 @@ function updateAmountBounds(formEl, powerTh, tiers, initializedRef, targetAmount
     amountSlider.style.display = "";
   }
 
-  // Вычисляем границы суммы на основе диапазона тира
-  const minAmountUsd = Math.round(tier.min * tier.pricePerTh);
-  const maxAmountUsd = Math.round(tier.max * tier.pricePerTh);
-  const stepUsd = tier.pricePerTh; // Шаг равен цене за 1 TH
+  // Вычисляем границы суммы на основе полного диапазона (от первого тира до последнего)
+  // Минимум = первый тир min * первый тир pricePerTh
+  // Максимум = последний тир max * последний тир pricePerTh (до "индивидуального предложения")
+  const firstTier = tiers[0];
+  const lastTier = tiers[tiers.length - 1];
+  const minAmountUsd = Math.round(firstTier.min * firstTier.pricePerTh);
+  const maxAmountUsd = Math.round(lastTier.max * lastTier.pricePerTh);
+  // Используем минимальный шаг из всех тиров для плавного перетягивания
+  const stepUsd = Math.min(...tiers.map(t => t.pricePerTh));
 
   // Конвертация для отображения в выбранной валюте
   const currency = currencyCtx?.currency || "dollar";
