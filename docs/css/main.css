@@ -4035,7 +4035,78 @@ input::-webkit-inner-spin-button {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  width: 100%;
+  -webkit-box-flex: 1;
+  -ms-flex-positive: 1;
+  flex-grow: 1;
+}
+@media (max-width: 576px) {
+  .calculator__btn {
+    font-size: 2.2rem;
+    padding: 1.5rem;
+  }
+}
+.calculator__reset {
+  width: 8rem;
+  background-color: var(--it-white);
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  border-radius: 2rem;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease;
+}
+.calculator__reset svg {
+  fill: var(--it-black);
+  width: 3rem;
+  height: 3rem;
+  -webkit-transition: fill 0.3s ease;
+  transition: fill 0.3s ease;
+}
+@media (max-width: 576px) {
+  .calculator__reset svg {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+}
+@media (max-width: 576px) {
+  .calculator__reset {
+    width: 6rem;
+  }
+}
+@media (any-hover: hover) {
+  .calculator__reset:hover {
+    background-color: var(--it-pink-hover);
+  }
+  .calculator__reset:hover svg {
+    fill: var(--it-white);
+  }
+}
+.calculator__reset:focus-visible {
+  outline: none;
+  background-color: var(--it-pink-hover);
+}
+.calculator__reset:focus-visible svg {
+  fill: var(--it-white);
+}
+.calculator__reset:active {
+  background-color: var(--it-pink);
+}
+.calculator__reset:active svg {
+  fill: var(--it-white);
+}
+.calculator__buttons {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 1rem;
 }
 
 .calculator__inwrapper input[type=range] {
@@ -4238,9 +4309,6 @@ input::-webkit-inner-spin-button {
   transition-property: color;
   -webkit-transition-duration: 0.1s;
   transition-duration: 0.1s;
-}
-.tabs input:checked ~ span {
-  color: var(--it-black);
 }
 .tabs input[data-selected="1"] ~ span {
   color: var(--it-black);

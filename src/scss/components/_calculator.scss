@@ -177,7 +177,66 @@
 
   &__btn {
     display: flex;
-    width: 100%;
+    flex-grow: 1;
+
+    @include mobile {
+      font-size: 2.2rem;
+      padding: 1.5rem;
+    }
+  }
+
+  &__reset {
+    width: 8rem;
+    background-color: var(--it-white);
+    flex-shrink: 0;
+    border-radius: 2rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: background-color 0.3s ease;
+
+    svg {
+      fill: var(--it-black);
+      width: 3rem;
+      height: 3rem;
+
+      transition: fill 0.3s ease;
+
+      @include mobile {
+        width: 2.4rem;
+        height: 2.4rem;
+      }
+    }
+    @include mobile {
+      width: 6rem;
+    }
+    @include hover {
+      background-color: var(--it-pink-hover);
+      svg {
+        fill: var(--it-white);
+      }
+    }
+    &:focus-visible {
+      outline: none;
+      background-color: var(--it-pink-hover);
+      svg {
+        fill: var(--it-white);
+      }
+    }
+
+    &:active {
+      background-color: var(--it-pink);
+      svg {
+        fill: var(--it-white);
+      }
+    }
+  }
+
+  &__buttons {
+    display: flex;
+    gap: 1rem;
   }
 }
 

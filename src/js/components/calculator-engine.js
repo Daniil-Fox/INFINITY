@@ -79,6 +79,7 @@ export function initCalculator(formEl, options = {}) {
   const pricePerThEl = query(formEl, ".calculator__info span");
   const pricePerThHint = query(formEl, ".calculator__info .hint");
   const resetBtn = query(formEl, ".course__btn");
+  const resetCalculatorBtn = query(formEl, ".calculator__reset");
   const buyButton = query(formEl, ".calculator__btn");
   const powerSliderEl = query(formEl, "#loanPowerSlider");
   const periodTabs = Array.from(
@@ -292,6 +293,79 @@ export function initCalculator(formEl, options = {}) {
 
         render();
       }
+    });
+  }
+
+  // Кнопка полного сброса калькулятора
+  if (resetCalculatorBtn && currencyCtl) {
+    resetCalculatorBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      // Сбрасываем мощность к минимальному значению (первый тир)
+      const firstTier = config.pricing.tiers[0];
+      const defaultPower = firstTier ? firstTier.min : 8;
+      if (powerInput) {
+        powerInput.value = String(defaultPower);
+        powerInput.setAttribute("value", String(defaultPower));
+        updateFilledState(powerInput);
+        if (powerSliderEl?.noUiSlider) {
+          powerSliderEl.noUiSlider.set(defaultPower);
+        }
+      }
+
+      // Сбрасываем курс биткоина к курсу из API
+      const state = currencyCtl.getState();
+      if (Number.isFinite(state.btcUsd) && state.btcUsd > 0 && courseInput) {
+        const rates = state.usdRates || { USD: 1, EUR: 0.92, RUB: 92 };
+        let btcPriceInCurrency;
+
+        if (state.currency === "dollar") {
+          btcPriceInCurrency = state.btcUsd;
+        } else if (state.currency === "euro") {
+          btcPriceInCurrency = state.btcUsd * (rates.EUR || 0.92);
+        } else if (state.currency === "ruble") {
+          btcPriceInCurrency = state.btcUsd * (rates.RUB || 92);
+        } else {
+          btcPriceInCurrency = state.btcUsd;
+        }
+
+        const btcPerUsd = Math.round(btcPriceInCurrency).toString();
+        const btcPerUsdNum = parseFloat(btcPerUsd);
+
+        courseInput.value = btcPerUsd;
+        courseInput.setAttribute("value", btcPerUsd);
+        updateFilledState(courseInput);
+
+        const courseSlider = query(formEl, "#loanCourseSlider");
+        if (courseSlider?.noUiSlider) {
+          courseSlider.noUiSlider.set(btcPerUsdNum);
+        }
+      }
+
+      // Сбрасываем период к "за год"
+      selectedPeriod = "year";
+      periodTabs.forEach((r) => {
+        r.checked = false;
+        r.dataset.selected = "0";
+        const label = r.closest("label");
+        if (label) {
+          label.style.pointerEvents = "";
+          label.style.cursor = "";
+        }
+      });
+      const defaultYearTab = periodTabs[periodTabs.length - 1];
+      if (defaultYearTab) {
+        defaultYearTab.checked = true;
+        defaultYearTab.dataset.selected = "1";
+        const yearLabel = defaultYearTab.closest("label");
+        if (yearLabel) {
+          yearLabel.style.pointerEvents = "none";
+          yearLabel.style.cursor = "default";
+        }
+      }
+
+      // Сумма пересчитается автоматически при render() на основе мощности
+      render("power");
     });
   }
 

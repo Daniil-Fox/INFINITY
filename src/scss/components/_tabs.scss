@@ -28,7 +28,7 @@
   }
 
   input:checked ~ span {
-    color: var(--it-black);
+    // color: var(--it-black);
   }
   input[data-selected="1"] ~ span {
     color: var(--it-black);
