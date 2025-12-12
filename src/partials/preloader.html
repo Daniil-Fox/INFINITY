@@ -17,7 +17,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-color: #000;
+    background-color: var(--it-black);
     opacity: var(--pre-white-opacity, 1);
   }
 
@@ -75,7 +75,7 @@
 </style>
 <div class="preloader" aria-hidden="true">
   <div class="preloader__video">
-    <video src="./loader.mp4" autoplay muted loop playsinline webkit-playsinline></video>
+    <video src="./loader.mp4" autoplay muted loop playsinline preload="auto" webkit-playsinline></video>
   </div>
   <div class="preloader__logo-visual">
     <svg viewBox="0 0 117 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

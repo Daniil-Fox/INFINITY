@@ -19,6 +19,40 @@ window.INFINITY_ENV =
     // OURPOOL_TOKEN: "", // Установите для dev режима
   };
 
+const GROUP_FORMATTER = new Intl.NumberFormat("ru-RU", {
+  maximumFractionDigits: 0,
+  useGrouping: true,
+});
+
+const getCurrencyRate = (rates = {}, currency = "dollar") => {
+  if (currency === "euro") return rates.EUR || 0.92;
+  if (currency === "ruble") return rates.RUB || 92;
+  return 1;
+};
+
+const formatIntWithSpaces = (value) => {
+  if (!Number.isFinite(value)) return "";
+  return GROUP_FORMATTER.format(Math.round(value)).replace(/\u00A0/g, " ");
+};
+
+const setValueWithSpaces = (input, numeric) => {
+  if (!input) return;
+  const plain = String(Math.round(numeric));
+  input.dataset.value = plain;
+  const formatted =
+    input.type === "number" ? plain : formatIntWithSpaces(numeric);
+  try {
+    input.value = formatted;
+    input.setAttribute("value", formatted);
+  } catch (_e) {
+    input.value = plain;
+    input.setAttribute("value", plain);
+  }
+  updateFilledState(input);
+};
+
+const BTC_COURSE_MAX = 300000;
+
 // Конфиг по умолчанию: можно переопределить через data-атрибуты
 export const defaultConfig = {
   ourPool: {
@@ -125,16 +159,7 @@ export function initCalculator(formEl, options = {}) {
       return null;
     }
 
-    const decimals = 0;
-    const formatted =
-      decimals > 0 ? numeric.toFixed(decimals) : String(Math.round(numeric));
-
-    if (priceInput.value !== formatted) {
-      priceInput.value = formatted;
-      priceInput.setAttribute("value", formatted);
-    }
-
-    updateFilledState(priceInput);
+    setValueWithSpaces(priceInput, numeric);
     return numeric;
   };
 
@@ -169,11 +194,11 @@ export function initCalculator(formEl, options = {}) {
           btcPriceInCurrency = state.btcUsd;
         }
 
-        const btcPerUsdFormatted = Math.round(btcPriceInCurrency).toString();
-
-        courseInput.value = btcPerUsdFormatted;
-        courseInput.setAttribute("value", courseInput.value);
-        updateFilledState(courseInput);
+        const rateFactor = getCurrencyRate(rates, state.currency);
+        const capInCurrency = BTC_COURSE_MAX * rateFactor;
+        const capped = Math.min(btcPriceInCurrency, capInCurrency);
+        const btcPerUsdFormatted = Math.round(capped);
+        setValueWithSpaces(courseInput, btcPerUsdFormatted);
 
         // Настраиваем диапазон слайдера курса (80%-120% от текущего курса)
         // Диапазон рассчитывается на основе выбранной валюты
@@ -191,8 +216,14 @@ export function initCalculator(formEl, options = {}) {
             btcInCurrency = state.btcUsd;
           }
 
-          const minBtcPrice = Math.round(btcInCurrency * 0.8); // 80% курса
-          const maxBtcPrice = Math.round(btcInCurrency * 1.2); // 120% курса
+          const rateFactor = getCurrencyRate(rates, state.currency);
+          const capInCurrency = BTC_COURSE_MAX * rateFactor;
+          const maxBtcPrice = Math.round(
+            Math.min(btcInCurrency * 3, capInCurrency)
+          ); // 120% курса, но не выше cap в выбранной валюте
+          const minBtcPrice = Math.round(
+            Math.max(1, Math.min(btcInCurrency * 0.8, maxBtcPrice * 0.8))
+          ); // 80% от текущего, но не выше 80% max
 
           courseInput.setAttribute("min", minBtcPrice);
           courseInput.setAttribute("max", maxBtcPrice);
@@ -201,8 +232,7 @@ export function initCalculator(formEl, options = {}) {
           if (!courseSliderInitialized) {
             // Убеждаемся, что значение установлено правильно перед инициализацией
             // Устанавливаем значение с точностью до 9 знаков
-            courseInput.value = btcPerUsdFormatted;
-            courseInput.setAttribute("value", btcPerUsdFormatted);
+            setValueWithSpaces(courseInput, btcPerUsdFormatted);
 
             // Инициализируем слайдер курса
             initRangeControl({ input: courseInput, slider: courseSlider });
@@ -212,9 +242,7 @@ export function initCalculator(formEl, options = {}) {
             const currentValue = parseFloat(courseInput.value);
             const expectedValue = parseFloat(btcPerUsdFormatted);
             if (Math.abs(currentValue - expectedValue) > 0.5) {
-              courseInput.value = btcPerUsdFormatted;
-              courseInput.setAttribute("value", btcPerUsdFormatted);
-              updateFilledState(courseInput);
+              setValueWithSpaces(courseInput, btcPerUsdFormatted);
             }
 
             courseSliderInitialized = true;
@@ -242,7 +270,7 @@ export function initCalculator(formEl, options = {}) {
               });
 
               // Устанавливаем значение
-              courseSlider.noUiSlider.set(currentNum);
+              courseSlider.noUiSlider.set(Math.min(currentNum, maxBtcPrice));
             }
           }
         }
@@ -271,14 +299,11 @@ export function initCalculator(formEl, options = {}) {
           btcPriceInCurrency = state.btcUsd;
         }
 
-        const btcPerUsd = Math.round(btcPriceInCurrency).toString();
-        const btcPerUsdNum = parseFloat(btcPerUsd);
+        const capped = Math.min(btcPriceInCurrency, BTC_COURSE_MAX);
+        const btcPerUsdNum = parseFloat(capped);
 
         if (courseInput) {
-          // Устанавливаем значение с точностью до 9 знаков
-          courseInput.value = btcPerUsd;
-          courseInput.setAttribute("value", btcPerUsd);
-          updateFilledState(courseInput);
+          setValueWithSpaces(courseInput, capped);
         }
 
         const courseSlider = query(formEl, "#loanCourseSlider");
@@ -329,12 +354,10 @@ export function initCalculator(formEl, options = {}) {
           btcPriceInCurrency = state.btcUsd;
         }
 
-        const btcPerUsd = Math.round(btcPriceInCurrency).toString();
-        const btcPerUsdNum = parseFloat(btcPerUsd);
+        const capped = Math.min(btcPriceInCurrency, BTC_COURSE_MAX);
+        const btcPerUsdNum = parseFloat(capped);
 
-        courseInput.value = btcPerUsd;
-        courseInput.setAttribute("value", btcPerUsd);
-        updateFilledState(courseInput);
+        setValueWithSpaces(courseInput, capped);
 
         const courseSlider = query(formEl, "#loanCourseSlider");
         if (courseSlider?.noUiSlider) {
@@ -440,7 +463,10 @@ export function initCalculator(formEl, options = {}) {
     // Получаем курс BTC: приоритет у значения из поля курса (если пользователь изменил),
     // иначе используем курс из API
     // В инпуте хранится стоимость 1 BTC в выбранной валюте
-    const courseInputRaw = courseInput?.value?.trim() || "";
+    const courseInputRaw =
+      courseInput?.dataset?.value ||
+      courseInput?.value?.replace(/\s+/g, "").replace(/\u00A0/g, "") ||
+      "";
     const courseInputValue = courseInputRaw ? parseFloat(courseInputRaw) : 0;
 
     // Разделяем рыночный курс из API и "пользовательский" курс из инпута
@@ -510,14 +536,7 @@ export function initCalculator(formEl, options = {}) {
         if (Number.isFinite(maxAttr)) {
           localAmount = Math.min(localAmount, maxAttr);
         }
-        const decimals = 0;
-        const formatted =
-          decimals > 0
-            ? localAmount.toFixed(decimals)
-            : String(Math.round(localAmount));
-        priceInput.value = formatted;
-        priceInput.setAttribute("value", formatted);
-        updateFilledState(priceInput);
+        setValueWithSpaces(priceInput, localAmount);
       }
 
       // 2) Пересчитываем мощность из суммы в USD
@@ -529,9 +548,7 @@ export function initCalculator(formEl, options = {}) {
       if (calculatedPower > 0) {
         finalPowerTh = calculatedPower;
         if (powerInput) {
-          powerInput.value = String(Math.round(finalPowerTh));
-          powerInput.setAttribute("value", powerInput.value);
-          updateFilledState(powerInput);
+          setValueWithSpaces(powerInput, Math.round(finalPowerTh));
           // Обновляем слайдер мощности
           if (powerSliderEl?.noUiSlider) {
             powerSliderEl.noUiSlider.set(finalPowerTh);
@@ -857,9 +874,7 @@ export function initCalculator(formEl, options = {}) {
     const max = Number.isFinite(maxAttr) ? maxAttr : 3760;
     const clamped = Math.max(min, Math.min(max, Math.round(numeric)));
     if (clamped !== toNumber(powerInput.value)) {
-      powerInput.value = String(clamped);
-      powerInput.setAttribute("value", powerInput.value);
-      updateFilledState(powerInput);
+      setValueWithSpaces(powerInput, clamped);
       if (powerSliderEl?.noUiSlider) {
         try {
           powerSliderEl.noUiSlider.set(clamped);
@@ -1244,18 +1259,14 @@ function updateAmountBounds(
   // Инициализируем слайдер, если он еще не инициализирован
   if (!amountSlider.noUiSlider && tier) {
     // Устанавливаем значение в input перед инициализацией
-    priceInput.value = String(amountValue);
-    priceInput.setAttribute("value", priceInput.value);
-    updateFilledState(priceInput);
+    setValueWithSpaces(priceInput, amountValue);
 
     // Инициализируем слайдер
     initRangeControl({ input: priceInput, slider: amountSlider });
     initializedRef.current = true;
   } else if (amountSlider.noUiSlider && targetAmount !== null) {
     // Обновляем значение в input, если оно было задано явно
-    priceInput.value = String(amountValue);
-    priceInput.setAttribute("value", priceInput.value);
-    updateFilledState(priceInput);
+    setValueWithSpaces(priceInput, amountValue);
   }
 
   return true;

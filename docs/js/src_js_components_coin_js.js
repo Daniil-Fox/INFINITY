@@ -1,27 +1,35 @@
-import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { GUI } from "lil-gui";
+"use strict";
+(self["webpackChunkgulp_builder"] = self["webpackChunkgulp_builder"] || []).push([["src_js_components_coin_js"],{
+
+/***/ "./src/js/components/coin.js":
+/*!***********************************!*\
+  !*** ./src/js/components/coin.js ***!
+  \***********************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var three_addons_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/addons/loaders/GLTFLoader.js */ "./node_modules/three/examples/jsm/loaders/GLTFLoader.js");
+/* harmony import */ var lil_gui__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lil-gui */ "./node_modules/lil-gui/dist/lil-gui.esm.js");
+
+
 
 (function initCoinScene() {
   const canvas = document.getElementById("scene");
   if (!canvas) return;
 
   // GUI setup - показываем только если в URL есть #debug
-  const isDebugMode =
-    typeof window !== "undefined" && window.location.hash === "#debug";
-  const gui =
-    (typeof window !== "undefined" && window.__infinityDebugGui) || new GUI();
-
+  const isDebugMode = typeof window !== "undefined" && window.location.hash === "#debug";
+  const gui = typeof window !== "undefined" && window.__infinityDebugGui || new lil_gui__WEBPACK_IMPORTED_MODULE_3__.GUI();
   if (typeof window !== "undefined" && !window.__infinityDebugGui) {
     window.__infinityDebugGui = gui;
   }
-
   if (!isDebugMode && gui.hide) {
     gui.hide();
   } else if (isDebugMode && gui.show) {
     gui.show();
   }
-
   let coinModel = null;
   let currentIntersect = null;
   let spinYRemaining = 0; // радианы, оставшиеся для докручивания по Y
@@ -33,11 +41,10 @@ import { GUI } from "lil-gui";
     positionX: 2,
     positionY: 0,
     positionZ: -0.8,
-
     rotationX: -0.353,
     rotationY: -0.62,
     rotationZ: -0.29,
-    scale: 2.1,
+    scale: 2.1
   };
 
   // Значения по умолчанию для мобильной версии можно будет подправить в процессе
@@ -45,33 +52,19 @@ import { GUI } from "lil-gui";
     positionX: 0,
     positionY: -1.3,
     positionZ: -0.8,
-
     rotationX: -0.353,
     rotationY: -0.62,
     rotationZ: -0.1,
-    scale: 1.4,
+    scale: 1.4
   };
-
   const BREAKPOINT_MOBILE = 576;
-
   const isMobileViewport = () => sizes.width <= BREAKPOINT_MOBILE;
-
-  const getCurrentCoinParams = () =>
-    isMobileViewport() ? coinParamsMobile : coinParamsDesktop;
-
-  const applyCoinParams = (params) => {
+  const getCurrentCoinParams = () => isMobileViewport() ? coinParamsMobile : coinParamsDesktop;
+  const applyCoinParams = params => {
     if (!coinModel) return;
     coinModel.scale.set(params.scale, params.scale, params.scale);
-    coinModel.position.set(
-      params.positionX,
-      params.positionY,
-      params.positionZ
-    );
-    coinModel.rotation.set(
-      params.rotationX,
-      params.rotationY,
-      params.rotationZ
-    );
+    coinModel.position.set(params.positionX, params.positionY, params.positionZ);
+    coinModel.rotation.set(params.rotationX, params.rotationY, params.rotationZ);
   };
 
   // Троттлинг для частых событий resize
@@ -106,54 +99,37 @@ import { GUI } from "lil-gui";
   const lightParams = {
     ambientIntensity: 0.6,
     ambientColor: "#ffffff",
-
     directional1Intensity: 1,
     directional1Color: "#ffffff",
     directional1X: -10,
     directional1Y: 1.1,
     directional1Z: 3.7,
-
     directional2Intensity: 6,
     directional2Color: "#ffffff",
     directional2X: -1,
     directional2Y: -1.5,
-    directional2Z: 0.6,
+    directional2Z: 0.6
   };
-
-  const mouse = new THREE.Vector2();
-
+  const mouse = new three__WEBPACK_IMPORTED_MODULE_0__.Vector2();
   const sizes = {
     width: window.innerWidth,
-    height: window.innerHeight,
+    height: window.innerHeight
   };
-
-  const scene = new THREE.Scene();
+  const scene = new three__WEBPACK_IMPORTED_MODULE_0__.Scene();
 
   // Camera
-  const camera = new THREE.PerspectiveCamera(
-    30,
-    sizes.width / sizes.height,
-    0.1,
-    100
-  );
+  const camera = new three__WEBPACK_IMPORTED_MODULE_0__.PerspectiveCamera(30, sizes.width / sizes.height, 0.1, 100);
   camera.position.set(0, 0, 12);
-
-  const cameraGroup = new THREE.Group();
+  const cameraGroup = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
   scene.add(cameraGroup);
-
   cameraGroup.add(camera);
-
-  const renderer = new THREE.WebGLRenderer({
+  const renderer = new three__WEBPACK_IMPORTED_MODULE_1__.WebGLRenderer({
     canvas: canvas,
-    alpha: true,
+    alpha: true
   });
-
-  const getMaxPixelRatio = () =>
-    window.innerWidth <= BREAKPOINT_MOBILE ? 1.25 : 1.5;
+  const getMaxPixelRatio = () => window.innerWidth <= BREAKPOINT_MOBILE ? 1.25 : 1.5;
   const updateRendererPixelRatio = () => {
-    renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio, getMaxPixelRatio())
-    );
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, getMaxPixelRatio()));
   };
 
   // Controls
@@ -161,110 +137,69 @@ import { GUI } from "lil-gui";
 
   // Lights
 
-  const ambientLight = new THREE.AmbientLight(
-    lightParams.ambientColor,
-    lightParams.ambientIntensity
-  );
+  const ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(lightParams.ambientColor, lightParams.ambientIntensity);
   scene.add(ambientLight);
-
-  const directionLightBottomLeft = new THREE.DirectionalLight(
-    lightParams.directional1Color,
-    lightParams.directional1Intensity
-  );
-  directionLightBottomLeft.position.set(
-    lightParams.directional1X,
-    lightParams.directional1Y,
-    lightParams.directional1Z
-  );
+  const directionLightBottomLeft = new three__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight(lightParams.directional1Color, lightParams.directional1Intensity);
+  directionLightBottomLeft.position.set(lightParams.directional1X, lightParams.directional1Y, lightParams.directional1Z);
   scene.add(directionLightBottomLeft);
-
-  const directionLightTopRight = new THREE.DirectionalLight(
-    lightParams.directional2Color,
-    lightParams.directional2Intensity
-  );
-  directionLightTopRight.position.set(
-    lightParams.directional2X,
-    lightParams.directional2Y,
-    lightParams.directional2Z
-  );
+  const directionLightTopRight = new three__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight(lightParams.directional2Color, lightParams.directional2Intensity);
+  directionLightTopRight.position.set(lightParams.directional2X, lightParams.directional2Y, lightParams.directional2Z);
   scene.add(directionLightTopRight);
 
   // LOADER
-  const loader = new GLTFLoader();
+  const loader = new three_addons_loaders_GLTFLoader_js__WEBPACK_IMPORTED_MODULE_2__.GLTFLoader();
   // Получаем путь к теме из локализации WordPress или используем относительный путь
-  const themeUrl =
-    typeof infinityData !== "undefined" && infinityData.themeUrl
-      ? infinityData.themeUrl
-      : "";
-  const modelPath = themeUrl
-    ? themeUrl + "/assets/models/gltf/bitcoin7/bitcoin.gltf"
-    : "../models/gltf/bitcoin7/bitcoin.gltf";
-  loader.load(
-    modelPath,
-    function (gltf) {
-      coinModel = gltf.scene;
+  const themeUrl = typeof infinityData !== "undefined" && infinityData.themeUrl ? infinityData.themeUrl : "";
+  const modelPath = themeUrl ? themeUrl + "/assets/models/gltf/bitcoin7/bitcoin.gltf" : "../models/gltf/bitcoin7/bitcoin.gltf";
+  loader.load(modelPath, function (gltf) {
+    coinModel = gltf.scene;
 
-      // Применяем параметры в зависимости от вьюпорта
-      applyCoinParams(getCurrentCoinParams());
-
-      scene.add(coinModel);
-    },
-    // called while loading is progressing
-    function (xhr) {
-      if (isDebugMode) {
-        console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-      }
-    },
-    // called when loading has errors
-    function (error) {
-      console.log("Bitcoin loading error: " + error);
+    // Применяем параметры в зависимости от вьюпорта
+    applyCoinParams(getCurrentCoinParams());
+    scene.add(coinModel);
+  },
+  // called while loading is progressing
+  function (xhr) {
+    if (isDebugMode) {
+      console.log(xhr.loaded / xhr.total * 100 + "% loaded");
     }
-  );
+  },
+  // called when loading has errors
+  function (error) {
+    console.log("Bitcoin loading error: " + error);
+  });
 
   // Создаем GUI контролы для монетки
   const coinFolder = gui.addFolder("Монетка (Desktop)");
 
   // Позиция
   const positionFolder = coinFolder.addFolder("Позиция");
-  positionFolder
-    .add(coinParamsDesktop, "positionX", -10, 10, 0.1)
-    .onChange((value) => {
-      coinModel.position.x = value;
-    });
-  positionFolder
-    .add(coinParamsDesktop, "positionY", -10, 10, 0.1)
-    .onChange((value) => {
-      coinModel.position.y = value;
-    });
-  positionFolder
-    .add(coinParamsDesktop, "positionZ", -10, 10, 0.1)
-    .onChange((value) => {
-      coinModel.position.z = value;
-    });
+  positionFolder.add(coinParamsDesktop, "positionX", -10, 10, 0.1).onChange(value => {
+    coinModel.position.x = value;
+  });
+  positionFolder.add(coinParamsDesktop, "positionY", -10, 10, 0.1).onChange(value => {
+    coinModel.position.y = value;
+  });
+  positionFolder.add(coinParamsDesktop, "positionZ", -10, 10, 0.1).onChange(value => {
+    coinModel.position.z = value;
+  });
 
   // Поворот
   const rotationFolder = coinFolder.addFolder("Поворот");
-  rotationFolder
-    .add(coinParamsDesktop, "rotationX", -Math.PI * 2, Math.PI * 2, 0.01)
-    .onChange((value) => {
-      coinModel.rotation.x = value;
-    });
-  rotationFolder
-    .add(coinParamsDesktop, "rotationY", -Math.PI * 2, Math.PI * 2, 0.01)
-    .onChange((value) => {
-      coinModel.rotation.y = value;
-    });
-  rotationFolder
-    .add(coinParamsDesktop, "rotationZ", -Math.PI * 2, Math.PI * 2, 0.01)
-    .onChange((value) => {
-      coinModel.rotation.z = value;
-    });
-
-  // Масштаб
-  coinFolder.add(coinParamsDesktop, "scale", 0.1, 5, 0.1).onChange((value) => {
-    coinModel.scale.set(value, value, value);
+  rotationFolder.add(coinParamsDesktop, "rotationX", -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+    coinModel.rotation.x = value;
+  });
+  rotationFolder.add(coinParamsDesktop, "rotationY", -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+    coinModel.rotation.y = value;
+  });
+  rotationFolder.add(coinParamsDesktop, "rotationZ", -Math.PI * 2, Math.PI * 2, 0.01).onChange(value => {
+    coinModel.rotation.z = value;
   });
 
+  // Масштаб
+  coinFolder.add(coinParamsDesktop, "scale", 0.1, 5, 0.1).onChange(value => {
+    coinModel.scale.set(value, value, value);
+  });
   coinFolder.open();
 
   // Создаем GUI контролы для освещения
@@ -272,73 +207,49 @@ import { GUI } from "lil-gui";
 
   // Ambient Light
   const ambientFolder = lightFolder.addFolder("Рассеянный свет");
-  ambientFolder
-    .add(lightParams, "ambientIntensity", 0, 5, 0.1)
-    .onChange((value) => {
-      ambientLight.intensity = value;
-    });
-  ambientFolder.addColor(lightParams, "ambientColor").onChange((value) => {
+  ambientFolder.add(lightParams, "ambientIntensity", 0, 5, 0.1).onChange(value => {
+    ambientLight.intensity = value;
+  });
+  ambientFolder.addColor(lightParams, "ambientColor").onChange(value => {
     ambientLight.color.setHex(value.replace("#", "0x"));
   });
 
   // Directional Light 1
   const directional1Folder = lightFolder.addFolder("Направленный свет 1");
-  directional1Folder
-    .add(lightParams, "directional1Intensity", 0, 10, 0.1)
-    .onChange((value) => {
-      directionLightBottomLeft.intensity = value;
-    });
-  directional1Folder
-    .addColor(lightParams, "directional1Color")
-    .onChange((value) => {
-      directionLightBottomLeft.color.setHex(value.replace("#", "0x"));
-    });
-  directional1Folder
-    .add(lightParams, "directional1X", -10, 10, 0.1)
-    .onChange((value) => {
-      directionLightBottomLeft.position.x = value;
-    });
-  directional1Folder
-    .add(lightParams, "directional1Y", -10, 10, 0.1)
-    .onChange((value) => {
-      directionLightBottomLeft.position.y = value;
-    });
-  directional1Folder
-    .add(lightParams, "directional1Z", -10, 10, 0.1)
-    .onChange((value) => {
-      directionLightBottomLeft.position.z = value;
-    });
+  directional1Folder.add(lightParams, "directional1Intensity", 0, 10, 0.1).onChange(value => {
+    directionLightBottomLeft.intensity = value;
+  });
+  directional1Folder.addColor(lightParams, "directional1Color").onChange(value => {
+    directionLightBottomLeft.color.setHex(value.replace("#", "0x"));
+  });
+  directional1Folder.add(lightParams, "directional1X", -10, 10, 0.1).onChange(value => {
+    directionLightBottomLeft.position.x = value;
+  });
+  directional1Folder.add(lightParams, "directional1Y", -10, 10, 0.1).onChange(value => {
+    directionLightBottomLeft.position.y = value;
+  });
+  directional1Folder.add(lightParams, "directional1Z", -10, 10, 0.1).onChange(value => {
+    directionLightBottomLeft.position.z = value;
+  });
 
   // Directional Light 2
   const directional2Folder = lightFolder.addFolder("Направленный свет 2");
-  directional2Folder
-    .add(lightParams, "directional2Intensity", 0, 10, 0.1)
-    .onChange((value) => {
-      directionLightTopRight.intensity = value;
-    });
-  directional2Folder
-    .addColor(lightParams, "directional2Color")
-    .onChange((value) => {
-      directionLightTopRight.color.setHex(value.replace("#", "0x"));
-    });
-  directional2Folder
-    .add(lightParams, "directional2X", -10, 10, 0.1)
-    .onChange((value) => {
-      directionLightTopRight.position.x = value;
-    });
-  directional2Folder
-    .add(lightParams, "directional2Y", -10, 10, 0.1)
-    .onChange((value) => {
-      directionLightTopRight.position.y = value;
-    });
-  directional2Folder
-    .add(lightParams, "directional2Z", -10, 10, 0.1)
-    .onChange((value) => {
-      directionLightTopRight.position.z = value;
-    });
-
+  directional2Folder.add(lightParams, "directional2Intensity", 0, 10, 0.1).onChange(value => {
+    directionLightTopRight.intensity = value;
+  });
+  directional2Folder.addColor(lightParams, "directional2Color").onChange(value => {
+    directionLightTopRight.color.setHex(value.replace("#", "0x"));
+  });
+  directional2Folder.add(lightParams, "directional2X", -10, 10, 0.1).onChange(value => {
+    directionLightTopRight.position.x = value;
+  });
+  directional2Folder.add(lightParams, "directional2Y", -10, 10, 0.1).onChange(value => {
+    directionLightTopRight.position.y = value;
+  });
+  directional2Folder.add(lightParams, "directional2Z", -10, 10, 0.1).onChange(value => {
+    directionLightTopRight.position.z = value;
+  });
   lightFolder.open();
-
   renderer.setSize(sizes.width, sizes.height);
   updateRendererPixelRatio();
 
@@ -351,26 +262,21 @@ import { GUI } from "lil-gui";
   window.addEventListener("resize", () => {
     sizes.width = window.innerWidth;
     sizes.height = window.innerHeight;
-
     camera.updateProjectionMatrix();
     camera.aspect = sizes.width / sizes.height;
-
     renderer.setSize(sizes.width, sizes.height);
     updateRendererPixelRatio();
 
     // Применяем подходящие параметры монетки c троттлингом
     applyResponsiveParamsThrottled();
   });
-
-  canvas.addEventListener("mousemove", (e) => {
-    const mouseX = (e.clientX / sizes.width) * 2 - 1;
+  canvas.addEventListener("mousemove", e => {
+    const mouseX = e.clientX / sizes.width * 2 - 1;
     const mouseY = -(e.clientY / sizes.height) * 2 + 1;
-
     mouse.x = mouseX;
     mouse.y = mouseY;
   });
-
-  canvas.addEventListener("click", (e) => {
+  canvas.addEventListener("click", e => {
     if (currentIntersect && clickCounter < MAX_CLICKS) {
       spinYRemaining += Math.PI * 2;
       clickCounter++;
@@ -380,34 +286,26 @@ import { GUI } from "lil-gui";
   // Сброс счетчика когда анимация завершилась
   // Это будет внутри tick функции
   // Raycaster
-  const raycaster = new THREE.Raycaster();
+  const raycaster = new three__WEBPACK_IMPORTED_MODULE_0__.Raycaster();
 
   // Animation
 
-  const clock = new THREE.Clock();
+  const clock = new three__WEBPACK_IMPORTED_MODULE_0__.Clock();
   let previousTime = 0;
   let animationFrameId = null;
   let isDocumentVisible = !document.hidden;
   let isInViewport = true;
-
   const tick = () => {
     raycaster.setFromCamera(mouse, camera);
-
     const elapsedTime = clock.getElapsedTime();
     let delta = elapsedTime - previousTime;
     previousTime = elapsedTime;
-
     delta = Math.min(delta, 0.1);
-
     if (coinModel) {
       const targetX = mouse.x * 0.5;
       const targetY = mouse.y * 0.5;
-
-      cameraGroup.position.x +=
-        (targetX - cameraGroup.position.x) * 0.5 * delta;
-      cameraGroup.position.y +=
-        (targetY - cameraGroup.position.y) * 0.5 * delta;
-
+      cameraGroup.position.x += (targetX - cameraGroup.position.x) * 0.5 * delta;
+      cameraGroup.position.y += (targetY - cameraGroup.position.y) * 0.5 * delta;
       coinModel.rotation.x += Math.sin(elapsedTime) * 0.001;
       coinModel.rotation.y += Math.cos(elapsedTime) * 0.001;
 
@@ -424,7 +322,6 @@ import { GUI } from "lil-gui";
         // Сброс счетчика когда анимация завершилась
         clickCounter = 0;
       }
-
       const intersects = raycaster.intersectObject(coinModel, true);
       if (intersects.length) {
         if (!currentIntersect) {
@@ -438,23 +335,19 @@ import { GUI } from "lil-gui";
         currentIntersect = null;
       }
     }
-
     renderer.render(scene, camera);
     animationFrameId = requestAnimationFrame(tick);
   };
-
   const stopLoop = () => {
     if (!animationFrameId) return;
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
   };
-
   const startLoop = () => {
     if (!(isDocumentVisible && isInViewport) || animationFrameId) return;
     previousTime = clock.getElapsedTime();
     animationFrameId = requestAnimationFrame(tick);
   };
-
   const handleVisibility = () => {
     if (isDocumentVisible && isInViewport) {
       startLoop();
@@ -462,20 +355,18 @@ import { GUI } from "lil-gui";
     }
     stopLoop();
   };
-
   document.addEventListener("visibilitychange", () => {
     isDocumentVisible = !document.hidden;
     handleVisibility();
   });
-
   if ("IntersectionObserver" in window) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        isInViewport = entries.some((entry) => entry.isIntersecting);
-        handleVisibility();
-      },
-      { rootMargin: "200px 0px", threshold: 0 }
-    );
+    const observer = new IntersectionObserver(entries => {
+      isInViewport = entries.some(entry => entry.isIntersecting);
+      handleVisibility();
+    }, {
+      rootMargin: "200px 0px",
+      threshold: 0
+    });
     observer.observe(canvas);
   } else {
     startLoop();
@@ -484,3 +375,8 @@ import { GUI } from "lil-gui";
   // Запускаем рендер-цикл только после начального вызова
   startLoop();
 })();
+
+/***/ })
+
+}]);
+//# sourceMappingURL=src_js_components_coin_js.js.map

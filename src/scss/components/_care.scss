@@ -47,10 +47,9 @@
     grid-column: 4 span;
     position: relative;
     mask-image: url("./../img/care-mask.svg");
-    mask-size: 100% 100%;
+    mask-size: cover;
     mask-repeat: no-repeat;
-    mask-position: center;
-    aspect-ratio: 1235 / 500;
+    mask-position: top;
     img {
       position: absolute;
       left: 0;

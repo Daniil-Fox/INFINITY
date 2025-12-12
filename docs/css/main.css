@@ -1318,7 +1318,7 @@ input::-webkit-inner-spin-button {
   border-radius: 2rem;
   outline: 2px solid transparent;
   padding: 2rem;
-  background-color: #fafafa;
+  background-color: #f2f2f2;
   font-weight: 300;
   font-size: 2.2rem;
   line-height: 150%;
@@ -1344,9 +1344,11 @@ input::-webkit-inner-spin-button {
   -ms-transform: none;
   transform: none;
 }
+.form__field.filled .form__field-wrapper {
+  background-color: #fafafa;
+}
 .form__field.focus .form__field-wrapper {
-  outline-color: #000;
-  background-color: #fff;
+  background-color: #fafafa;
 }
 .form__label {
   position: absolute;
@@ -1397,7 +1399,7 @@ input::-webkit-inner-spin-button {
   cursor: not-allowed;
   -ms-touch-action: none;
   touch-action: none;
-  background-color: #fafafa;
+  background-color: #f2f2f2;
 }
 .form__input--area {
   height: 100%;
@@ -1430,7 +1432,7 @@ input::-webkit-inner-spin-button {
   width: 100%;
   border-radius: 2rem;
   padding: 2.4rem 3rem;
-  background-color: #f7fafa;
+  background-color: #f2f2f2;
   border: none;
   font-weight: 300;
   font-size: 2.2rem;
@@ -1523,12 +1525,12 @@ input::-webkit-inner-spin-button {
   }
 }
 .dropdown.open {
-  background: var(--it-white);
+  background-color: #fafafa;
   border-radius: 2rem 2rem 0 0;
   border-bottom: none;
 }
 .dropdown.open .dropdown__content {
-  background-color: var(--it-white);
+  background-color: #fafafa;
 }
 .dropdown.open .dropdown__header {
   color: var(--it-black);
@@ -1540,6 +1542,9 @@ input::-webkit-inner-spin-button {
   .dropdown.open:hover .dropdown__label {
     color: var(--it-black);
   }
+}
+.dropdown.filled {
+  background-color: #fafafa;
 }
 .dropdown.filled .dropdown__capture {
   color: var(--it-black);
@@ -2530,7 +2535,7 @@ input::-webkit-inner-spin-button {
 .clients__item-bottom {
   height: 28rem;
   overflow: hidden;
-  padding: 5rem 4rem;
+  padding: 3.5rem 4rem;
   backdrop-filter: blur(1rem);
   -webkit-mask-image: url("./../img/clients/card.svg");
   mask-image: url("./../img/clients/card.svg");
@@ -3151,13 +3156,12 @@ input::-webkit-inner-spin-button {
   position: relative;
   -webkit-mask-image: url("./../img/care-mask.svg");
   mask-image: url("./../img/care-mask.svg");
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
+  -webkit-mask-size: cover;
+  mask-size: cover;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  aspect-ratio: 1235/500;
+  -webkit-mask-position: top;
+  mask-position: top;
 }
 .care__img img {
   position: absolute;

@@ -66,10 +66,19 @@ function setCache(key, value, ttl) {
   cache.set(key, { v: value, t: Date.now(), ttl });
 }
 
+function parseNumberMaybe(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 function normalizeRatesPayload(data) {
   // exchangerate-api.com: { rates: { ... } }
   if (data?.rates && typeof data.rates === "object") {
     return data.rates;
+  }
+  // иногда оборачивают в data: { rates: { ... } }
+  if (data?.data?.rates && typeof data.data.rates === "object") {
+    return data.data.rates;
   }
   // exchangerate.host: { result: { rates: { ... } } }
   if (data?.result?.rates && typeof data.result.rates === "object") {
@@ -91,21 +100,35 @@ function normalizeRatesPayload(data) {
 }
 
 function extractRates(data) {
-  const ratesObj = normalizeRatesPayload(data);
+  let ratesObj = normalizeRatesPayload(data);
+
+  // Попытка вытащить из quotes (например, CurrencyLayer / Proxy)
+  if (!ratesObj && data?.quotes) {
+    const eur = parseNumberMaybe(data.quotes.USDEUR);
+    const rub = parseNumberMaybe(data.quotes.USDRUB);
+    if (eur || rub) {
+      ratesObj = { EUR: eur, RUB: rub };
+    }
+  }
+
   if (!ratesObj) {
     throw new Error("Unknown API format");
   }
-  const eur = Number(ratesObj.EUR);
-  const rub = Number(ratesObj.RUB);
+
+  const eur = parseNumberMaybe(ratesObj.EUR);
+  const rub = parseNumberMaybe(ratesObj.RUB);
   if (!Number.isFinite(eur) || !Number.isFinite(rub)) {
     throw new Error("Invalid exchange rates: non-finite values");
   }
-  if (eur < 0.5 || eur > 1.5) {
+
+  // Разумные, но менее строгие границы, чтобы не падать на валидных ответах
+  if (eur < 0.5 || eur > 2) {
     throw new Error(`EUR rate out of range: ${eur}`);
   }
-  if (rub < 30 || rub > 200) {
+  if (rub < 30 || rub > 1500) {
     throw new Error(`RUB rate out of range: ${rub}`);
   }
+
   return { EUR: eur, RUB: rub, USD: 1 };
 }
 

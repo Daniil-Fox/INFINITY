@@ -1,10 +1,30 @@
 import noUiSlider from "nouislider";
 
+const formatIntWithSpaces = (value) => {
+  if (!Number.isFinite(value)) return "";
+  return new Intl.NumberFormat("ru-RU", {
+    maximumFractionDigits: 0,
+    useGrouping: true,
+  })
+    .format(Math.round(value))
+    .replace(/\u00A0/g, " ");
+};
+
+const sanitizeNumberString = (str) =>
+  str ? str.toString().replace(/\s+/g, "") : str;
+
 export function initRangeControl({ input, slider }) {
   // Проверяем, не инициализирован ли слайдер уже
   if (slider.noUiSlider) {
     return;
   }
+  // Разрешаем отображение пробелов: number → text c цифровой раскладкой
+  if (input.type === "number") {
+    input.dataset.originalType = "number";
+    input.type = "text";
+    input.setAttribute("inputmode", "numeric");
+  }
+
   const min = readNumberAttribute(
     input,
     "min",
@@ -98,10 +118,16 @@ export function initRangeControl({ input, slider }) {
       if (isCourseInput) {
         // Округляем до целого числа (стоимость 1 BTC в выбранной валюте)
         const rounded = Math.round(rawValue);
-        const formatted = rounded.toString();
+        const formatted = formatIntWithSpaces(rounded);
 
-        input.value = formatted;
-        input.setAttribute("value", formatted);
+        input.dataset.value = String(rounded);
+        try {
+          input.value = formatted;
+          input.setAttribute("value", formatted);
+        } catch (_e) {
+          input.value = rounded.toString();
+          input.setAttribute("value", rounded.toString());
+        }
         updateFilledState(input);
 
         // Триггерим кастомное событие БЕЗ перерасчета (перерасчет при slider-end)
@@ -113,6 +139,7 @@ export function initRangeControl({ input, slider }) {
       } else {
         const actualPrecision = precision;
         setInputValue(input, rawValue, actualPrecision);
+        input.dataset.value = String(rawValue);
 
         // Триггерим кастомное событие для синхронизации с калькулятором
         input.dispatchEvent(
@@ -126,16 +153,10 @@ export function initRangeControl({ input, slider }) {
 
   // Обработчик окончания перетаскивания слайдера для всех полей
   slider.noUiSlider.on("end", () => {
-    const inputId = input.id;
-    let value = 0;
-
-    if (isCourseInput) {
-      // Для курса используем целое число
-      value = Math.round(parseFloat(input.value) || 0);
-    } else {
-      // Для других полей
-      value = parseFloat(input.value) || 0;
-    }
+    const rawStored = sanitizeNumberString(input.dataset.value || "");
+    const fallback = sanitizeNumberString(input.value || "");
+    const parsed = parseFloat(rawStored || fallback) || 0;
+    const value = isCourseInput ? Math.round(parsed) : parsed;
 
     // Триггерим событие окончания перетаскивания
     input.dispatchEvent(
@@ -156,7 +177,7 @@ export function initRangeControl({ input, slider }) {
   };
 
   const handleInputChange = () => {
-    const raw = input.value.trim();
+    const raw = sanitizeNumberString(input.value.trim());
 
     if (raw === "") {
       updateFilledState(input);
@@ -171,6 +192,7 @@ export function initRangeControl({ input, slider }) {
       return;
     }
 
+    input.dataset.value = String(numericValue);
     syncSlider(numericValue);
   };
 
@@ -254,40 +276,50 @@ export function getPrecision(step) {
 }
 
 export function readInitialValue(input) {
-  if (input.value) {
-    const parsed = Number(input.value);
-
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
+  const fromDataset = sanitizeNumberString(input.dataset?.value || "");
+  if (fromDataset) {
+    const parsed = Number(fromDataset);
+    if (Number.isFinite(parsed)) return parsed;
   }
 
   const attrValue = input.getAttribute("value");
-
   if (attrValue !== null && attrValue !== "") {
-    const parsed = Number(attrValue);
+    const parsed = Number(attrValue.toString().replace(/\s+/g, ""));
+    if (Number.isFinite(parsed)) return parsed;
+  }
 
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
+  if (input.value) {
+    const parsed = Number(input.value.toString().replace(/\s+/g, ""));
+    if (Number.isFinite(parsed)) return parsed;
   }
 
   return undefined;
 }
 
 export function setInputValue(input, value, precision) {
-  const formatted = formatValue(value, precision);
-  input.value = formatted;
-  input.setAttribute("value", formatted);
+  const useGrouping = precision === 0 && input?.type !== "number";
+  const formatted = formatValue(value, precision, useGrouping);
+  const plain = formatValue(value, precision, false);
+  if (input) input.dataset.value = String(value);
+  try {
+    input.value = formatted;
+    input.setAttribute("value", formatted);
+  } catch (_e) {
+    input.value = plain;
+    input.setAttribute("value", plain);
+  }
   updateFilledState(input);
 }
 
-export function formatValue(value, precision) {
+export function formatValue(value, precision, useGrouping = false) {
   if (!Number.isFinite(value)) {
     return "";
   }
 
   if (precision === 0) {
+    if (useGrouping) {
+      return formatIntWithSpaces(value);
+    }
     return String(Math.round(value));
   }
 

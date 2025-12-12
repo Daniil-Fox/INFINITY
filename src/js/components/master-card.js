@@ -37,13 +37,15 @@ import { GUI } from "lil-gui";
     height: canvas.clientHeight,
   };
 
+  const getMaxPixelRatio = () => (window.innerWidth <= 576 ? 1.25 : 1.5);
+
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
     antialias: true,
   });
   renderer.setClearColor(0x000000, 0);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, getMaxPixelRatio()));
   renderer.setSize(sizes.width, sizes.height);
 
   const scene = new THREE.Scene();
@@ -395,7 +397,9 @@ import { GUI } from "lil-gui";
     camera.aspect = sizes.width / sizes.height;
     camera.updateProjectionMatrix();
     renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, getMaxPixelRatio())
+    );
   };
 
   if ("ResizeObserver" in window) {
@@ -406,6 +410,9 @@ import { GUI } from "lil-gui";
   }
 
   const clock = new THREE.Clock();
+  let animationFrameId = null;
+  let isDocumentVisible = !document.hidden;
+  let isInViewport = true;
 
   const tick = () => {
     const delta = clock.getDelta();
@@ -427,8 +434,43 @@ import { GUI } from "lil-gui";
     cardGroup.position.z = idleOffset;
 
     renderer.render(scene, camera);
-    requestAnimationFrame(tick);
+    animationFrameId = requestAnimationFrame(tick);
   };
 
-  tick();
+  const stopLoop = () => {
+    if (!animationFrameId) return;
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  };
+
+  const startLoop = () => {
+    if (!(isDocumentVisible && isInViewport) || animationFrameId) return;
+    animationFrameId = requestAnimationFrame(tick);
+  };
+
+  const handleVisibility = () => {
+    if (isDocumentVisible && isInViewport) {
+      startLoop();
+      return;
+    }
+    stopLoop();
+  };
+
+  document.addEventListener("visibilitychange", () => {
+    isDocumentVisible = !document.hidden;
+    handleVisibility();
+  });
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        isInViewport = entries.some((entry) => entry.isIntersecting);
+        handleVisibility();
+      },
+      { rootMargin: "200px 0px" }
+    );
+    observer.observe(canvas);
+  }
+
+  startLoop();
 })();

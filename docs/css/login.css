@@ -1318,7 +1318,7 @@ input::-webkit-inner-spin-button {
   border-radius: 2rem;
   outline: 2px solid transparent;
   padding: 2rem;
-  background-color: #fafafa;
+  background-color: #f2f2f2;
   font-weight: 300;
   font-size: 2.2rem;
   line-height: 150%;
@@ -1344,9 +1344,11 @@ input::-webkit-inner-spin-button {
   -ms-transform: none;
   transform: none;
 }
+.form__field.filled .form__field-wrapper {
+  background-color: #fafafa;
+}
 .form__field.focus .form__field-wrapper {
-  outline-color: #000;
-  background-color: #fff;
+  background-color: #fafafa;
 }
 .form__label {
   position: absolute;
@@ -1397,7 +1399,7 @@ input::-webkit-inner-spin-button {
   cursor: not-allowed;
   -ms-touch-action: none;
   touch-action: none;
-  background-color: #fafafa;
+  background-color: #f2f2f2;
 }
 .form__input--area {
   height: 100%;

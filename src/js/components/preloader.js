@@ -1,6 +1,7 @@
-import { gsap } from "gsap";
-
 (function initPreloader() {
+  if (typeof window !== "undefined" && window.__infinityPreloaderInited) return;
+  if (typeof window !== "undefined") window.__infinityPreloaderInited = true;
+
   const preloader = document.querySelector(".preloader");
   if (!preloader) return;
 
@@ -10,6 +11,11 @@ import { gsap } from "gsap";
   const videoContainer = preloader.querySelector(".preloader__video");
   if (!videoContainer) return;
   const videoEl = videoContainer.querySelector("video");
+  if (videoEl) {
+    videoEl.preload = "auto";
+    videoEl.playsInline = true;
+  }
+  preloader.style.opacity = "1";
 
   // Блокируем взаимодействие под прелоадером до завершения
   document.documentElement.style.overflow = "hidden";
@@ -17,40 +23,85 @@ import { gsap } from "gsap";
   const MIN_DELAY_MS = 800; // искусственная минимальная задержка показа прелоадера
   const REQUIRED_VIDEO_LOOPS = 2; // минимум два полных проигрывания видео
 
-  // Функция перехода от видео к визуалу
-  const transitionFromVideo = () => {
-    const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
-
-    // Одновременно скрываем видео и проявляем визуал
-    tl.to(videoContainer, { duration: 0.8, scale: 0.45 });
-    tl.to(videoContainer, { duration: 0.8, opacity: 0 });
-    tl.to(
-      logoVisual,
-      {
-        duration: 0.8,
-        opacity: 1,
-        scale: 0.3, // Устанавливаем начальный scale из CSS
-      },
-      0.5
-    );
-
-    // После завершения перехода запускаем основную анимацию
-    tl.add(() => {
-      reveal();
-    });
+  const animateEl = (element, keyframes, options) => {
+    if (!element?.animate) return Promise.resolve();
+    const animation = element.animate(keyframes, options);
+    return animation.finished.catch(() => {});
   };
 
-  const reveal = () => {
-    const tl = gsap.timeline({ defaults: { ease: "power3.inOut" } });
+  // Функция перехода от видео к визуалу
+  const transitionFromVideo = async () => {
+    const baseTransform = "translate(-50%, -50%)";
+    const baseScale = 0.3;
 
+    const hideVideo = animateEl(
+      videoContainer,
+      [
+        { transform: `${baseTransform} scale(2)`, opacity: 1, offset: 0 },
+        { transform: `${baseTransform} scale(0.45)`, opacity: 1, offset: 0.8 },
+        { transform: `${baseTransform} scale(0.45)`, opacity: 0, offset: 1 },
+      ],
+      {
+        duration: 800,
+        easing: "linear",
+        fill: "forwards",
+      }
+    );
+    const showLogo = animateEl(
+      logoVisual,
+      [
+        {
+          opacity: 0,
+          transform: `${baseTransform} scale(${baseScale})`,
+          offset: 0,
+        },
+        {
+          opacity: 0,
+          transform: `${baseTransform} scale(${baseScale})`,
+          offset: 0,
+        },
+        {
+          opacity: 1,
+          transform: `${baseTransform} scale(${baseScale})`,
+          offset: 1,
+        },
+      ],
+      {
+        duration: 800,
+        delay: 500,
+        easing: "linear",
+        fill: "forwards",
+      }
+    );
+
+    await Promise.all([hideVideo, showLogo]);
+    // Зафиксируем конечные стили, чтобы не мелькало
+    videoContainer.style.opacity = "0";
+    videoContainer.style.transform = `${baseTransform} scale(0.45)`;
+    videoContainer.style.display = "none";
+    logoVisual.style.opacity = "1";
+    reveal();
+  };
+
+  const reveal = async () => {
     // Находим целевой элемент логотипа в hero
     const targetLogo = document.querySelector(".logo_symbol");
     if (!targetLogo) {
       // Если логотип не найден, делаем простую анимацию
-      tl.to(preloader, { duration: 0.5, "--pre-white-opacity": 0 }, 0);
-      tl.to(logoVisual, { duration: 1, scale: 2 });
-      tl.to(preloader, { duration: 0.3, opacity: 0 }, "-=0.2");
-      tl.add(() => {
+      preloader.style.setProperty("--pre-white-opacity", "0");
+      animateEl(
+        logoVisual,
+        [
+          { transform: "translate(-50%, -50%) scale(0.3)" },
+          { transform: "translate(-50%, -50%) scale(2)" },
+        ],
+        { duration: 900, easing: "linear", fill: "forwards" }
+      );
+      animateEl(preloader, [{ opacity: 1 }, { opacity: 0 }], {
+        duration: 500,
+        easing: "linear",
+        fill: "forwards",
+      }).finally(() => {
         preloader.remove();
         document.documentElement.style.overflow = "";
       });
@@ -79,42 +130,34 @@ import { gsap } from "gsap";
     const baseWidth = 20 * rem; // ширина без учета scale
     const targetWidth = targetRect.width;
 
-    // GSAP заменит текущий transform, поэтому используем абсолютное значение scale
     // Чтобы итоговый размер был targetWidth, нужен scale = targetWidth / baseWidth
     const targetScale = targetWidth / baseWidth;
-    tl.add(() => {
-      // Убеждаемся, что страница наверху после завершения прелоадера
-      window.scrollTo(0, 0);
-    });
-    // Убираем белый фон
-    tl.to(preloader, { duration: 0.5, "--pre-white-opacity": 0 }, 0);
+    const baseTransform = "translate(-50%, -50%)";
 
-    // Анимируем визуальный белый логотип к целевой позиции
-    // Используем xPercent и yPercent для сохранения центрирования
-    tl.to(
+    preloader.style.setProperty("--pre-white-opacity", "0");
+    logoVisual.style.opacity = "1";
+
+    const moveLogo = animateEl(
       logoVisual,
-      {
-        duration: 2,
-        xPercent: -50,
-        yPercent: -50,
-        x: deltaX,
-        y: deltaY,
-        scale: targetScale,
-        ease: "power2.inOut",
-      },
-      0.2
+      [
+        { transform: `${baseTransform} scale(0.3)` },
+        {
+          transform: `${baseTransform} translate(${deltaX}px, ${deltaY}px) scale(${targetScale})`,
+        },
+      ],
+      { duration: 1400, easing: "linear", delay: 200, fill: "forwards" }
     );
 
-    // Плавно скрываем прелоадер
-    tl.to(
+    await moveLogo;
+
+    await animateEl(
       preloader,
-      { duration: 1.4, opacity: 0, pointerEvents: "none" },
-      "-=0.2"
+      [{ opacity: 1 }, { opacity: 0, pointerEvents: "none" }],
+      { duration: 800, easing: "linear", fill: "forwards" }
     );
-    tl.add(() => {
-      preloader.remove();
-      document.documentElement.style.overflow = "";
-    });
+
+    preloader.remove();
+    document.documentElement.style.overflow = "";
   };
 
   const siteReadyPromise = waitForSiteReady(MIN_DELAY_MS);
