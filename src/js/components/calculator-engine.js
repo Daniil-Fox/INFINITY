@@ -139,6 +139,47 @@ export function initCalculator(formEl, options = {}) {
     ...lastRenderContext,
   });
 
+  const applyPowerBoundsFromConfig = () => {
+    if (!powerInput) return;
+    const tiers = config?.pricing?.tiers;
+    if (!Array.isArray(tiers) || tiers.length === 0) return;
+
+    const minPower = Number(tiers[0]?.min);
+    const maxPower = Number(tiers[tiers.length - 1]?.max);
+
+    if (Number.isFinite(minPower)) {
+      powerInput.setAttribute("min", String(minPower));
+    }
+    if (Number.isFinite(maxPower)) {
+      powerInput.setAttribute("max", String(maxPower));
+    }
+
+    const current = toNumber(powerInput.value) || minPower;
+    const clamped = Number.isFinite(maxPower)
+      ? Math.max(minPower || 0, Math.min(maxPower, current))
+      : Math.max(minPower || 0, current);
+
+    if (Number.isFinite(clamped)) {
+      setValueWithSpaces(powerInput, clamped);
+      if (powerSliderEl?.noUiSlider) {
+        try {
+          powerSliderEl.noUiSlider.updateOptions(
+            {
+              range: {
+                min: Number.isFinite(minPower) ? minPower : 0,
+                max: Number.isFinite(maxPower) ? maxPower : clamped,
+              },
+            },
+            false
+          );
+          powerSliderEl.noUiSlider.set(clamped);
+        } catch (_e) {
+          // игнорируем ошибки noUiSlider
+        }
+      }
+    }
+  };
+
   const clampAmountInputValue = () => {
     if (!priceInput) return null;
     const raw = priceInput.value?.trim() || "";
@@ -903,6 +944,7 @@ export function initCalculator(formEl, options = {}) {
     ? loadCalculatorConfig(remoteConfigUrl).then((remote) => {
         if (remote && typeof remote === "object") {
           deepMerge(config, remote);
+          applyPowerBoundsFromConfig();
         }
       })
     : Promise.resolve();
@@ -917,12 +959,14 @@ export function initCalculator(formEl, options = {}) {
           .then((stats) => {
             if (stats) {
               applyRewardsStatsToConfig(config, stats);
+              applyPowerBoundsFromConfig();
             }
           })
           .catch(() => {})
       : Promise.resolve();
 
   Promise.allSettled([remoteCfgPromise, ourPoolStatsPromise]).finally(() => {
+    applyPowerBoundsFromConfig();
     render();
   });
 
